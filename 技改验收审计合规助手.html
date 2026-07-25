@@ -535,7 +535,17 @@ function renderWiz(){
   document.getElementById('wizNext').textContent=WS.step===WS.steps.length-1?'创建项目':'下一步';
   document.getElementById('wizBody').innerHTML=WS['render'+WS.step]();
 }
-function wizNext(){if(WS.step===WS.steps.length-1){wizCreate();return}WS.step++;renderWiz();}
+function wizNext(){
+  // Save current step data from DOM before leaving
+  if(WS.step===0){
+    var ne=document.getElementById('wizName');if(ne)WS.data.name=ne.value.trim();
+    var te=document.getElementById('wizType');if(te)WS.data.type=te.value;
+    var se=document.getElementById('wizSd');if(se)WS.data.sd=se.value;
+    var ee=document.getElementById('wizEd');if(ee)WS.data.ed=ee.value;
+  }
+  if(WS.step===WS.steps.length-1){wizCreate();return}
+  WS.step++;renderWiz();
+}
 function wizPrev(){if(WS.step>0){WS.step--;renderWiz()}}
 
 // Step 0: Project info
@@ -616,17 +626,16 @@ WS.render5=function(){
 };
 
 function wizCreate(){
-  WS.data.name=document.getElementById('wizName')?document.getElementById('wizName').value.trim():WS.data.name;
-  WS.data.type=document.getElementById('wizType')?document.getElementById('wizType').value:WS.data.type;
-  WS.data.sd=document.getElementById('wizSd')?document.getElementById('wizSd').value:nw();
-  WS.data.ed=document.getElementById('wizEd')?document.getElementById('wizEd').value:'';
-  if(!WS.data.name){alert('请填写项目名称');return}
+  // Already saved from wizNext step 0 -> use WS.data directly
+  if(!WS.data.name){alert('请在第一步填写项目名称');WS.step=0;renderWiz();return}
+  if(!WS.data.sd)WS.data.sd=nw();
   function ad(n){var d=new Date(WS.data.sd||nw());d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
   var p=AP();var depts=[],persons=[];
   if(p){depts=(p.org.depts||[]).filter(function(d){return WS.data.depts.indexOf(d.id)>=0});persons=(p.org.persons||[]).filter(function(pp){return WS.data.persons.indexOf(pp.id)>=0})}
   else{depts=WS.data.depts.map(function(id){return{id:id,name:id,status:'active',hist:[]}});persons=WS.data.persons.map(function(id){return{id:id,name:id,dept:'',role:'',status:'active',hist:[]}})}
   var proj={id:uid(),name:WS.data.name,tpl:WS.data.type,sd:ad(0),ed:WS.data.ed||ad(390),org:{depts:depts,persons:persons},
-    deliverables:[],indicators:[],materials:[],milestones:(WS.data.milestones||[]).map(function(m){return{id:uid(),n:m.n,pd:ad(m.o),ad:''}})};
+    deliverables:(WS.data.deliverables||[]).length?WS.data.deliverables.map(function(d){return{id:uid(),name:d.name,type:d.type,ver:d.ver,file:d.file,owner:d.owner||(persons.length?persons[0].id:''),status:'draft',desc:'',linked:[],hist:[]}}):[],
+    indicators:[],materials:[],milestones:(WS.data.milestones||[]).map(function(m){return{id:uid(),n:m.n,pd:ad(m.o),ad:''}})};
   Object.entries(WS.data.mods||{}).forEach(function(e){var mod=e[0],names=e[1];if(!names||!names.length)return;names.forEach(function(n){if(n==='新指标')return;proj.indicators.push({id:uid(),name:n,mod:mod,target:'',owner:persons.length?persons[0].id:'',deadline:ad(180),priority:'normal',dept:depts.length?depts[0].id:'',linkedDocs:[],linkedMats:[],stages:{requirement:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},design:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},implementation:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},verification:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]}})})});
   (WS.data.matCats||[]).forEach(function(cid){var names=WS.data.matNames[cid]||['材料'];names.forEach(function(n){if(n==='新材料')return;proj.materials.push({id:uid(),name:n,cat:cid,rule:'',owner:'',deadline:ad(90),wf:'pending',ver:1,hist:[],linkedInds:[],linkedDocs:[]})})});
   D.projects.push(proj);D.activeProjectId=proj.id;save();closeWiz();showV('dash');
