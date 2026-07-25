@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>技改项目验收审计 — 智能合规管理系统 v1.0</title>
+<title>技改项目验收审计 — 智能合规管理系统（开源版）</title>
 <style>
 :root{--bg:#f4f5f7;--s:#fff;--bd:#dfe2e7;--t:#1d2129;--t2:#5a6170;--t3:#8f95a3;--p:#1b5e3f;--pl:#e8f5ee;--a:#2a6496;--al:#eef5fb;--su:#1f7d3a;--w:#b3540e;--d:#c22d3a;--ai:#7c3aed;--ai-bg:#faf5ff;--r:6px;--f:-apple-system,"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -44,14 +44,6 @@ body{font-family:var(--f);background:var(--bg);color:var(--t);display:flex;min-h
 .ai-msg.user{background:var(--ai-bg);color:var(--ai);text-align:right}
 .ai-msg.bot{background:#f4f5f7;color:var(--t2)}
 .ai-msg .meta{font-size:8px;color:var(--t3);margin-top:2px}
-
-/* Wizard steps */
-.wiz-step{flex:1;text-align:center;padding:6px 4px;font-size:9px;color:var(--t3);border-bottom:2px solid transparent;cursor:default}
-.wiz-step.active{color:var(--p);border-bottom-color:var(--p);font-weight:600}
-.wiz-step.done{color:var(--su);border-bottom-color:var(--su)}
-.wiz-check-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;font-size:10.5px}
-.wiz-check-grid label{display:flex;align-items:center;gap:5px;cursor:pointer}
-.wiz-section{margin-bottom:12px}.wiz-section h4{font-size:11.5px;font-weight:600;margin-bottom:6px;color:var(--a)}
 
 /* TOPBAR */
 .topbar{background:var(--s);border-bottom:1px solid var(--bd);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;gap:8px}
@@ -148,6 +140,17 @@ textarea.form-input{resize:vertical;min-height:45px}
   .sidebar{width:44px}.sidebar>*:not(nav){display:none}.nav-item span:not(.i){display:none}.nav-item{justify-content:center;padding:8px}
   .main-wrapper{margin-left:44px}.ai-panel{width:280px;z-index:95}.main.ai-open{margin-right:280px}}
 @media print{.sidebar,.ai-panel,.ai-toggle,.topbar,.btn,.modal-overlay{display:none!important}.main-wrapper{margin-left:0!important}.main{margin-right:0!important}.content{padding:0!important}}
+
+/* === Wizard === */
+.wiz-steps{display:flex;gap:0;border-bottom:1px solid var(--bd);padding:6px 10px;background:#fafbfc;font-size:9.5px}
+.wiz-step-item{flex:1;text-align:center;padding:5px 3px;font-size:9px;color:var(--t3);border-bottom:2px solid transparent;cursor:default}
+.wiz-step-item.active{color:var(--p);border-bottom-color:var(--p);font-weight:600}
+.wiz-step-item.done{color:var(--su);border-bottom-color:var(--su)}
+.wiz-chk-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;font-size:10px}
+.wiz-chk-grid label{display:flex;align-items:center;gap:4px;cursor:pointer}
+.wiz-mod-row{border:1px solid var(--bd);border-radius:4px;padding:8px;margin-bottom:6px;background:#fafbfc}
+.wiz-mod-row.active{border-color:var(--p);background:var(--pl)}
+.wiz-ind-row{display:flex;gap:4px;margin-top:3px;font-size:10px}
 </style>
 </head>
 <body>
@@ -277,17 +280,6 @@ textarea.form-input{resize:vertical;min-height:45px}
   <div class="form-g"><label>变更说明</label><input class="form-input" id="orgNote"></div>
   <input type="hidden" id="orgId">
 </div><div class="modal-foot"><button class="btn btn-s" onclick="closeOrgM()">取消</button><button class="btn btn-p" onclick="saveOrg()">保存</button></div></div></div>
-
-<!-- PROJECT WIZARD MODAL -->
-<div class="modal-overlay" id="wizModal"><div class="modal" style="max-width:750px">
-  <div class="modal-head"><h2 id="wizTitle">创建新项目</h2><button class="modal-close" onclick="closeWiz()">&times;</button></div>
-  <div style="display:flex;gap:0;border-bottom:1px solid var(--bd);padding:8px 12px;background:#fafbfc;font-size:9.5px" id="wizSteps"></div>
-  <div class="modal-body" id="wizBody" style="min-height:280px;max-height:60vh;overflow-y:auto"></div>
-  <div class="modal-foot" id="wizFoot">
-    <button class="btn btn-s" id="wizPrev" onclick="wizPrev()" style="display:none">上一步</button>
-    <button class="btn btn-p" id="wizNext" onclick="wizNext()">下一步</button>
-  </div>
-</div></div>
 
 <script>
 // ============ TEMPLATES (same as V6) ============
@@ -522,211 +514,123 @@ function rrpt(){
 }
 
 // ============ TEMPLATES ============
-function rt(){document.getElementById('tplContent').innerHTML=Object.entries(TPL).map(function(kv){var n=kv[0],t=kv[1];return'<div class="panel" style="margin-bottom:8px"><div class="phead"><h3>'+n+'</h3><button class="btn btn-p btn-xs" onclick="openWiz();setTimeout(function(){document.getElementById(\'wName\').value=\''+n+'\'},100)">创建项目</button></div><div class="pbody" style="font-size:10px">'+t.cats.length+'类材料 · '+t.mods.length+'指标模块 · '+t.defDocs.length+'交付物 · '+t.milestones.length+'节点</div></div>'}).join('')}
+function rt(){document.getElementById('tplContent').innerHTML=Object.entries(TPL).map(function(e){var n=e[0],t=e[1];return'<div class="panel" style="margin-bottom:8px"><div class="phead"><h3>'+n+'</h3><button class="btn btn-p btn-xs" onclick="openWiz(''+n+'')">创建项目</button></div><div class="pbody" style="font-size:10px">'+t.cats.length+'类材料 · '+t.mods.length+'指标模块 · '+t.defDocs.length+'交付物 · '+t.milestones.length+'节点</div></div>'}).join('')}
+
 // ============ PROJECT WIZARD ============
-var wizStep=0,wizData={};
-function openWiz(prefillType){
-  wizStep=0;wizData={name:'',type:prefillType||'技改项目',sd:'',ed:'',depts:[],persons:[],modInds:{},matCats:[],milestones:[],deliverables:[]};
-  renderWiz();document.getElementById('wizModal').classList.add('show');
+var WS={step:0,steps:['项目信息','组织架构','指标模块','材料清单','里程碑','确认创建'],data:{}};
+
+function openWiz(type){
+  if(!type)type='技改项目';
+  WS.step=0;WS.data={name:'',type:type,sd:'',ed:'',depts:[],persons:[],mods:{},matCats:[],matNames:{},milestones:[],deliverables:[]};
+  document.getElementById('wizModal').classList.add('show');
+  renderWiz();
 }
 function closeWiz(){document.getElementById('wizModal').classList.remove('show')}
-var WIZ_STEPS=['项目信息','组织架构','指标模块','材料清单','里程碑','确认创建'];
 
 function renderWiz(){
-  var st='';for(var i=0;i<WIZ_STEPS.length;i++){st+='<div class="wiz-step'+(i===wizStep?' active':'')+(i<wizStep?' done':'')+'">'+(i+1)+'. '+WIZ_STEPS[i]+'</div>'}
-  document.getElementById('wizSteps').innerHTML=st;
-  document.getElementById('wizTitle').textContent='创建新项目 — '+WIZ_STEPS[wizStep];
-  document.getElementById('wizPrev').style.display=wizStep===0?'none':'inline-flex';
-  document.getElementById('wizNext').textContent=wizStep===WIZ_STEPS.length-1?'创建项目':'下一步';
-  var b=document.getElementById('wizBody');
-  switch(wizStep){
-    case 0:b.innerHTML=wizStep0();break;
-    case 1:b.innerHTML=wizStep1();break;
-    case 2:b.innerHTML=wizStep2();break;
-    case 3:b.innerHTML=wizStep3();break;
-    case 4:b.innerHTML=wizStep4();break;
-    case 5:b.innerHTML=wizStep5();break;
-  }
+  var steps='',i;for(i=0;i<WS.steps.length;i++)steps+='<div class="wiz-step-item'+(i===WS.step?' active':'')+(i<WS.step?' done':'')+'">'+(i+1)+'. '+WS.steps[i]+'</div>';
+  document.getElementById('wizSteps').innerHTML=steps;
+  document.getElementById('wizTit').textContent='创建新项目 - '+WS.steps[WS.step];
+  document.getElementById('wizPrev').style.display=WS.step===0?'none':'inline-flex';
+  document.getElementById('wizNext').textContent=WS.step===WS.steps.length-1?'创建项目':'下一步';
+  document.getElementById('wizBody').innerHTML=WS['render'+WS.step]();
 }
-function wizNext(){if(wizStep===WIZ_STEPS.length-1){wizCreate();return}if(!wizValidate())return;wizStep++;renderWiz()}
-function wizPrev(){if(wizStep>0){wizStep--;renderWiz()}}
+function wizNext(){if(WS.step===WS.steps.length-1){wizCreate();return}WS.step++;renderWiz();}
+function wizPrev(){if(WS.step>0){WS.step--;renderWiz()}}
 
-function wizStep0(){
-  wizData.name=wizData.name||'';wizData.type=wizData.type||'技改项目';wizData.sd=wizData.sd||'';wizData.ed=wizData.ed||'';
-  var types='';Object.keys(TPL).forEach(function(k){types+='<option value="'+k+'"'+(wizData.type===k?' selected':'')+'>'+k+'</option>'});
-  return '<div class="wiz-section"><h4>项目基本信息</h4>'+
-    '<div class="form-row"><div class="form-g"><label>项目名称*</label><input class="form-input" id="wName" value="'+esc(wizData.name)+'" onchange="wizData.name=this.value"></div>'+
-    '<div class="form-g"><label>项目类型*</label><select class="form-input" id="wType" onchange="wizData.type=this.value">'+types+'</select></div></div>'+
-    '<div class="form-row"><div class="form-g"><label>开始日期</label><input type="date" class="form-input" id="wSd" value="'+wizData.sd+'" onchange="wizData.sd=this.value"></div>'+
-    '<div class="form-g"><label>结束日期</label><input type="date" class="form-input" id="wEd" value="'+wizData.ed+'" onchange="wizData.ed=this.value"></div></div>'+
-    '<p style="font-size:10px;color:var(--t3);margin-top:8px">选择项目类型后，后续步骤将根据类型自动推荐对应的模块、材料分类和里程碑模板。</p></div>';
-}
+// Step 0: Project info
+WS.render0=function(){
+  var types='';Object.keys(TPL).forEach(function(k){types+='<option value="'+k+'"'+(WS.data.type===k?' selected':'')+'>'+k+'</option>'});
+  return'<div class="wiz-section"><h4><input class="form-input" id="wizName" value="'+esc(WS.data.name||'')+'" placeholder="项目名称*" style="font-size:13px;margin-bottom:8px"></h4>'+
+    '<div class="form-row"><div class="form-g"><label>项目类型</label><select class="form-input" id="wizType">'+types+'</select></div>'+
+    '<div class="form-g"><label>开始日期</label><input type="date" class="form-input" id="wizSd" value="'+nw()+'"></div></div>'+
+    '<div class="form-g"><label>结束日期</label><input type="date" class="form-input" id="wizEd"></div>'+
+    '<p style="font-size:9.5px;color:var(--t3)">选择项目类型后，后续步骤将根据类型自动推荐对应的模块和材料分类。</p></div>';
+};
 
-function wizStep1(){
-  // Get existing org data from any project or defaults
-  var p=AP();var depts=p?p.org?.depts||[]:[];var persons=p?p.org?.persons||[]:[];
-  if(!depts.length)depts=[{id:'D1',name:'计划处',status:'active'},{id:'D2',name:'技术部',status:'active'},{id:'D3',name:'质量部',status:'active'},{id:'D4',name:'财务部',status:'active'}];
-  if(!persons.length)persons=[{id:'P1',name:'项目负责人',dept:'D1',role:'主管'},{id:'P2',name:'技术负责人',dept:'D2',role:'技术'},{id:'P3',name:'检验工程师',dept:'D3',role:'检验'}];
-  // Init selections
-  if(!wizData.depts.length)wizData.depts=depts.filter(function(d){return d.status==='active'}).map(function(d){return d.id});
-  if(!wizData.persons.length)wizData.persons=persons.filter(function(p){return p.status==='active'}).map(function(p){return p.id});
+// Step 1: Organization
+WS.render1=function(){
+  var p=AP();var depts=p?p.org.depts||[]:[];var persons=p?p.org.persons||[]:[];
+  if(!depts.length){depts=[{id:'D1',name:'计划处',status:'active'},{id:'D2',name:'技术部',status:'active'},{id:'D3',name:'质量部',status:'active'},{id:'D4',name:'财务部',status:'active'}];if(p){p.org.depts=depts}}
+  if(!persons.length){persons=[{id:'P1',name:'项目负责人',dept:'D1',role:'主管'},{id:'P2',name:'技术负责人',dept:'D2',role:'技术'},{id:'P3',name:'检验工程师',dept:'D3',role:'检验'}];if(p){p.org.persons=persons}}
+  if(!WS.data.depts.length)WS.data.depts=depts.filter(function(d){return d.status==='active'}).map(function(d){return d.id});
+  if(!WS.data.persons.length)WS.data.persons=persons.filter(function(p){return p.status==='active'}).map(function(p){return p.id});
+  var dh='<div class="wiz-section"><h4>部门 ('+WS.data.depts.length+'个已选)</h4><div class="wiz-chk-grid">';
+  depts.forEach(function(d){var ch=WS.data.depts.indexOf(d.id)>=0;dh+='<label><input type="checkbox" data-did="'+d.id+'"'+(ch?' checked':'')+' onchange="wizOnCheck(this,'dept')">'+esc(d.name)+'</label>'});dh+='</div></div>';
+  var ph='<div class="wiz-section"><h4>人员 ('+WS.data.persons.length+'人已选)</h4><div class="wiz-chk-grid">';
+  persons.forEach(function(p){var ch=WS.data.persons.indexOf(p.id)>=0;ph+='<label><input type="checkbox" data-pid="'+p.id+'"'+(ch?' checked':'')+' onchange="wizOnCheck(this,'person')">'+esc(p.name)+' ('+esc(p.role||'')+')</label>'});ph+='</div></div>';
+  return dh+ph+'<p style="font-size:9px;color:var(--t3)">勾选的部门/人员将被纳入项目。</p>';
+};
+function wizOnCheck(el,type){var id=el.getAttribute('data-did')||el.getAttribute('data-pid');var arr=type==='dept'?WS.data.depts:WS.data.persons;if(el.checked&&arr.indexOf(id)<0)arr.push(id);if(!el.checked)WS.data[type==='dept'?'depts':'persons']=arr.filter(function(v){return v!==id});renderWiz()}
 
-  var dh='<div class="wiz-check-grid">';
-  depts.forEach(function(d){var sel=wizData.depts.indexOf(d.id)>=0;dh+='<label><input type="checkbox"'+(sel?' checked':'')+' onchange="wizToggleDept(\x27'+d.id+'\x27,this.checked)">'+esc(d.name)+(d.status==='inactive'?' (已撤销)':'')+'</label>'});
-  dh+='</div><button class="btn btn-xs btn-out" style="margin-top:6px" onclick="wizAddDept()">+ 添加部门</button>';
+// Step 2: Indicators
+WS.render2=function(){
+  var t=TPL[WS.data.type]||TPL['技改项目'],mods=t.mods||[];
+  if(!WS.data.mods||Object.keys(WS.data.mods).length===0){WS.data.mods={};mods.forEach(function(m){WS.data.mods[m.id]=[]})}
+  var h='<div class="wiz-section"><h4>指标模块配置</h4>';
+  mods.forEach(function(m){var items=WS.data.mods[m.id]||[],active=items.length>0;
+    h+='<div class="wiz-mod-row'+(active?' active':'')+'"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><strong>'+esc(m.n)+'</strong><button class="btn btn-xs '+(active?'btn-s':'btn-p')+'" data-mid="'+m.id+'" onclick="wizToggleMod(this)">'+(active?'已选择('+items.length+'项)':'+ 激活模块')+'</button></div>';
+    items.forEach(function(ik,idx){h+='<div class="wiz-ind-row"><input class="form-input" style="flex:1" value="'+esc(ik)+'" data-mid="'+m.id+'" data-idx="'+idx+'" onchange="wizUpdateInd(this)"><button class="btn btn-xs btn-gh" style="color:var(--d)" data-mid="'+m.id+'" data-idx="'+idx+'" onclick="wizDelInd(this)">x</button></div>'});
+    if(active)h+='<button class="btn btn-xs btn-gh" style="margin-top:2px;font-size:9px" data-mid="'+m.id+'" onclick="wizAddInd(this)">+ 添加指标</button>';
+    h+='</div>'});
+  h+='</div><p style="font-size:9px;color:var(--t3)">点击"激活模块"启用该模块，然后添加验收指标。可自定义指标名称。</p>';return h;
+};
+function wizToggleMod(btn){var mid=btn.getAttribute('data-mid');var arr=WS.data.mods[mid]||[];if(!arr.length)WS.data.mods[mid]=['新指标'];else WS.data.mods[mid]=[];renderWiz()}
+function wizAddInd(btn){var mid=btn.getAttribute('data-mid');if(!WS.data.mods[mid])WS.data.mods[mid]=[];WS.data.mods[mid].push('新指标');renderWiz()}
+function wizDelInd(btn){var mid=btn.getAttribute('data-mid'),idx=parseInt(btn.getAttribute('data-idx'));WS.data.mods[mid].splice(idx,1);renderWiz()}
+function wizUpdateInd(inp){var mid=inp.getAttribute('data-mid'),idx=parseInt(inp.getAttribute('data-idx'));WS.data.mods[mid][idx]=inp.value}
 
-  var ph='<div class="wiz-check-grid">';
-  persons.forEach(function(p){var sel=wizData.persons.indexOf(p.id)>=0;ph+='<label><input type="checkbox"'+(sel?' checked':'')+' onchange="wizTogglePerson(\x27'+p.id+'\x27,this.checked)">'+esc(p.name)+' ('+esc(p.role||'')+')'+(p.status==='inactive'?' 已离职':'')+'</label>'});
-  ph+='</div><button class="btn btn-xs btn-out" style="margin-top:6px" onclick="wizAddPerson()">+ 添加人员</button>';
+// Step 3: Materials
+WS.render3=function(){
+  var t=TPL[WS.data.type]||TPL['技改项目'],cats=t.cats||[];
+  if(!WS.data.matCats.length)WS.data.matCats=cats.map(function(c){return c.id});
+  if(!WS.data.matNames||Object.keys(WS.data.matNames).length===0){WS.data.matNames={};cats.forEach(function(c){WS.data.matNames[c.id]=['材料']})}
+  var h='<div class="wiz-section"><h4>材料分类 ('+WS.data.matCats.length+'/'+cats.length+'类已选)</h4><div class="wiz-chk-grid">';
+  cats.forEach(function(c){var sel=WS.data.matCats.indexOf(c.id)>=0;h+='<label><input type="checkbox" data-cid="'+c.id+'"'+(sel?' checked':'')+' onchange="wizOnCheck(this,'cat')">'+esc(c.n)+'</label>'});h+='</div></div>';
+  WS.data.matCats.forEach(function(cid){var c=cats.find(function(cc){return cc.id===cid});var items=WS.data.matNames[cid]||['材料'];h+='<div style="margin-bottom:6px"><strong style="font-size:10px">'+esc(c?c.n:cid)+'</strong>';
+    items.forEach(function(n,idx){h+='<div class="wiz-ind-row"><input class="form-input" style="flex:1" value="'+esc(n)+'" data-cid="'+cid+'" data-idx="'+idx+'" onchange="wizUpdateMat(this)"><button class="btn btn-xs btn-gh" style="color:var(--d)" data-cid="'+cid+'" data-idx="'+idx+'" onclick="wizDelMat(this)">x</button></div>'});
+    h+='<button class="btn btn-xs btn-gh" style="margin-top:2px;font-size:9px" data-cid="'+cid+'" onclick="wizAddMat(this)">+ 添加材料</button></div>'});
+  return h+'<p style="font-size:9px;color:var(--t3)">勾选需要的材料分类，每种分类可自定义材料名称。</p>';
+};
+function wizOnCheck(el,type){var id=el.getAttribute('data-did')||el.getAttribute('data-pid')||el.getAttribute('data-cid');var arr=type==='dept'?WS.data.depts:type==='person'?WS.data.persons:WS.data.matCats;if(el.checked&&arr.indexOf(id)<0)arr.push(id);if(!el.checked){var key=type==='dept'?'depts':type==='person'?'persons':'matCats';WS.data[key]=arr.filter(function(v){return v!==id})}renderWiz()}
+function wizAddMat(btn){var cid=btn.getAttribute('data-cid');if(!WS.data.matNames[cid])WS.data.matNames[cid]=[];WS.data.matNames[cid].push('新材料');renderWiz()}
+function wizDelMat(btn){var cid=btn.getAttribute('data-cid'),idx=parseInt(btn.getAttribute('data-idx'));WS.data.matNames[cid].splice(idx,1);renderWiz()}
+function wizUpdateMat(inp){var cid=inp.getAttribute('data-cid'),idx=parseInt(inp.getAttribute('data-idx'));WS.data.matNames[cid][idx]=inp.value}
 
-  return '<div class="wiz-section"><h4>选择参与部门 ('+wizData.depts.length+'个已选)</h4>'+dh+'</div>'+
-    '<div class="wiz-section"><h4>选择参与人员 ('+wizData.persons.length+'个已选)</h4>'+ph+'</div>'+
-    '<p style="font-size:9.5px;color:var(--t3)">勾选的组织和人员将被纳入项目，后续可在组织架构页面修改。快速添加的部门/人员会自动保存到项目。</p>';
-}
+// Step 4: Milestones
+WS.render4=function(){
+  var t=TPL[WS.data.type]||TPL['技改项目'];
+  if(!WS.data.milestones.length)WS.data.milestones=(t.milestones||[]).map(function(m){return{n:m.n,o:m.o}});
+  var h='<div class="wiz-section"><h4>里程碑节点</h4><p style="font-size:9px;color:var(--t3);margin-bottom:8px">天数从项目开始日期起算。</p>';
+  WS.data.milestones.forEach(function(m,idx){h+='<div class="form-row" style="margin-bottom:4px"><div class="form-g"><input class="form-input" value="'+esc(m.n)+'" data-idx="'+idx+'" onchange="WS.data.milestones['+idx+'].n=this.value"></div><div class="form-g"><input type="number" class="form-input" value="'+m.o+'" data-idx="'+idx+'" onchange="WS.data.milestones['+idx+'].o=parseInt(this.value)||0" style="width:80px"> 天</div><button class="btn btn-xs btn-gh" style="color:var(--d)" onclick="WS.data.milestones.splice('+idx+',1);renderWiz()">x</button></div>'});
+  h+='</div><button class="btn btn-xs btn-out" data-n="新节点" data-o="90" onclick="wizAddMs(this)">+ 添加节点</button>';return h;
+};
+function wizAddMs(btn){WS.data.milestones.push({n:btn.getAttribute('data-n'),o:parseInt(btn.getAttribute('data-o'))});renderWiz()}
 
-function wizStep2(){
-  var t=TPL[wizData.type]||TPL['技改项目'];
-  var mods=t.mods||[];
-  if(!wizData.modInds||typeof wizData.modInds!=='object')wizData.modInds={};
-  // Ensure all modules have indicator arrays
-  mods.forEach(function(m){if(!wizData.modInds[m.id])wizData.modInds[m.id]=[]});
-  // Auto-fill default indicators for modules that have them
-  var t2=TPL[wizData.type];if(t2&&t2.defInds){t2.defInds.forEach(function(di){var arr=wizData.modInds[di.mod]||[];if(arr.indexOf(di.name)<0&&!arr.length)arr.push(di.name)});}
-
-  var h='<div class="wiz-section"><h4>选择指标模块</h4>';
-  mods.forEach(function(m){
-    var count=(wizData.modInds[m.id]||[]).length;
-    var active=count>0;
-    h+='<div style="border:1px solid '+(active?'var(--p)':'var(--bd)')+';border-radius:4px;padding:8px;margin-bottom:6px;background:'+(active?'var(--pl)':'#fafbfc')+'">'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'+
-      '<strong style="font-size:10.5px">'+esc(m.n)+'</strong>'+
-      '<button class="btn btn-xs '+(active?'btn-s':'btn-p')+'" onclick="wizToggleMod(\x27'+m.id+'\x27)">'+(active?'已选择('+count+'项)':'+ 选择模块')+'</button></div>'+
-      '<div id="wizModInds_'+m.id+'">';
-    (wizData.modInds[m.id]||[]).forEach(function(ik){
-      h+='<div style="display:flex;gap:4px;margin-top:3px;font-size:10px"><input class="form-input" style="flex:1" value="'+esc(ik)+'" onchange="wizUpdateInd(\x27'+m.id+'\x27,\x27'+ik+'\x27,this.value)"><button class="btn btn-xs btn-gh" style="color:var(--d)" onclick="wizDelInd(\x27'+m.id+'\x27,\x27'+ik+'\x27)">x</button></div>';
-    });
-    h+=active?'<button class="btn btn-xs btn-gh" style="margin-top:3px;font-size:9px" onclick="wizAddInd(\x27'+m.id+'\x27)">+ 添加指标</button>':'';
-    h+='</div></div>';
-  });
-  h+='</div><p style="font-size:9.5px;color:var(--t3)">点击"选择模块"激活该模块，然后添加该模块下的验收指标。可以自定义指标名称和目标要求。</p>';
-  return h;
-}
-
-function wizStep3(){
-  var t=TPL[wizData.type]||TPL['技改项目'];
-  var cats=t.cats||[];
-  if(!wizData.matCats.length)wizData.matCats=cats.map(function(c){return c.id});
-  var matNames=wizData.matNames||{};
-
-  var h='<div class="wiz-section"><h4>选择材料分类 ('+wizData.matCats.length+'/'+cats.length+'类已选)</h4><div class="wiz-check-grid">';
-  cats.forEach(function(c){var sel=wizData.matCats.indexOf(c.id)>=0;h+='<label><input type="checkbox"'+(sel?' checked':'')+' onchange="wizToggleCat(\x27'+c.id+'\x27,this.checked)">'+esc(c.n)+'</label>'});
-  h+='</div></div>';
-
-  // Custom materials per category
-  h+='<div class="wiz-section"><h4>自定义材料清单</h4>';
-  wizData.matCats.forEach(function(cid){
-    var c=cats.find(function(cc){return cc.id===cid});
-    var items=matNames[cid]||[];
-    if(!items.length&&TPL[wizData.type]&&TPL[wizData.type].defMats){TPL[wizData.type].defMats.forEach(function(dm){if(dm.cat===cid)items.push(dm.name)});matNames[cid]=items}
-    h+='<div style="margin-bottom:6px"><strong style="font-size:10px">'+esc(c?c.n:cid)+'</strong>';
-    items.forEach(function(n,idx){
-      h+='<div style="display:flex;gap:4px;margin-top:2px;font-size:10px"><input class="form-input" style="flex:1" value="'+esc(n)+'" onchange="wizUpdateMat(\x27'+cid+'\x27,'+idx+',this.value)"><button class="btn btn-xs btn-gh" style="color:var(--d)" onclick="wizDelMat(\x27'+cid+'\x27,'+idx+')">x</button></div>';
-    });
-    h+='<button class="btn btn-xs btn-gh" style="margin-top:2px;font-size:9px" onclick="wizAddMat(\x27'+cid+'\x27)">+ 添加材料</button></div>';
-  });
-  h+='</div>';
-  return h;
-}
-
-function wizStep4(){
-  var t=TPL[wizData.type]||TPL['技改项目'];
-  if(!wizData.milestones.length)wizData.milestones=(t.milestones||[]).map(function(m){return{n:m.n,o:m.o}});
-
-  var h='<div class="wiz-section"><h4>配置里程碑节点</h4><p style="font-size:10px;color:var(--t3);margin-bottom:8px">天数从项目开始日期起算，可拖拽或直接修改。</p>';
-  wizData.milestones.forEach(function(m,idx){
-    h+='<div class="form-row" style="margin-bottom:6px">'+
-      '<div class="form-g"><label>节点名称</label><input class="form-input" value="'+esc(m.n)+'" onchange="wizData.milestones['+idx+'].n=this.value"></div>'+
-      '<div class="form-g"><label>偏移天数</label><input type="number" class="form-input" value="'+m.o+'" onchange="wizData.milestones['+idx+'].o=parseInt(this.value)||0" style="width:80px"></div>'+
-      '<button class="btn btn-xs btn-gh" style="color:var(--d);align-self:flex-end;margin-bottom:4px" onclick="wizData.milestones.splice('+idx+',1);renderWiz()">x</button></div>';
-  });
-  h+='</div><button class="btn btn-xs btn-out" onclick="wizData.milestones.push({n:\x27新节点\x27,o:90});renderWiz()">+ 添加节点</button>';
-  return h;
-}
-
-function wizStep5(){
-  var t=TPL[wizData.type]||TPL['技改项目'];
-  if(!wizData.deliverables.length)wizData.deliverables=(t.defDocs||[]).map(function(d){return d});
-  var dt='招标文件,合同,技术协议,交付物,其他'.split(',');
-  var h='<div class="wiz-section"><h4>交付物模板 ('+wizData.deliverables.length+'个)</h4>';
-  wizData.deliverables.forEach(function(d,idx){
-    h+='<div class="form-row" style="margin-bottom:6px"><div class="form-g"><input class="form-input" value="'+esc(d.name)+'" onchange="wizData.deliverables['+idx+'].name=this.value"></div>'+
-      '<div class="form-g"><select class="form-input" onchange="wizData.deliverables['+idx+'].type=this.value">'+dt.map(function(tp){return'<option value="'+tp+'"'+(d.type===tp?' selected':'')+'>'+tp+'</option>'}).join('')+'</select></div>'+
-      '<button class="btn btn-xs btn-gh" style="color:var(--d);align-self:center" onclick="wizData.deliverables.splice('+idx+',1);renderWiz()">x</button></div>';
-  });
-  h+='</div><button class="btn btn-xs btn-out" onclick="wizData.deliverables.push({name:\x27新建交付物\x27,type:\x27交付物\x27,ver:\x27V1.0\x27,file:\x27\x27});renderWiz()">+ 添加交付物</button>';
-  // Summary
-  h+='<div class="wiz-section" style="margin-top:14px;padding:10px;background:#fafbfc;border-radius:6px"><h4>创建预览</h4>'+
-    '<table style="font-size:9.5px;width:100%"><tr><td>项目名称</td><td><strong>'+esc(wizData.name||'(未填写)')+'</strong></td></tr>'+
-    '<tr><td>类型</td><td>'+wizData.type+'</td></tr>'+
-    '<tr><td>部门</td><td>'+wizData.depts.length+'个</td></tr>'+
-    '<tr><td>人员</td><td>'+wizData.persons.length+'人</td></tr>'+
-    '<tr><td>指标模块</td><td>'+Object.values(wizData.modInds).filter(function(a){return a&&a.length>0}).length+'个激活</td></tr>'+
-    '<tr><td>材料分类</td><td>'+wizData.matCats.length+'类</td></tr>'+
-    '<tr><td>里程碑</td><td>'+wizData.milestones.length+'个</td></tr>'+
-    '<tr><td>交付物</td><td>'+wizData.deliverables.length+'个</td></tr></table></div>';
-  return h;
-}
-
-function wizValidate(){
-  if(wizStep===0){wizData.name=document.getElementById('wName')?.value?.trim()||wizData.name;wizData.type=document.getElementById('wType')?.value||wizData.type;wizData.sd=document.getElementById('wSd')?.value||nw();wizData.ed=document.getElementById('wEd')?.value||'';if(!wizData.name){alert('请输入项目名称');return false}}
-  return true;
-}
-
-function wizToggleDept(id,checked){if(checked&&wizData.depts.indexOf(id)<0)wizData.depts.push(id);if(!checked)wizData.depts=wizData.depts.filter(function(d){return d!==id})}
-function wizTogglePerson(id,checked){if(checked&&wizData.persons.indexOf(id)<0)wizData.persons.push(id);if(!checked)wizData.persons=wizData.persons.filter(function(p){return p!==id})}
-function wizAddDept(){var n=prompt('部门名称：');if(!n)return;var p=AP();var id='D'+uid();var d={id:id,name:n,status:'active',hist:[]};if(p){if(!p.org.depts)p.org.depts=[];p.org.depts.push(d);wizData.depts.push(id)}renderWiz()}
-function wizAddPerson(){var n=prompt('人员姓名：');if(!n)return;var p=AP();var id='P'+uid();var pp={id:id,name:n,dept:'',role:'',status:'active',hist:[]};if(p){if(!p.org.persons)p.org.persons=[];p.org.persons.push(pp);wizData.persons.push(id)}renderWiz()}
-function wizToggleMod(mid){if(!wizData.modInds[mid]||!wizData.modInds[mid].length)wizData.modInds[mid]=['新指标'];else wizData.modInds[mid]=[];renderWiz()}
-function wizAddInd(mid){if(!wizData.modInds[mid])wizData.modInds[mid]=[];wizData.modInds[mid].push('新指标');renderWiz()}
-function wizDelInd(mid,oldName){(wizData.modInds[mid]||[])=wizData.modInds[mid].filter(function(n){return n!==oldName});renderWiz()}
-function wizUpdateInd(mid,oldName,newName){var arr=wizData.modInds[mid]||[];var idx=arr.indexOf(oldName);if(idx>=0)arr[idx]=newName}
-function wizToggleCat(id,checked){if(checked&&wizData.matCats.indexOf(id)<0)wizData.matCats.push(id);if(!checked)wizData.matCats=wizData.matCats.filter(function(c){return c!==id});renderWiz()}
-function wizAddMat(cid){var mn=wizData.matNames||{};if(!mn[cid])mn[cid]=[];mn[cid].push('新材料');wizData.matNames=mn;renderWiz()}
-function wizDelMat(cid,idx){var mn=wizData.matNames||{};if(mn[cid])mn[cid].splice(idx,1);renderWiz()}
-function wizUpdateMat(cid,idx,val){var mn=wizData.matNames||{};if(mn[cid])mn[cid][idx]=val}
+// Step 5: Confirm
+WS.render5=function(){
+  var h='<div class="wiz-section" style="padding:10px;background:#fafbfc;border-radius:6px"><h4>创建预览</h4><table style="font-size:9.5px;width:100%"><tr><td>名称</td><td><strong>'+esc(WS.data.name||'(请在第一步填写)')+'</strong></td></tr><tr><td>类型</td><td>'+WS.data.type+'</td></tr><tr><td>部门</td><td>'+WS.data.depts.length+'个</td></tr><tr><td>人员</td><td>'+WS.data.persons.length+'人</td></tr>';
+  var modCount=0;Object.values(WS.data.mods||{}).forEach(function(a){if(a.length)modCount++});h+='<tr><td>指标模块</td><td>'+modCount+'个激活</td></tr>';
+  h+='<tr><td>材料分类</td><td>'+WS.data.matCats.length+'类</td></tr><tr><td>里程碑</td><td>'+WS.data.milestones.length+'个</td></tr></table></div>';return h;
+};
 
 function wizCreate(){
-  if(!wizValidate()||!wizData.name){alert('请填写项目名称');return}
-  function ad(n){var d=new Date(wizData.sd||nw());if(typeof n==='number')d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
-  var p=AP();var depts=[];var persons=[];
-  if(p){depts=(p.org?.depts||[]).filter(function(d){return wizData.depts.indexOf(d.id)>=0});persons=(p.org?.persons||[]).filter(function(pp){return wizData.persons.indexOf(pp.id)>=0})}
-  else{depts=wizData.depts.map(function(id){return{id:id,name:id,status:'active',hist:[]}});persons=wizData.persons.map(function(id){return{id:id,name:id,dept:'',role:'',status:'active',hist:[]}})}
-
-  var proj={id:uid(),name:wizData.name,tpl:wizData.type,sd:ad(0),ed:wizData.ed||ad(390),
-    org:{depts:depts,persons:persons},
-    deliverables:(wizData.deliverables||[]).map(function(d){return{id:uid(),name:d.name,type:d.type,ver:d.ver||'V1.0',file:d.file||'',owner:persons.length?persons[0].id:'',status:'draft',desc:'',linked:[],hist:[]}}),
-    indicators:[],
-    materials:[],
-    milestones:(wizData.milestones||[]).map(function(m){return{id:uid(),n:m.n,pd:ad(m.o),ad:''}})
-  };
-
-  // Build indicators from selected modules
-  Object.entries(wizData.modInds||{}).forEach(function(e){var mod=e[0],names=e[1];if(!names||!names.length)return;
-    names.forEach(function(n){if(n==='新指标')return;
-      proj.indicators.push({id:uid(),name:n,mod:mod,target:'',owner:persons.length?persons[0].id:'',deadline:ad(180),priority:'normal',dept:depts.length?depts[0].id:'',linkedDocs:[],linkedMats:[],stages:{requirement:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},design:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},implementation:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},verification:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]}});
-    });
-  });
-
-  // Build materials from selected categories with custom names
-  var mn=wizData.matNames||{};
-  wizData.matCats.forEach(function(cid){var names=mn[cid]||['材料'];names.forEach(function(n){if(n==='新材料')return;
-    proj.materials.push({id:uid(),name:n,cat:cid,rule:'',owner:'',deadline:ad(90),wf:'pending',ver:1,hist:[],linkedInds:[],linkedDocs:[]});
-  })});
-
+  WS.data.name=document.getElementById('wizName')?document.getElementById('wizName').value.trim():WS.data.name;
+  WS.data.type=document.getElementById('wizType')?document.getElementById('wizType').value:WS.data.type;
+  WS.data.sd=document.getElementById('wizSd')?document.getElementById('wizSd').value:nw();
+  WS.data.ed=document.getElementById('wizEd')?document.getElementById('wizEd').value:'';
+  if(!WS.data.name){alert('请填写项目名称');return}
+  function ad(n){var d=new Date(WS.data.sd||nw());d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
+  var p=AP();var depts=[],persons=[];
+  if(p){depts=(p.org.depts||[]).filter(function(d){return WS.data.depts.indexOf(d.id)>=0});persons=(p.org.persons||[]).filter(function(pp){return WS.data.persons.indexOf(pp.id)>=0})}
+  else{depts=WS.data.depts.map(function(id){return{id:id,name:id,status:'active',hist:[]}});persons=WS.data.persons.map(function(id){return{id:id,name:id,dept:'',role:'',status:'active',hist:[]}})}
+  var proj={id:uid(),name:WS.data.name,tpl:WS.data.type,sd:ad(0),ed:WS.data.ed||ad(390),org:{depts:depts,persons:persons},
+    deliverables:[],indicators:[],materials:[],milestones:(WS.data.milestones||[]).map(function(m){return{id:uid(),n:m.n,pd:ad(m.o),ad:''}})};
+  Object.entries(WS.data.mods||{}).forEach(function(e){var mod=e[0],names=e[1];if(!names||!names.length)return;names.forEach(function(n){if(n==='新指标')return;proj.indicators.push({id:uid(),name:n,mod:mod,target:'',owner:persons.length?persons[0].id:'',deadline:ad(180),priority:'normal',dept:depts.length?depts[0].id:'',linkedDocs:[],linkedMats:[],stages:{requirement:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},design:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},implementation:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},verification:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]}})})});
+  (WS.data.matCats||[]).forEach(function(cid){var names=WS.data.matNames[cid]||['材料'];names.forEach(function(n){if(n==='新材料')return;proj.materials.push({id:uid(),name:n,cat:cid,rule:'',owner:'',deadline:ad(90),wf:'pending',ver:1,hist:[],linkedInds:[],linkedDocs:[]})})});
   D.projects.push(proj);D.activeProjectId=proj.id;save();closeWiz();showV('dash');
 }
-// Hook the template page "创建项目" button to open wizard
-function mkPrj(n){} // Replaced by wizard
+
 
 // ============ DELIVERABLE CRUD (owner mandatory) ============
 let edid=null;
@@ -1152,5 +1056,17 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeDocM()
 document.addEventListener('click',function(e){var el=e.target;while(el&&el.className.indexOf('ai-tgl')<0)el=el.parentElement;if(el){var b=el.nextElementSibling;if(b)b.style.display=b.style.display?'':'none'}});
 showV('dash');
 </script>
+
+<!-- ==== PROJECT WIZARD MODAL ==== -->
+<div class="modal-overlay" id="wizModal"><div class="modal" style="max-width:720px">
+  <div class="modal-head"><h2 id="wizTit">创建新项目</h2><button class="modal-close" onclick="closeWiz()">&times;</button></div>
+  <div class="wiz-steps" id="wizSteps"></div>
+  <div class="modal-body" id="wizBody"></div>
+  <div class="modal-foot">
+    <button class="btn btn-s" id="wizPrev" onclick="wizPrev()" style="display:none">上一步</button>
+    <button class="btn btn-p" id="wizNext" onclick="wizNext()">下一步</button>
+  </div>
+</div></div>
+
 </body>
 </html>
