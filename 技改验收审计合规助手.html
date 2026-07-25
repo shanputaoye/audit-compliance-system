@@ -895,7 +895,7 @@ function aiGanttRisk(){var p=AP();if(!p)return;var ms=p.milestones||[],td=nw();
   if(!ov.length){addAIMsg('无逾期里程碑，进度正常');return}
   var msg='<strong>逾期影响分析</strong><br>';
   ov.forEach(function(m){var days=Math.floor((new Date(td)-new Date(m.pd))/86400000);msg+=m.n+'：逾期'+days+'天 ('+m.pd+')<br>'});
-  var nextOpen=ms.filter(function(m){return !m.ad&&m.pd>=td}).sort(function(a,b){return a.pd.localeCompare(b.pd)})[0];
+  var nextOpen=ms.filter(function(m){return !m.ad&&m.pd>=td}).sort(function(a,b){return a.pd<b.pd?-1:a.pd>b.pd?1:0})[0];
   if(nextOpen)msg+='<br>下一个到期节点：'+nextOpen.n+' ('+nextOpen.pd+')';
   msg+='<br><span style="color:var(--w)">建议：立即调整工作计划，评估后续节点赶工可行性</span>';
   addAIMsg(msg);
@@ -903,7 +903,7 @@ function aiGanttRisk(){var p=AP();if(!p)return;var ms=p.milestones||[],td=nw();
 function aiGanttPath(){var p=AP();if(!p)return;var ms=p.milestones||[],td=nw();
   var done=ms.filter(function(m){return m.ad}).length;
   var total=ms.length;
-  var remain=ms.filter(function(m){return !m.ad}).sort(function(a,b){return a.pd.localeCompare(b.pd)});
+  var remain=ms.filter(function(m){return !m.ad}).sort(function(a,b){return a.pd<b.pd?-1:a.pd>b.pd?1:0});
   var msg='<strong>关键路径建议</strong><br>';
   msg+='已完成：'+done+'/'+total+' ('+Math.round(done/total*100)+'%)<br>';
   if(remain.length){
@@ -1131,12 +1131,12 @@ function updateAI(){
   else if(cv==='review'){
     const sub=mats.filter(m=>m.wf==='submitted'),rej=mats.filter(m=>m.wf==='rejected');
     body.innerHTML=sec('审核队列','待审核：'+sub.length+'项 · 需重做：'+rej.length+'项'+(rej.length?'<br><span style="color:var(--d)">'+rej.map(m=>m.name).join('、')+'</span>':''))+
-      sec('智能审核','<button class="btn btn-xs btn-s" style="width:100%;margin-bottom:3px" onclick="aiReviewBatch()">批量审核建议</button><button class="btn btn-xs btn-s" style="width:100%" onclick="aiReviewRisk()">驳回项风险评估</button><div id="aiReviewResult" style="font-size:9px;margin-top:3px;color:var(--t3)">AI审核辅助功能</div>',false);
+      sec('智能审核','<button class="btn btn-xs btn-s" style="width:100%;margin-bottom:3px" onclick="aiReviewBatch()">批量审核建议</button><button class="btn btn-xs btn-s" style="width:100%" onclick="aiReviewRisk()">驳回项风险评估</button><div id="aiReviewResult" style="font-size:9px;margin-top:3px;color:var(--t3)">AI审核辅助功能</div>');
   }
   else if(cv==='gantt'){
     const ms=p.milestones||[],done=ms.filter(m=>m.ad).length,ov=ms.filter(m=>!m.ad&&m.pd<td),next=ms.filter(m=>!m.ad&&m.pd>=td).sort((a,b)=>a.pd.localeCompare(b.pd))[0];
     body.innerHTML=sec('进度总览',done+'/'+ms.length+'完成 · 完成率'+Math.round(done/ms.length*100)+'%'+(ov.length?'<br><span style="color:var(--d)">⚠ 逾期：'+ov.map(m=>m.n).join('、')+'</span>':'')+(next?'<br>下一节点：'+next.n+'('+next.pd+')':''))+
-      sec('风险分析','<button class="btn btn-xs btn-s" style="width:100%;margin-bottom:3px" onclick="aiGanttRisk()">逾期影响分析</button><button class="btn btn-xs btn-s" style="width:100%" onclick="aiGanttPath()">关键路径建议</button><div id="aiGanttResult" style="font-size:9px;margin-top:3px;color:var(--t3)">里程碑智能分析</div>',false);
+      sec('风险分析','<button class="btn btn-xs btn-s" style="width:100%;margin-bottom:3px" onclick="aiGanttRisk()">逾期影响分析</button><button class="btn btn-xs btn-s" style="width:100%" onclick="aiGanttPath()">关键路径建议</button><div id="aiGanttResult" style="font-size:9px;margin-top:3px;color:var(--t3)">里程碑智能分析</div>');
   }
   else if(cv==='org'){
     const act=(p.org?.persons||[]).filter(pp=>pp.status==='active'),orph=docs.filter(d=>{const per=(p.org?.persons||[]).find(pp=>pp.id===d.owner);return per&&per.status==='inactive'});
