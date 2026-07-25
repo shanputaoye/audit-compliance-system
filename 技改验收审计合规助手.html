@@ -541,10 +541,24 @@ function rorg(){
 // ============ REVIEW ============
 function rrev(){
   const p=AP();if(!p)return;const mats=p.materials||[];
-  const items=mats.filter(m=>m.wf==='submitted'||m.wf==='rejected');
-  if(items.length===0){document.getElementById('reviewContent').innerHTML='<div class="empty-st"><div class="eicon">✓</div><h3>无待审核项</h3></div>';return}
-  const lb={submitted:'待审核',rejected:'需重做',approved:'已通过'},cb={submitted:'badge-info',rejected:'badge-err'};
-  document.getElementById('reviewContent').innerHTML='<div class="tbl-wrap"><div class="tbl-bar"><strong>待审核（'+items.length+'项）</strong></div><table><thead><tr><th>材料</th><th>类别</th><th>责任人</th><th>状态</th><th>操作</th></tr></thead><tbody>'+items.map(function(m){return'<tr onclick="aiAnalyzeReview(\''+m.id+'\')" style="cursor:pointer"><td><strong>'+esc(m.name)+'</strong>'+(m.rjReason?'<br><span style="font-size:8.5px;color:var(--d)">驳回：'+esc(m.rjReason)+'</span>':'')+'</td><td>'+cn(p,m.cat)+'</td><td>'+pn(p,m.owner)+'</td><td><span class="badge '+cb[m.wf]+'">'+lb[m.wf]+'</span></td><td style="display:flex;gap:2px"><button class="btn btn-xs btn-p" onclick="event.stopPropagation();qrMat(\''+m.id+'\',\'approved\')">通过</button><button class="btn btn-xs btn-gh" style="color:var(--d)" onclick="event.stopPropagation();qrMat(\''+m.id+'\',\'rejected\')">退回</button></td></tr>'}).join('')+'</tbody></table></div>';
+  const items=mats.filter(function(m){return m.wf==='submitted'||m.wf==='rejected'});
+  if(items.length===0){document.getElementById('reviewContent').innerHTML='<div class="empty-st"><div class="eicon">OK</div><h3>无待审核项</h3></div>';return}
+  var html='<div class="tbl-wrap"><div class="tbl-bar"><strong>待审核（'+items.length+'项）</strong></div>';
+  html+='<table><thead><tr><th>材料</th><th>类别</th><th>责任人</th><th>状态</th><th>操作</th></tr></thead><tbody>';
+  items.forEach(function(m){
+    var lb={submitted:'待审核',rejected:'需重做'},cb={submitted:'badge-info',rejected:'badge-err'};
+    html+='<tr onclick="aiAnalyzeReview(\x27'+m.id+'\x27)" style="cursor:pointer">';
+    html+='<td><strong>'+esc(m.name)+'</strong>';
+    if(m.rjReason)html+='<br><span style="font-size:8.5px;color:var(--d)">驳回：'+esc(m.rjReason)+'</span>';
+    html+='</td><td>'+cn(p,m.cat)+'</td><td>'+pn(p,m.owner)+'</td>';
+    html+='<td><span class="badge '+cb[m.wf]+'">'+lb[m.wf]+'</span></td>';
+    html+='<td style="display:flex;gap:2px">';
+    html+='<button class="btn btn-xs btn-p" onclick="event.stopPropagation();qrMat(\x27'+m.id+'\x27,\x27approved\x27)">通过</button> ';
+    html+='<button class="btn btn-xs btn-gh" style="color:var(--d)" onclick="event.stopPropagation();qrMat(\x27'+m.id+'\x27,\x27rejected\x27)">退回</button>';
+    html+='</td></tr>';
+  });
+  html+='</tbody></table></div>';
+  document.getElementById('reviewContent').innerHTML=html;
 }
 function qrMat(mid,s){const p=AP();const m=p.materials.find(mm=>mm.id===mid);if(!m)return;if(s==='rejected'){const r=prompt('退回原因：');if(!r)return;m.rjReason=r}m.wf=s;m.op='审核员';m.date=nw();m.ver=(m.ver||1)+1;m.hist.push({s,desc:s==='approved'?'通过':'退回',date:nw(),op:'审核员',ver:m.ver});save();refresh()}
 

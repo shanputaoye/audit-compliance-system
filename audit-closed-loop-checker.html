@@ -1,0 +1,1695 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>环控系统研发验证平台 — 审计指标闭环检查系统</title>
+<style>
+:root {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --border: #dfe2e7;
+  --text: #1d2129;
+  --text-secondary: #5a6170;
+  --text-muted: #8f95a3;
+  --primary: #1b5e3f;
+  --primary-light: #e8f5ee;
+  --primary-dark: #124a30;
+  --success: #1f7d3a;
+  --success-light: #edf7f1;
+  --warning: #b3540e;
+  --warning-light: #fef6ee;
+  --danger: #c22d3a;
+  --danger-light: #fef0f1;
+  --info: #2a6496;
+  --info-light: #eef5fb;
+  --sidebar-bg: #14181f;
+  --sidebar-text: #8a8f9a;
+  --sidebar-active: #ffffff;
+  --sidebar-hover: #1e232c;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.03);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.05);
+  --shadow-lg: 0 4px 20px rgba(0,0,0,0.08);
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+  --font-mono: "SF Mono", "Cascadia Code", "Consolas", monospace;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  display:flex;
+  min-height:100vh;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* === SIDEBAR === */
+.sidebar{
+  width:230px;
+  background:var(--sidebar-bg);
+  color:var(--sidebar-text);
+  display:flex;
+  flex-direction:column;
+  position:fixed;
+  top:0;left:0;bottom:0;
+  z-index:100;
+  flex-shrink:0;
+  overflow-y:auto;
+}
+.sidebar-header{
+  padding:22px 18px 18px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.sidebar-header .logo{
+  font-size:14px;
+  font-weight:700;
+  color:var(--sidebar-active);
+  letter-spacing:-0.01em;
+}
+.sidebar-header .logo span{color:#4aad6e;font-weight:800;}
+.sidebar-header .sub{
+  font-size:10.5px;
+  color:var(--sidebar-text);
+  margin-top:3px;
+  opacity:0.6;
+}
+.sidebar-nav{flex:1;padding:10px 0;}
+.nav-section{
+  padding:10px 16px 4px;
+  font-size:9.5px;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--sidebar-text);
+  opacity:0.4;
+  font-weight:600;
+}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 16px;margin:2px 8px;
+  border-radius:var(--radius-sm);
+  cursor:pointer;font-size:13px;
+  color:var(--sidebar-text);
+  transition:all 0.15s;
+  border:none;background:none;
+  width:calc(100% - 16px);
+  text-align:left;
+}
+.nav-item:hover{background:var(--sidebar-hover);color:#c8cdd5;}
+.nav-item.active{background:var(--primary);color:white;}
+.nav-item .icon{font-size:15px;width:20px;text-align:center;flex-shrink:0;}
+.nav-badge{
+  margin-left:auto;
+  background:var(--warning);
+  color:white;
+  font-size:10px;
+  padding:1px 7px;
+  border-radius:9px;
+  font-weight:600;
+}
+.nav-badge.good{background:var(--success);}
+.sidebar-footer{
+  padding:14px 16px;
+  border-top:1px solid rgba(255,255,255,0.05);
+  font-size:10px;
+  color:var(--sidebar-text);
+  opacity:0.4;
+}
+
+/* === MAIN === */
+.main{margin-left:230px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
+
+/* Topbar */
+.topbar{
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:12px 24px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:sticky;top:0;z-index:50;
+}
+.topbar-left{display:flex;align-items:center;gap:12px;}
+.topbar-breadcrumb{font-size:12px;color:var(--text-muted);}
+.topbar-breadcrumb span{color:var(--text);font-weight:600;}
+.topbar-title{font-size:15px;font-weight:600;}
+.topbar-actions{display:flex;gap:8px;align-items:center;}
+
+/* Buttons */
+.btn{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:7px 14px;border-radius:var(--radius-sm);
+  font-size:12.5px;font-weight:500;
+  font-family:var(--font);cursor:pointer;
+  border:1px solid transparent;
+  transition:all 0.15s;white-space:nowrap;
+}
+.btn-primary{background:var(--primary);color:white;}
+.btn-primary:hover{background:var(--primary-dark);}
+.btn-secondary{background:var(--surface);color:var(--text-secondary);border-color:var(--border);}
+.btn-secondary:hover{background:#f0f1f3;}
+.btn-sm{padding:4px 10px;font-size:11.5px;}
+.btn-xs{padding:3px 8px;font-size:10.5px;border-radius:3px;}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--text-secondary);}
+.btn-ghost:hover{background:rgba(0,0,0,0.03);}
+.btn-outline{background:transparent;border-color:var(--primary);color:var(--primary);}
+.btn-outline:hover{background:var(--primary-light);}
+
+/* Content */
+.content{padding:24px;flex:1;}
+.view{display:none;}
+.view.active{display:block;}
+
+/* === STATS === */
+.stats-grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:14px;
+  margin-bottom:22px;
+}
+.stat-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:18px;
+}
+.stat-card .stat-label{font-size:11.5px;color:var(--text-muted);margin-bottom:6px;}
+.stat-card .stat-value{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-0.02em;}
+.stat-card .stat-sub{font-size:11px;color:var(--text-muted);margin-top:4px;}
+.stat-card.good .stat-value{color:var(--success);}
+.stat-card.warn .stat-value{color:var(--warning);}
+.stat-card.bad .stat-value{color:var(--danger);}
+.stat-card.info .stat-value{color:var(--info);}
+
+/* === PANELS === */
+.panel-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+  margin-bottom:22px;
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  overflow:hidden;
+}
+.panel-header{
+  padding:14px 18px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:#fafbfc;
+}
+.panel-header h3{font-size:13.5px;font-weight:600;}
+.panel-body{padding:16px;}
+
+/* Stage flow */
+.stage-bar{
+  display:flex;
+  gap:0;
+  margin-bottom:8px;
+  position:relative;
+}
+.stage-step{
+  flex:1;
+  text-align:center;
+  padding:14px 6px 10px;
+  position:relative;
+  font-size:11px;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.stage-step::after{
+  content:'';
+  position:absolute;
+  top:50%;left:100%;
+  width:calc(100% / 5);
+  height:2px;
+  background:var(--border);
+  z-index:0;
+}
+.stage-step:last-child::after{display:none;}
+.stage-step .step-dot{
+  width:24px;height:24px;
+  border-radius:50%;
+  background:var(--border);
+  margin:0 auto 6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;
+  color:white;
+  position:relative;z-index:1;
+}
+.stage-step.done .step-dot{background:var(--success);}
+.stage-step.issue .step-dot{background:var(--warning);}
+.stage-step.pending .step-dot{background:#c8ccd2;color:#6b7280;}
+.stage-step .step-label{font-size:10.5px;color:var(--text-secondary);font-weight:500;margin-top:4px;}
+.stage-step.done .step-label{color:var(--success);}
+.stage-step.issue .step-label{color:var(--warning);}
+.stage-step .step-evidence{font-size:9.5px;color:var(--text-muted);margin-top:2px;line-height:1.3;}
+
+/* Module cards */
+.module-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+  margin-bottom:22px;
+}
+.module-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:18px;
+  cursor:pointer;
+  transition:all 0.15s;
+}
+.module-card:hover{border-color:var(--primary);box-shadow:var(--shadow-md);}
+.module-card.selected{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-light);}
+.module-card .module-num{
+  font-size:10px;font-weight:700;
+  color:var(--primary);
+  background:var(--primary-light);
+  padding:2px 8px;border-radius:10px;
+  display:inline-block;margin-bottom:8px;
+}
+.module-card h4{font-size:13.5px;font-weight:600;margin-bottom:6px;}
+.module-card .module-meta{font-size:11px;color:var(--text-muted);}
+.module-card .module-progress{
+  margin-top:10px;
+  height:4px;
+  background:#e5e7eb;
+  border-radius:2px;
+  overflow:hidden;
+}
+.module-card .module-progress-bar{
+  height:100%;
+  background:var(--primary);
+  border-radius:2px;
+  transition:width 0.4s;
+}
+
+/* Table */
+.table-wrap{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  overflow:hidden;
+}
+.table-toolbar{
+  padding:12px 16px;
+  border-bottom:1px solid var(--border);
+  display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+}
+.table-toolbar input[type=text]{
+  padding:7px 11px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  font-size:12.5px;font-family:var(--font);
+  width:220px;outline:none;
+}
+.table-toolbar input[type=text]:focus{border-color:var(--primary);}
+.table-toolbar select{
+  padding:7px 11px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  font-size:12.5px;font-family:var(--font);
+  background:white;cursor:pointer;outline:none;
+}
+.spacer{flex:1;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+thead th{
+  text-align:left;padding:10px 14px;
+  font-weight:600;font-size:11.5px;
+  color:var(--text-muted);background:#fafbfc;
+  border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+tbody td{
+  padding:11px 14px;
+  border-bottom:1px solid var(--border);
+  vertical-align:middle;
+}
+tbody tr:hover{background:#fafbfc;}
+tbody tr:last-child td{border-bottom:none;}
+
+/* Badges */
+.badge{
+  display:inline-flex;align-items:center;gap:3px;
+  padding:2px 9px;border-radius:10px;
+  font-size:10.5px;font-weight:600;
+}
+.badge-ok{background:var(--success-light);color:var(--success);}
+.badge-warn{background:var(--warning-light);color:var(--warning);}
+.badge-err{background:var(--danger-light);color:var(--danger);}
+.badge-pending{background:#f0f1f3;color:var(--text-muted);}
+.badge-info{background:var(--info-light);color:var(--info);}
+
+.stage-dots{display:flex;gap:3px;}
+.stage-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:#d1d5db;
+}
+.stage-dot.ok{background:var(--success);}
+.stage-dot.issue{background:var(--warning);}
+
+/* Detail panel */
+.detail-split{
+  display:grid;
+  grid-template-columns:280px 1fr;
+  gap:16px;
+  align-items:start;
+}
+.detail-list{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  overflow:hidden;
+}
+.detail-list .list-header{
+  padding:12px 14px;
+  border-bottom:1px solid var(--border);
+  font-size:12.5px;font-weight:600;
+  background:#fafbfc;
+}
+.detail-item{
+  padding:11px 14px;
+  cursor:pointer;
+  border-bottom:1px solid var(--border);
+  font-size:12.5px;
+  display:flex;align-items:center;justify-content:space-between;
+  transition:background 0.1s;
+}
+.detail-item:hover{background:#f8f9fb;}
+.detail-item.selected{background:var(--primary-light);border-left:3px solid var(--primary);}
+.detail-item:last-child{border-bottom:none;}
+
+.detail-content{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  overflow:hidden;
+}
+.detail-content .dc-header{
+  padding:16px 20px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.detail-content .dc-body{padding:20px;}
+
+/* Requirements mapping */
+.req-map-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:12px;
+}
+.req-map-table td, .req-map-table th{
+  padding:10px 12px;
+  border:1px solid var(--border);
+  vertical-align:top;
+}
+.req-map-table th{
+  background:#fafbfc;
+  font-size:11px;font-weight:600;
+  color:var(--text-secondary);
+}
+.req-map-table .req-col{width:35%;}
+.req-map-table .resp-col{width:55%;}
+.req-map-table .status-col{width:10%;text-align:center;}
+
+/* Report */
+.report-title{
+  text-align:center;
+  padding-bottom:16px;
+  margin-bottom:20px;
+  border-bottom:2px solid var(--border);
+}
+.report-title h2{font-size:20px;font-weight:700;margin-bottom:6px;}
+.report-section{margin-bottom:22px;}
+.report-section h3{
+  font-size:14px;font-weight:600;
+  margin-bottom:12px;padding-bottom:6px;
+  border-bottom:1px solid var(--border);
+}
+.report-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+.report-grid-item{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:14px;
+  text-align:center;
+}
+.report-grid-item .val{font-size:22px;font-weight:700;}
+.report-grid-item .lbl{font-size:11px;color:var(--text-muted);margin-top:3px;}
+
+/* Modal */
+.modal-overlay{
+  display:none;
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.35);
+  z-index:1000;
+  justify-content:center;align-items:flex-start;
+  padding:40px 20px;overflow-y:auto;
+}
+.modal-overlay.show{display:flex;}
+.modal{
+  background:var(--surface);
+  border-radius:var(--radius-lg);
+  width:100%;max-width:680px;
+  box-shadow:var(--shadow-lg);
+  animation:slideIn 0.2s ease;
+}
+@keyframes slideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.modal-header{
+  padding:18px 22px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.modal-header h2{font-size:15px;font-weight:600;}
+.modal-close{
+  width:30px;height:30px;border:none;background:none;
+  cursor:pointer;border-radius:var(--radius-sm);
+  font-size:18px;color:var(--text-muted);
+  display:flex;align-items:center;justify-content:center;
+}
+.modal-close:hover{background:#f0f1f3;color:var(--text);}
+.modal-body{padding:22px;}
+.modal-footer{
+  padding:14px 22px;
+  border-top:1px solid var(--border);
+  display:flex;justify-content:flex-end;gap:8px;
+}
+
+/* Form */
+.form-g{margin-bottom:16px;}
+.form-g label{display:block;font-size:12.5px;font-weight:600;margin-bottom:5px;color:var(--text);}
+.form-g .hint{font-size:11px;color:var(--text-muted);margin-top:3px;}
+.form-g .err{font-size:11px;color:var(--danger);margin-top:3px;display:none;}
+.form-g.has-err .err{display:block;}
+.form-g.has-err input,.form-g.has-err textarea,.form-g.has-err select{border-color:var(--danger);}
+.form-input{
+  width:100%;padding:8px 11px;
+  border:1px solid var(--border);border-radius:var(--radius-sm);
+  font-size:12.5px;font-family:var(--font);
+  outline:none;background:white;
+  transition:border-color 0.15s;
+}
+.form-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(27,94,63,0.08);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+textarea.form-input{resize:vertical;min-height:70px;}
+
+/* Empty state */
+.empty-st{
+  text-align:center;padding:50px 20px;color:var(--text-muted);
+}
+.empty-st .eicon{font-size:42px;margin-bottom:14px;opacity:0.35;}
+.empty-st h3{font-size:15px;color:var(--text);margin-bottom:6px;}
+.empty-st p{font-size:12.5px;max-width:360px;margin:0 auto;}
+
+/* Risk matrix */
+.risk-matrix{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:10px;
+}
+.risk-item{
+  padding:12px 14px;
+  border-radius:var(--radius-sm);
+  font-size:12px;
+  display:flex;align-items:flex-start;gap:8px;
+}
+.risk-L{background:var(--danger-light);border:1px solid #f5c6cb;}
+.risk-M{background:var(--warning-light);border:1px solid #ffeeba;}
+.risk-H{background:var(--success-light);border:1px solid #c3e6cb;}
+
+/* Print */
+@media print{
+  .sidebar,.topbar,.btn,.modal-overlay{display:none!important;}
+  .main{margin-left:0!important;}
+  .content{padding:0!important;}
+  .panel-row,.module-grid,.detail-split{grid-template-columns:1fr!important;}
+}
+
+@media(max-width:1200px){.stats-grid{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:1024px){
+  .module-grid{grid-template-columns:1fr 1fr;}
+  .panel-row{grid-template-columns:1fr;}
+  .detail-split{grid-template-columns:1fr;}
+}
+@media(max-width:768px){
+  .stats-grid{grid-template-columns:repeat(2,1fr);}
+  .module-grid{grid-template-columns:1fr;}
+  .sidebar{width:56px;}
+  .sidebar-header .logo,.sidebar-header .sub,.nav-section,.nav-item span:not(.icon),.sidebar-footer{display:none;}
+  .nav-item{justify-content:center;padding:12px;}
+  .main{margin-left:56px;}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo"><span>&#9678;</span> 审计闭环系统</div>
+    <div class="sub">环控系统研发验证平台</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">概览</div>
+    <button class="nav-item active" data-view="overview"><span class="icon">&#9681;</span><span>项目总览</span></button>
+    <button class="nav-item" data-view="modules"><span class="icon">&#9638;</span><span>六大模块</span><span class="nav-badge good" id="badge-modules">6</span></button>
+    <button class="nav-item" data-view="indicators"><span class="icon">&#9776;</span><span>指标矩阵</span><span class="nav-badge" id="badge-indicators">0</span></button>
+    <div class="nav-section">追踪</div>
+    <button class="nav-item" data-view="tracking"><span class="icon">&#8644;</span><span>闭环追踪</span></button>
+    <button class="nav-item" data-view="mapping"><span class="icon">&#8660;</span><span>需求-方案对照</span></button>
+    <div class="nav-section">输出</div>
+    <button class="nav-item" data-view="report"><span class="icon">&#9998;</span><span>审计报告</span></button>
+    <button class="nav-item" data-view="risks"><span class="icon">&#9888;</span><span>风险清单</span><span class="nav-badge" id="badge-risks">0</span></button>
+  </nav>
+  <div class="sidebar-footer">v2.0 &copy; 指标闭环检查系统</div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-title" id="topbarTitle">项目总览</span>
+      <span class="topbar-breadcrumb">XX车环控系统综合研发及验证平台</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-outline btn-sm" onclick="exportData()">导出数据</button>
+      <button class="btn btn-secondary btn-sm" onclick="importData()">导入</button>
+      <button class="btn btn-secondary btn-sm" onclick="resetToDefault()">恢复默认</button>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- OVERVIEW -->
+    <div class="view active" id="view-overview">
+      <div class="stats-grid" id="ovStats"></div>
+      <div class="panel-row">
+        <div class="panel">
+          <div class="panel-header"><h3>五阶段闭环总体进展</h3></div>
+          <div class="panel-body" id="ovStageFlow"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h3>闭环状态分布</h3></div>
+          <div class="panel-body" id="ovLoopChart"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h3>六大模块概览</h3></div>
+        <div class="panel-body"><div class="module-grid" id="ovModules"></div></div>
+      </div>
+    </div>
+
+    <!-- MODULES -->
+    <div class="view" id="view-modules">
+      <div id="modulesContainer"></div>
+    </div>
+
+    <!-- INDICATORS TABLE -->
+    <div class="view" id="view-indicators">
+      <div class="table-wrap">
+        <div class="table-toolbar">
+          <input type="text" placeholder="搜索指标..." id="indSearch" oninput="renderIndicatorTable()">
+          <select id="indModule" onchange="renderIndicatorTable()"><option value="all">全部模块</option></select>
+          <select id="indLoop" onchange="renderIndicatorTable()">
+            <option value="all">全部状态</option>
+            <option value="closed">已闭环</option>
+            <option value="partial">部分闭环</option>
+            <option value="broken">存在断点</option>
+            <option value="none">未开始</option>
+          </select>
+          <div class="spacer"></div>
+          <span style="font-size:11px;color:var(--text-muted)" id="indCount">共 0 条</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr>
+              <th>指标名称</th><th>所属模块</th><th>目标/要求</th>
+              <th>五阶段</th><th>闭环状态</th><th>负责人</th><th>操作</th>
+            </tr></thead>
+            <tbody id="indTbody"></tbody>
+          </table>
+        </div>
+        <div class="empty-st" id="indEmpty" style="display:none">
+          <div class="eicon">&#128203;</div><h3>暂无指标</h3>
+          <p>点击模块详情中的"添加指标"来创建新的检查项。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRACKING -->
+    <div class="view" id="view-tracking">
+      <div class="detail-split">
+        <div class="detail-list">
+          <div class="list-header">选择指标</div>
+          <div id="trackList"></div>
+        </div>
+        <div id="trackDetail">
+          <div class="empty-st"><div class="eicon">&#128269;</div><h3>请选择指标</h3><p>从左侧选择，查看五阶段闭环追踪详情。</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAPPING: REQUIREMENTS vs PROPOSAL -->
+    <div class="view" id="view-mapping">
+      <div class="panel">
+        <div class="panel-header"><h3>招标技术要求 ⇄ 投标方案响应对照表</h3></div>
+        <div class="panel-body" id="mappingTable" style="overflow-x:auto"></div>
+      </div>
+    </div>
+
+    <!-- REPORT -->
+    <div class="view" id="view-report">
+      <div id="reportContent"></div>
+    </div>
+
+    <!-- RISKS -->
+    <div class="view" id="view-risks">
+      <div id="risksContent"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- STAGE EDIT MODAL -->
+<div class="modal-overlay" id="stageModal">
+  <div class="modal">
+    <div class="modal-header"><h2 id="stageModalTitle">编辑阶段</h2><button class="modal-close" onclick="closeStageModal()">&times;</button></div>
+    <div class="modal-body">
+      <div class="form-g"><label>状态</label>
+        <select class="form-input" id="stageStatus">
+          <option value="pending">未开始</option><option value="done">已完成</option><option value="issue">存在问题</option>
+        </select></div>
+      <div class="form-g"><label>执行说明</label><textarea class="form-input" id="stageDesc" rows="2"></textarea></div>
+      <div class="form-g"><label>证据/依据</label><textarea class="form-input" id="stageEvid" rows="2"></textarea></div>
+      <div class="form-g"><label>日期</label><input type="date" class="form-input" id="stageDate"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeStageModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveStage()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- INDICATOR ADD/EDIT MODAL -->
+<div class="modal-overlay" id="indModal">
+  <div class="modal">
+    <div class="modal-header"><h2 id="indModalTitle">新增指标</h2><button class="modal-close" onclick="closeIndModal()">&times;</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-g"><label>指标名称*</label><input class="form-input" id="fname"></div>
+        <div class="form-g"><label>所属模块</label><select class="form-input" id="fmodule"></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-g"><label>目标值/要求</label><input class="form-input" id="ftarget"></div>
+        <div class="form-g"><label>负责人</label><input class="form-input" id="fowner"></div>
+      </div>
+      <div class="form-g"><label>描述</label><textarea class="form-input" id="fdesc" rows="2"></textarea></div>
+      <input type="hidden" id="fid">
+      <input type="hidden" id="fparent">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeIndModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveIndicator()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ DATA MODEL ============
+const MODULES = [
+  {id:'M1',name:'整体布局和集成设计',desc:'系统总体架构设计、热力循环计算、部件关键性能指标分解、工程模板支持',order:1},
+  {id:'M2',name:'部件选型及建模',desc:'压缩机、风机、泵、节流元件、管路、负载、控制策略的选型与建模',order:2},
+  {id:'M3',name:'换热器设计及优化',desc:'六类换热器详细设计与优化：微通道、翅片管、板翅式、板式、管壳式、管带式',order:3},
+  {id:'M4',name:'部件指标参数输入和建模',desc:'图形化拖拽建模环境、参数边界校验、自定义模型库扩展',order:4},
+  {id:'M5',name:'热力学仿真及性能评估',desc:'空调/散热/液冷系统稳态瞬态仿真、换热器标定≥95%、物理-控制联合仿真',order:5},
+  {id:'M6',name:'迭代优化模块',desc:'参数寻优、控制策略优化、负载-环控-控制联合仿真、设计指标数字验证',order:6},
+  {id:'NF',name:'非功能性要求',desc:'自主可控B级、国产适配、License、交付节点、培训、维护、灾难恢复',order:7}
+];
+
+// Get default indicators from embedded project data
+function getDefaultIndicators(){
+  const now = '2026-07-24';
+  function mkStages(req,design,impl,verify,closure){
+    return {
+      requirement: req||{status:'pending',desc:'',evidence:'',date:''},
+      design: design||{status:'pending',desc:'',evidence:'',date:''},
+      implementation: impl||{status:'pending',desc:'',evidence:'',date:''},
+      verification: verify||{status:'pending',desc:'',evidence:'',date:''},
+      closure: closure||{status:'pending',desc:'',evidence:'',date:''}
+    };
+  }
+
+  return [
+    // M1: 整体布局和集成设计
+    {id:'I01',name:'系统总体架构设计能力',module:'M1',target:'支持散热/液冷/空调三类系统模板',owner:'技术负责人',
+     desc:'确定系统设计工况，定义部件组成、工质流连接关系、热力循环关联与能量传递路径',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标技术要求明确三类系统+模板',evidence:'技术要求第5.1.1节',date:'2026-07-23'},
+       {status:'done',desc:'方案明确Hysim基座+定制开发分层架构',evidence:'技术方案第1.3节 总体技术路线',date:'2026-06-15'},
+       {status:'issue',desc:'工程模板参数化界面待开发，内置模板数量待确认',evidence:'技术方案第4章 需6类模板',date:'2026-07-20'},
+       {status:'pending'},{status:'pending'}
+     )},
+    {id:'I02',name:'热力循环仿真计算',module:'M1',target:'一维热力循环仿真，分解部件关键性能指标',owner:'热工算法工程师',
+     desc:'确定系统在各设计工况下运行参数，分解压缩机/泵/风机/换热器核心部件关键性能指标',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求明确循环计算并分解指标',evidence:'技术要求第5.1.1节',date:'2026-07-23'},
+       {status:'done',desc:'方案采用TESPy稳态求解+自研模型封装',evidence:'技术方案第4.4节 系统拓扑与稳态仿真',date:'2026-06-20'},
+       {status:'done',desc:'已完成系统拓扑演示、COP=3.92/制冷量8.7kW求解',evidence:'SimulationDemo页面展示',date:'2026-07-15'},
+       {status:'issue',desc:'需接入真实热力网络求解器完成精度验证',evidence:'技术方案第4.4节 工程达标计划',date:'2026-07-20'},
+       {status:'pending'}
+     )},
+    {id:'I03',name:'工程模板支持',module:'M1',target:'内置若干典型环控系统整体模型模板',owner:'前端开发',
+     desc:'支持直接调用并支持参数编辑，快速完成不同技术方案对比评估与参数匹配',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求内置若干典型环控系统模型',evidence:'技术要求第5.1.1节',date:'2026-07-23'},
+       {status:'done',desc:'方案已规划模板体系',evidence:'技术方案第1.3节',date:'2026-06-15'},
+       {status:'pending'},{status:'pending'},{status:'pending'}
+     )},
+
+    // M2: 部件选型及建模
+    {id:'I04',name:'压缩机选型建模',module:'M2',target:'支持规格型号+自定义扩容+性能曲线',owner:'热工算法工程师',
+     desc:'包含规格型号、制冷剂种类、供电体制、功率、重量、排量；厂家性能曲线插值为主算法',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求包含特征参数和自定义扩容',evidence:'技术要求第5.1.2节',date:'2026-07-23'},
+       {status:'done',desc:'方案附录G 压缩机选型功能开发方案完整设计',evidence:'技术方案附录G Phase1-3计划',date:'2026-06-25'},
+       {status:'issue',desc:'压缩机数据库待建设，性能曲线插值算法开发中',evidence:'方案Phase1: 2-3周开发周期',date:'2026-07-20'},
+       {status:'pending'},{status:'pending'}
+     )},
+    {id:'I05',name:'风机选型建模',module:'M2',target:'规格型号+流量-压力特性+自定义扩容',owner:'部件建模工程师',
+     desc:'包含风机规格型号、供电体制、功率、重量、流量-压力特性参数',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求明确风机特征参数',evidence:'技术要求第5.1.2节',date:'2026-07-23'},
+       {status:'done',desc:'方案部件模型设计中覆盖',evidence:'技术方案第1.3节 部件模型',date:'2026-06-15'},
+       {status:'pending'},{status:'pending'},{status:'pending'}
+     )},
+    {id:'I06',name:'泵选型建模',module:'M2',target:'规格型号+流量-压力特性+自定义扩容',owner:'部件建模工程师',
+     desc:'包含泵规格型号、供电体制、功率、重量、流量-压力特性参数',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求明确',evidence:'技术要求第5.1.2节',date:'2026-07-23'},
+       {status:'done',desc:'方案覆盖',evidence:'技术方案第1.3节',date:'2026-06-15'},
+       {status:'pending'},{status:'pending'},{status:'pending'}
+     )},
+    {id:'I07',name:'节流元件选型建模',module:'M2',target:'种类+流动特性描述+自定义扩容',owner:'部件建模工程师',
+     desc:'包含节流元件种类、流动特性描述，支持自定义创建',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求明确',evidence:'技术要求第5.1.2节',date:'2026-07-23'},
+       {status:'done',desc:'方案覆盖',evidence:'技术方案第1.3节',date:'2026-06-15'},
+       {status:'pending'},{status:'pending'},{status:'pending'}
+     )},
+    {id:'I08',name:'管路建模',module:'M2',target:'直管/弯管/阀建模+摩擦阻力计算',owner:'部件建模工程师',
+     desc:'包含直管长度、内径、粗糙度、流体密度、粘度、流量等；支持弯管和阀建模',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求明确管路特征参数',evidence:'技术要求第5.1.2节',date:'2026-07-23'},
+       {status:'done',desc:'方案覆盖',evidence:'技术方案第1.3节',date:'2026-06-15'},
+       {status:'pending'},{status:'pending'},{status:'pending'}
+     )},
+    {id:'I09',name:'负载建模（热源型+空间型）',module:'M2',target:'函数/表格/混合方式计算发热功率',owner:'仿真工程师',
+     desc:'热源型：发热功率；空间型：目标温度/几何/物性/环境温度/热边界',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求明确两类负载',evidence:'技术要求第5.1.2节',date:'2026-07-23'},
+       {status:'done',desc:'方案第5.5节 瞬态控制耦合设计中覆盖',evidence:'技术方案第5.5节 集总热容-热阻模型',date:'2026-06-25'},
+       {status:'pending'},{status:'pending'},{status:'pending'}
+     )},
+    {id:'I10',name:'控制策略建模',module:'M2',target:'连续/离散信号+代码/框图+三类系统集成控制',owner:'控制算法工程师',
+     desc:'支持空调/散热/液冷系统集成控制策略验证和仿真评估，PID和开关控制闭环',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求明确',evidence:'技术要求第5.1.2节',date:'2026-07-23'},
+       {status:'done',desc:'方案设计PID和开关控制闭环',evidence:'技术方案第5.5节 Phase2',date:'2026-06-25'},
+       {status:'pending'},{status:'pending'},{status:'pending'}
+     )},
+
+    // M3: 换热器设计及优化
+    {id:'I11',name:'微通道换热器设计',module:'M3',target:'输入输出≥30项参数，支持详细几何建模',owner:'换热器算法工程师',
+     desc:'扁管参数/翅片参数/物性/工质状态/流程设计→换热量/压降/出口参数/面积/重量',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求详见表1 微通道参数清单',evidence:'技术要求表1 序号1',date:'2026-07-23'},
+       {status:'done',desc:'方案已完成工程初版算法和参数化界面',evidence:'技术方案第4.1节 当前实现能力',date:'2026-06-20'},
+       {status:'done',desc:'参数输入+实时计算展示已通过验证',evidence:'算法验证结果汇总表 微通道行',date:'2026-07-15'},
+       {status:'issue',desc:'两相工程模型待完善，需固化精度证据',evidence:'技术方案第5.4节 两相工程算法补强',date:'2026-07-20'},
+       {status:'pending'}
+     )},
+    {id:'I12',name:'翅片管换热器设计',module:'M3',target:'支持几何-热工耦合计算',owner:'换热器算法工程师',
+     desc:'管径/翅片参数/管排数/流程→换热量/压降/出口参数',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求参考微通道设计流程',evidence:'技术要求第5.1.3节',date:'2026-07-23'},
+       {status:'done',desc:'方案已完成工程初版算法',evidence:'技术方案第4.2节',date:'2026-06-20'},
+       {status:'done',desc:'参数和结果输出已通过',evidence:'算法验证汇总表 翅片管行',date:'2026-07-15'},
+       {status:'issue',desc:'正在接入成熟关联式完成精度校准',evidence:'技术方案第4.2节 工程达标计划',date:'2026-07-20'},
+       {status:'pending'}
+     )},
+    {id:'I13',name:'板翅式换热器设计',module:'M3',target:'支持6种翅片形式+表面几何特性计算',owner:'换热器算法工程师',
+     desc:'平直/锯齿/开孔/百叶窗翅片；计算表面几何特性/NTU/效能/压降',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求明确板翅式特征参数',evidence:'技术要求表1 序号2',date:'2026-07-23'},
+       {status:'done',desc:'方案已完成架构设计+关联式库选择',evidence:'技术方案第5.2节',date:'2026-06-20'},
+       {status:'issue',desc:'算法代码编写中，4阶段补强计划执行中',evidence:'方案第5.2节 Phase1-5计划',date:'2026-07-20'},
+       {status:'pending'},{status:'pending'}
+     )},
+    {id:'I14',name:'板式换热器设计',module:'M3',target:'支持有效板片/流道/流程设计计算',owner:'换热器算法工程师',
+     desc:'有效板片数/流道数/流程布置→Nu/Re/Pr/压降/U值',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求参考微通道设计流程',evidence:'技术要求第5.1.3节',date:'2026-07-23'},
+       {status:'done',desc:'技术路线明确，模型成熟',evidence:'技术方案第5.1节',date:'2026-06-20'},
+       {status:'issue',desc:'独立工程化页面待开发，L1/L2算例待建',evidence:'方案第5.1节 第一阶段',date:'2026-07-20'},
+       {status:'pending'},{status:'pending'}
+     )},
+    {id:'I15',name:'管壳式换热器设计',module:'M3',target:'Kern法工程估算+裕量表达',owner:'换热器算法工程师',
+     desc:'壳径/管径/管数/流程→换热量/压降/裕量',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求参考微通道设计流程',evidence:'技术要求第5.1.3节',date:'2026-07-23'},
+       {status:'done',desc:'方案已完成工程初版算法',evidence:'技术方案第4.3节',date:'2026-06-20'},
+       {status:'done',desc:'换热量/压降/裕量展示已通过',evidence:'算法验证汇总表 管壳式行',date:'2026-07-15'},
+       {status:'issue',desc:'Kern/Bell-Delaware模型待固化验证',evidence:'方案第4.3节 工程达标计划',date:'2026-07-20'},
+       {status:'pending'}
+     )},
+    {id:'I16',name:'管带式换热器设计',module:'M3',target:'空气侧Wang-Chi+管内两相模型',owner:'换热器算法工程师',
+     desc:'汽车空调冷凝器/蒸发器场景，重量+充注量计算',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求参考微通道设计流程',evidence:'技术要求第5.1.3节',date:'2026-07-23'},
+       {status:'done',desc:'方案已完成架构设计+关联式选择',evidence:'技术方案第5.3节',date:'2026-06-20'},
+       {status:'issue',desc:'5阶段开发计划执行中，可复用微通道/翅片管模块',evidence:'方案第5.3节 Phase1-5',date:'2026-07-20'},
+       {status:'pending'},{status:'pending'}
+     )},
+
+    // M4: 部件指标参数输入和建模
+    {id:'I17',name:'图形化一维热力学仿真建模环境',module:'M4',target:'拖拽建模+端口连接+模型库',owner:'前端架构师',
+     desc:'通过拖拽从部件模型库选取部件至画布，连接端口构建系统模型；支持自定义扩展模型库+检索+参数边界校验',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求明确',evidence:'技术要求第5.1.4节',date:'2026-07-23'},
+       {status:'done',desc:'方案已规划基于Hysim基座的可视化框架',evidence:'技术方案第2.2节 Hysim页面承载',date:'2026-06-15'},
+       {status:'pending'},{status:'pending'},{status:'pending'}
+     )},
+    {id:'I18',name:'部件参数传递与重定义',module:'M4',target:'支持从设计子平台传递+手动重定义',owner:'后端开发',
+     desc:'各部件指标参数可从研发设计子平台传递，也可重新输入或定义',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求明确参数双向传递',evidence:'技术要求第5.1.4节',date:'2026-07-23'},
+       {status:'done',desc:'方案已设计统一参数字典和接口',evidence:'技术方案第8.3节 系统集成',date:'2026-06-25'},
+       {status:'pending'},{status:'pending'},{status:'pending'}
+     )},
+
+    // M5: 热力学仿真及性能评估
+    {id:'I19',name:'空调系统稳态/瞬态仿真',module:'M5',target:'含换热器/压缩机/风机/管路/控制',owner:'仿真工程师',
+     desc:'搭建空调系统模型，开展热力学仿真，支持稳态和瞬态分析',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求明确空调系统仿真',evidence:'技术要求第5.1.5节 空调系统',date:'2026-07-23'},
+       {status:'done',desc:'方案已展示COP=3.92/制冷量8.7kW求解',evidence:'技术方案第4.4节 当前工程示例',date:'2026-06-20'},
+       {status:'issue',desc:'需接入TESPy/自研热力网络求解器',evidence:'方案第4.4节 工程达标计划表',date:'2026-07-20'},
+       {status:'pending'},{status:'pending'}
+     )},
+    {id:'I20',name:'散热装置仿真',module:'M5',target:'含换热器/泵/风机/阀/管路',owner:'仿真工程师',
+     desc:'搭建散热装置模型，开展稳态和瞬态分析',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求明确散热装置仿真',evidence:'技术要求第5.1.5节 散热装置',date:'2026-07-23'},
+       {status:'done',desc:'方案覆盖三类系统仿真设计',evidence:'技术方案第9.3节 第三阶段',date:'2026-06-20'},
+       {status:'pending'},{status:'pending'},{status:'pending'}
+     )},
+    {id:'I21',name:'液冷装置仿真',module:'M5',target:'含换热器/泵/压缩机/节流元件/管路',owner:'仿真工程师',
+     desc:'搭建液冷装置模型，开展稳态和瞬态分析',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求明确液冷装置仿真',evidence:'技术要求第5.1.5节 液冷装置',date:'2026-07-23'},
+       {status:'done',desc:'方案覆盖三类系统仿真设计',evidence:'技术方案第9.3节 第三阶段',date:'2026-06-20'},
+       {status:'pending'},{status:'pending'},{status:'pending'}
+     )},
+    {id:'I22',name:'换热器标定精度',module:'M5',target:'标定精度不低于95%',owner:'换热器算法工程师',
+     desc:'具备蒸发器/冷凝器/Chiller专用标定工具箱',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求≥95%',evidence:'技术要求第5.1.5节',date:'2026-07-23'},
+       {status:'done',desc:'方案建立L1/L2/L3/L4分层验证体系',evidence:'技术方案第7章 验证体系',date:'2026-06-25'},
+       {status:'issue',desc:'标定工具箱待开发，验证算例库建设中',evidence:'方案第7章 最终算例库目标表',date:'2026-07-20'},
+       {status:'pending'},{status:'pending'}
+     )},
+    {id:'I23',name:'物理-控制联合仿真',module:'M5',target:'机理模型+控制算法有机集成',owner:'仿真工程师',
+     desc:'换热器/压缩机/管路热力学机理模型与闭环控制算法/逻辑策略联合仿真',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求支持物理-控制混合建模',evidence:'技术要求第5.1.5节',date:'2026-07-23'},
+       {status:'done',desc:'方案设计ODE+PID/开关控制闭环',evidence:'技术方案第5.5节 瞬态闭环仿真',date:'2026-06-25'},
+       {status:'pending'},{status:'pending'},{status:'pending'}
+     )},
+
+    // M6: 迭代优化
+    {id:'I24',name:'参数寻优算法',module:'M6',target:'参数扫描+网格搜索+GA+PSO+NSGA-II+贝叶斯',owner:'优化算法工程师',
+     desc:'支持单目标和多目标优化，帕累托前沿输出，优化结果可复现',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求参数寻优及迭代',evidence:'技术要求第5.1.6节',date:'2026-07-23'},
+       {status:'done',desc:'方案列出7种优化算法及优先级',evidence:'技术方案第4.5节 优化算法演示',date:'2026-06-20'},
+       {status:'done',desc:'展示级多方案对比已实现（换热量/压降/重量/COP）',evidence:'方案第4.5节 当前实现能力表',date:'2026-07-15'},
+       {status:'issue',desc:'真实优化算法待接入',evidence:'方案第4.5节 工程达标计划',date:'2026-07-20'},
+       {status:'pending'}
+     )},
+    {id:'I25',name:'负载-环控-控制联合仿真',module:'M6',target:'制冷量/COP/工质状态/负载参数闭环',owner:'仿真工程师',
+     desc:'建立负载-环控系统-控制策略仿真，检验被调控对象设计指标符合性数字验证',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求明确联合仿真流程',evidence:'技术要求第5.1.6节 图6',date:'2026-07-23'},
+       {status:'done',desc:'方案集总热容-热阻+RK4+PID设计',evidence:'技术方案第5.5节',date:'2026-06-25'},
+       {status:'pending'},{status:'pending'},{status:'pending'}
+     )},
+
+    // NF: 非功能性要求
+    {id:'I26',name:'自主可控B级',module:'NF',target:'自主可控等级≥B级+测评报告',owner:'项目经理',
+     desc:'投标阶段提供已有基座测评材料+承诺书+测评计划；验收阶段提交软件测评报告',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求自主可控B级及以上',evidence:'技术要求第3节 方案要求',date:'2026-07-23'},
+       {status:'done',desc:'方案核心算法自研+开源组件受控+测评计划',evidence:'技术方案第1.3节+附录H第8条',date:'2026-06-25'},
+       {status:'pending'},{status:'pending'},{status:'pending'}
+     )},
+    {id:'I27',name:'国产平台适配',module:'NF',target:'飞腾CPU+麒麟操作系统运行',owner:'国产适配工程师',
+     desc:'用户终端支持运行在飞腾CPU和麒麟操作系统的国产化平台',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求飞腾+麒麟',evidence:'技术要求第5.2节',date:'2026-07-23'},
+       {status:'done',desc:'方案明确国产适配计划和替代方案',evidence:'技术方案附录H第3条 国产环境适配',date:'2026-06-25'},
+       {status:'pending'},{status:'pending'},{status:'pending'}
+     )},
+    {id:'I28',name:'浮动License≥3',module:'NF',target:'并发浮动License数量≥3',owner:'项目经理',
+     desc:'支持内网授权服务器部署、授权占用查看、异常释放和状态记录',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求浮动License≥3',evidence:'技术要求第3节',date:'2026-07-23'},
+       {status:'done',desc:'方案确认≥3并发+不限终端安装',evidence:'技术方案附录H第10条',date:'2026-06-25'},
+       {status:'pending'},{status:'pending'},{status:'pending'}
+     )},
+    {id:'I29',name:'交付节点-试运行',module:'NF',target:'2027年5月完成试运行(1个月)',owner:'项目经理',
+     desc:'2027年5月完成试运行，试运行时间1个月',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求2027.5试运行/2027.6验收',evidence:'技术要求第5.3节',date:'2026-07-23'},
+       {status:'done',desc:'方案调整为7月预验收/8月验收，更稳健',evidence:'技术方案第3.2节+附录H第4条',date:'2026-06-25'},
+       {status:'pending'},{status:'pending'},{status:'pending'}
+     )},
+    {id:'I30',name:'资料移交完整性',module:'NF',target:'13项资料清单全部交付',owner:'文档工程师',
+     desc:'含软件证明/实施方案/详细设计/数据字典/测试报告/授权函/合格证/安装报告/验收总结/用户手册/培训资料/灾难恢复手册/安装程序',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求13项资料',evidence:'技术要求第5.6.1节',date:'2026-07-23'},
+       {status:'done',desc:'方案已规划资料移交证据链',evidence:'技术方案第1.4节 全生命周期覆盖',date:'2026-06-25'},
+       {status:'pending'},{status:'pending'},{status:'pending'}
+     )},
+    {id:'I31',name:'培训服务',module:'NF',target:'≥8学时+分对象课程+培训记录',owner:'培训讲师',
+     desc:'培训对象为环控系统开发人员，具备软件使用能力和日常问题处理能力',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求≥8学时',evidence:'技术要求第5.6.2节',date:'2026-07-23'},
+       {status:'done',desc:'方案承诺≥48学时(超指标响应)',evidence:'技术方案第3.3节 培训服务',date:'2026-06-25'},
+       {status:'pending'},{status:'pending'},{status:'pending'}
+     )},
+    {id:'I32',name:'售后维护',module:'NF',target:'3年免费维护+灾难恢复<12h',owner:'运维工程师',
+     desc:'包括软件完善升级/电话支持/现场支援/安全补丁/系统优化',createdAt:now,
+     stages:mkStages(
+       {status:'done',desc:'招标要求3年免费维护',evidence:'技术要求第5.6.3节',date:'2026-07-23'},
+       {status:'done',desc:'方案确认3年+电话/远程/现场/升级/灾难恢复',evidence:'技术方案第3.3节 售后服务',date:'2026-06-25'},
+       {status:'pending'},{status:'pending'},{status:'pending'}
+     )},
+  ];
+}
+
+// ============ STORAGE ============
+const STORAGE_KEY = 'audit_loop_v2_data';
+let indicators = [];
+
+function loadData(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const data = JSON.parse(raw);
+      if(Array.isArray(data) && data.length>0) return data;
+    }
+  }catch(e){}
+  return getDefaultIndicators();
+}
+
+function saveData(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(indicators)); }
+
+function resetToDefault(){
+  if(!confirm('确定恢复为默认数据？当前修改将丢失。')) return;
+  indicators = getDefaultIndicators();
+  saveData();
+  refreshView();
+  alert('已恢复默认数据。');
+}
+
+// Init
+indicators = loadData();
+
+// ============ NAVIGATION ============
+let currentView = 'overview';
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click',function(){
+    document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+    this.classList.add('active');
+    showView(this.dataset.view);
+  });
+});
+
+function showView(v){
+  currentView = v;
+  document.querySelectorAll('.view').forEach(vv=>vv.classList.remove('active'));
+  const el = document.getElementById('view-'+v);
+  if(el) el.classList.add('active');
+  const titles = {
+    overview:'项目总览',modules:'六大模块',indicators:'指标矩阵',
+    tracking:'闭环追踪',mapping:'需求-方案对照',report:'审计报告',risks:'风险清单'
+  };
+  document.getElementById('topbarTitle').textContent = titles[v]||v;
+  refreshView();
+}
+
+function refreshView(){
+  updateBadges();
+  if(currentView==='overview') renderOverview();
+  if(currentView==='modules') renderModules();
+  if(currentView==='indicators') renderIndicatorTable();
+  if(currentView==='tracking') renderTracking();
+  if(currentView==='mapping') renderMapping();
+  if(currentView==='report') renderReport();
+  if(currentView==='risks') renderRisks();
+}
+
+function updateBadges(){
+  const broken = indicators.filter(i=>getLoopStatus(i)==='broken').length;
+  document.getElementById('badge-modules').textContent = '6';
+  document.getElementById('badge-indicators').textContent = indicators.length;
+  const rb = document.getElementById('badge-risks');
+  rb.textContent = broken;
+  rb.className = broken>0 ? 'nav-badge' : 'nav-badge good';
+}
+
+// ============ HELPERS ============
+function getLoopStatus(ind){
+  const keys = ['requirement','design','implementation','verification','closure'];
+  const vals = keys.map(k=>ind.stages[k].status==='done'?1:ind.stages[k].status==='issue'?0.5:0);
+  const done = vals.filter(v=>v===1).length;
+  const issues = vals.filter(v=>v===0.5).length;
+  if(done===5) return 'closed';
+  if(done===0 && issues===0) return 'none';
+  if(issues>0) return 'broken';
+  if(done>0) return 'partial';
+  return 'none';
+}
+
+function getModuleName(mid){
+  const m = MODULES.find(mm=>mm.id===mid);
+  return m ? m.name : mid;
+}
+
+function getModuleIndicators(mid){
+  return indicators.filter(i=>i.module===mid);
+}
+
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+// ============ OVERVIEW ============
+function renderOverview(){
+  const total = indicators.length;
+  const closed = indicators.filter(i=>getLoopStatus(i)==='closed').length;
+  const broken = indicators.filter(i=>getLoopStatus(i)==='broken').length;
+  const partial = indicators.filter(i=>getLoopStatus(i)==='partial').length;
+
+  document.getElementById('ovStats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">指标总数</div><div class="stat-value">${total}</div><div class="stat-sub">覆盖7个模块大类</div></div>
+    <div class="stat-card good"><div class="stat-label">已闭环</div><div class="stat-value">${closed}</div><div class="stat-sub">闭环率 ${total>0?Math.round(closed/total*100):0}%</div></div>
+    <div class="stat-card warn"><div class="stat-label">存在断点</div><div class="stat-value">${broken}</div><div class="stat-sub">需重点关注</div></div>
+    <div class="stat-card info"><div class="stat-label">进行中</div><div class="stat-value">${partial}</div><div class="stat-sub">部分阶段已完成</div></div>
+    <div class="stat-card ${broken>0?'bad':''}"><div class="stat-label">断点率</div><div class="stat-value">${total>0?Math.round(broken/total*100):0}%</div><div class="stat-sub">${broken}项指标存在断层</div></div>
+  `;
+
+  // Stage flow
+  const sn = ['需求定义','方案设计','实施执行','验收验证','闭环确认'];
+  const sk = ['requirement','design','implementation','verification','closure'];
+  let flow = sk.map((k,i)=>{
+    const done = indicators.filter(ii=>ii.stages[k].status==='done').length;
+    const issue = indicators.filter(ii=>ii.stages[k].status==='issue').length;
+    const cls = done===total?'done':issue>0?'issue':'pending';
+    return `<div class="stage-step ${cls}">
+      <div class="step-dot">${i+1}</div>
+      <div class="step-label">${sn[i]}</div>
+      <div>${done}/${total}</div>
+      ${issue>0?`<div style="font-size:10px;color:var(--warning)">${issue}项问题</div>`:''}
+    </div>`;
+  }).join('');
+  document.getElementById('ovStageFlow').innerHTML = `<div class="stage-bar">${flow}</div>`;
+
+  // Loop chart
+  const labels = [
+    {k:'closed',l:'已闭环',c:'var(--success)'},
+    {k:'partial',l:'进行中',c:'var(--primary)'},
+    {k:'broken',l:'存在断点',c:'var(--warning)'},
+    {k:'none',l:'未开始',c:'#c8ccd2'}
+  ];
+  let chart = labels.map(s=>{
+    const cnt = indicators.filter(i=>getLoopStatus(i)===s.k).length;
+    const pct = total>0?Math.round(cnt/total*100):0;
+    return `<div style="flex:1">
+      <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px">
+        <span style="width:8px;height:8px;border-radius:50%;background:${s.c};flex-shrink:0"></span>
+        <span style="font-size:11px;color:var(--text-secondary)">${s.l}</span>
+      </div>
+      <div style="font-size:18px;font-weight:700">${cnt}<span style="font-size:11px;font-weight:400;color:var(--text-muted)">/${total}</span></div>
+      <div style="height:5px;background:#e5e7eb;border-radius:3px;margin-top:6px">
+        <div style="height:100%;width:${pct}%;background:${s.c};border-radius:3px;transition:width .4s"></div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('ovLoopChart').innerHTML = `<div style="display:flex;gap:18px;padding:4px 0">${chart}</div>`;
+
+  // Module cards
+  document.getElementById('ovModules').innerHTML = MODULES.filter(m=>m.id!=='NF').map(m=>{
+    const items = getModuleIndicators(m.id);
+    const closed = items.filter(i=>getLoopStatus(i)==='closed').length;
+    const pct = items.length>0?Math.round(closed/items.length*100):0;
+    return `<div class="module-card" onclick="navigateToModule('${m.id}')">
+      <span class="module-num">模块${m.order}</span>
+      <h4>${m.name}</h4>
+      <div class="module-meta">${items.length}项指标 | ${closed}项已闭环</div>
+      <div class="module-progress"><div class="module-progress-bar" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function navigateToModule(mid){
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+  document.querySelector('[data-view="modules"]').classList.add('active');
+  showView('modules');
+  setTimeout(()=>{
+    const el = document.getElementById('module-'+mid);
+    if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+  },100);
+}
+
+// ============ MODULES VIEW ============
+function renderModules(){
+  let html = '';
+  MODULES.forEach(m=>{
+    const items = getModuleIndicators(m.id);
+    const closed = items.filter(i=>getLoopStatus(i)==='closed').length;
+    const broken = items.filter(i=>getLoopStatus(i)==='broken').length;
+    const pct = items.length>0?Math.round(closed/items.length*100):0;
+
+    html += `<div class="panel" style="margin-bottom:18px" id="module-${m.id}">
+      <div class="panel-header">
+        <div>
+          <h3>模块${m.order}: ${m.name}</h3>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${esc(m.desc)}</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="badge ${broken>0?'badge-warn':'badge-ok'}">${broken>0?broken+'项断点':closed+'/'+items.length+' 闭环'}</span>
+          <button class="btn btn-sm btn-outline" onclick="addIndicatorTo('${m.id}')">+ 添加指标</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        ${items.length===0 ? `<div class="empty-st"><p>暂无指标，点击"添加指标"开始。</p></div>` : `
+        <table style="margin:-12px -16px">
+          <thead><tr><th style="width:30%">指标</th><th>目标</th><th style="width:15%">五阶段</th><th style="width:8%">状态</th><th style="width:10%">操作</th></tr></thead>
+          <tbody>${items.map(ind=>{
+            const loop = getLoopStatus(ind);
+            const lmap = {closed:'已闭环',partial:'进行中',broken:'存在断点',none:'未开始'};
+            const cmap = {closed:'badge-ok',partial:'badge-info',broken:'badge-warn',none:'badge-pending'};
+            const dots = ['requirement','design','implementation','verification','closure'].map(k=>
+              `<span class="stage-dot ${ind.stages[k].status==='done'?'ok':ind.stages[k].status==='issue'?'issue':''}"></span>`
+            ).join('');
+            return `<tr>
+              <td style="font-weight:500">${esc(ind.name)}</td>
+              <td style="font-size:11px;color:var(--text-secondary)">${esc(ind.target||'-')}</td>
+              <td><div class="stage-dots">${dots}</div></td>
+              <td><span class="badge ${cmap[loop]}">${lmap[loop]}</span></td>
+              <td>
+                <button class="btn btn-xs btn-secondary" onclick="event.stopPropagation();editIndicator('${ind.id}')">编辑</button>
+                <button class="btn btn-xs btn-ghost" style="color:var(--danger)" onclick="event.stopPropagation();delInd('${ind.id}')">删</button>
+              </td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>`}
+      </div>
+    </div>`;
+  });
+  document.getElementById('modulesContainer').innerHTML = html;
+}
+
+function addIndicatorTo(mid){
+  openIndAddModal(mid);
+}
+
+// ============ INDICATOR TABLE ============
+function renderIndicatorTable(){
+  const search = (document.getElementById('indSearch')?.value||'').toLowerCase();
+  const mod = document.getElementById('indModule')?.value||'all';
+  const loop = document.getElementById('indLoop')?.value||'all';
+
+  // Update module filter
+  const ms = document.getElementById('indModule');
+  if(ms && ms.options.length<=1){
+    ms.innerHTML = '<option value="all">全部模块</option>'+
+      MODULES.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+    ms.value = mod;
+  }
+
+  let filtered = indicators.filter(i=>{
+    if(search && !i.name.toLowerCase().includes(search)) return false;
+    if(mod!=='all' && i.module!==mod) return false;
+    if(loop!=='all' && getLoopStatus(i)!==loop) return false;
+    return true;
+  });
+
+  if(filtered.length===0){
+    document.getElementById('indTbody').innerHTML='';
+    document.getElementById('indEmpty').style.display='block';
+    document.getElementById('indCount').textContent='共 0 条';
+    return;
+  }
+  document.getElementById('indEmpty').style.display='none';
+  document.getElementById('indCount').textContent=`共 ${filtered.length} 条`;
+
+  const lmap = {closed:'已闭环',partial:'进行中',broken:'存在断点',none:'未开始'};
+  const cmap = {closed:'badge-ok',partial:'badge-info',broken:'badge-warn',none:'badge-pending'};
+
+  document.getElementById('indTbody').innerHTML = filtered.map(ind=>{
+    const loop = getLoopStatus(ind);
+    const dots = ['requirement','design','implementation','verification','closure'].map(k=>
+      `<span class="stage-dot ${ind.stages[k].status==='done'?'ok':ind.stages[k].status==='issue'?'issue':''}"></span>`
+    ).join('');
+    return `<tr>
+      <td><div style="font-weight:500;cursor:pointer;color:var(--primary-dark)" onclick="editIndicator('${ind.id}')">${esc(ind.name)}</div></td>
+      <td><span style="font-size:11px;background:var(--info-light);color:var(--info);padding:1px 7px;border-radius:8px">${esc(getModuleName(ind.module))}</span></td>
+      <td style="font-size:11px">${esc(ind.target||'-')}</td>
+      <td><div class="stage-dots">${dots}</div></td>
+      <td><span class="badge ${cmap[loop]}">${lmap[loop]}</span></td>
+      <td>${esc(ind.owner||'-')}</td>
+      <td>
+        <button class="btn btn-xs btn-secondary" onclick="editIndicator('${ind.id}')">编辑</button>
+        <button class="btn btn-xs btn-ghost" style="color:var(--danger)" onclick="delInd('${ind.id}')">删</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ============ TRACKING ============
+let trackingSelectedId = null;
+
+function renderTracking(){
+  const listEl = document.getElementById('trackList');
+  listEl.innerHTML = indicators.map(ind=>{
+    const loop = getLoopStatus(ind);
+    const cmap = {closed:'badge-ok',partial:'badge-info',broken:'badge-warn',none:'badge-pending'};
+    const lmap = {closed:'闭环',partial:'进行',broken:'断点',none:'未开始'};
+    return `<div class="detail-item${trackingSelectedId===ind.id?' selected':''}" data-id="${ind.id}" onclick="selectTracking('${ind.id}')">
+      <span>${esc(ind.name)}</span>
+      <span class="badge ${cmap[loop]}">${lmap[loop]}</span>
+    </div>`;
+  }).join('');
+  if(trackingSelectedId) renderTrackingDetail(trackingSelectedId);
+}
+
+function selectTracking(id){
+  trackingSelectedId = id;
+  document.querySelectorAll('.detail-item').forEach(i=>i.classList.remove('selected'));
+  const el = document.querySelector(`.detail-item[data-id="${id}"]`);
+  if(el) el.classList.add('selected');
+  renderTrackingDetail(id);
+}
+
+function renderTrackingDetail(id){
+  const ind = indicators.find(i=>i.id===id);
+  if(!ind) return;
+
+  const sn = ['需求定义','方案设计','实施执行','验收验证','闭环确认'];
+  const sk = ['requirement','design','implementation','verification','closure'];
+  const smap = {done:'已完成',issue:'存在问题',pending:'未开始'};
+  const vals = sk.map(k=>ind.stages[k].status==='done'?1:ind.stages[k].status==='issue'?0.5:0);
+  const breakIdx = vals.findIndex(v=>v===0);
+  const loop = getLoopStatus(ind);
+  const lmap = {closed:'已闭环',partial:'进行中',broken:'存在断点',none:'未开始'};
+  const cmap = {closed:'badge-ok',partial:'badge-info',broken:'badge-warn',none:'badge-pending'};
+
+  const cards = sk.map((k,i)=>{
+    const s = ind.stages[k];
+    const blocked = breakIdx>=0 && i>breakIdx;
+    const stepCls = s.status==='done'?'done':s.status==='issue'?'issue':'pending';
+    const cardCls = s.status==='done'?'badge-ok':s.status==='issue'?'badge-warn':'badge-pending';
+    return `<div style="border:1px solid var(--border);border-radius:var(--radius-md);padding:14px;${blocked?'opacity:0.5':''}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0;
+            background:${s.status==='done'?'var(--success)':s.status==='issue'?'var(--warning)':'#c8ccd2'}">${i+1}</span>
+          <span style="font-weight:600;font-size:13px">${sn[i]}</span>
+          ${blocked?'<span style="font-size:10px;color:var(--danger)">（断层阻断）</span>':''}
+        </div>
+        <span class="badge ${cardCls}">${smap[s.status]}</span>
+      </div>
+      ${s.desc?`<div style="font-size:12px;margin-bottom:6px;color:var(--text-secondary)">${esc(s.desc)}</div>`:'<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">暂无记录</div>'}
+      ${s.evidence?`<div style="font-size:11px;color:var(--text-muted);font-style:italic">依据：${esc(s.evidence)}</div>`:''}
+      ${s.date?`<div style="font-size:11px;color:var(--text-muted)">日期：${s.date}</div>`:''}
+      <button class="btn btn-xs btn-secondary" style="margin-top:8px" onclick="openStageEdit('${ind.id}','${k}')">编辑</button>
+    </div>`;
+  }).join('');
+
+  document.getElementById('trackDetail').innerHTML = `
+    <div class="detail-content">
+      <div class="dc-header">
+        <div>
+          <h3 style="font-size:15px;font-weight:600;margin-bottom:3px">${esc(ind.name)}</h3>
+          <div style="font-size:11px;color:var(--text-muted)">${esc(getModuleName(ind.module))} &middot; ${esc(ind.owner||'未指定')}</div>
+        </div>
+        <span class="badge ${cmap[loop]}">${lmap[loop]}</span>
+      </div>
+      <div class="dc-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;padding:10px;background:#fafbfc;border-radius:var(--radius-sm);font-size:12px">
+          <div>目标/要求：<strong>${esc(ind.target||'-')}</strong></div>
+          <div>描述：${esc(ind.desc||'无')}</div>
+        </div>
+        <div style="display:grid;gap:12px">${cards}</div>
+      </div>
+    </div>`;
+}
+
+// ============ STAGE EDIT ============
+let stageEditing = {iid:null,key:null};
+
+function openStageEdit(iid,key){
+  const ind = indicators.find(i=>i.id===iid);
+  if(!ind) return;
+  stageEditing = {iid,key};
+  const sn = {requirement:'需求定义',design:'方案设计',implementation:'实施执行',verification:'验收验证',closure:'闭环确认'};
+  document.getElementById('stageModalTitle').textContent = `编辑阶段 - ${sn[key]}`;
+  const s = ind.stages[key];
+  document.getElementById('stageStatus').value = s.status||'pending';
+  document.getElementById('stageDesc').value = s.desc||'';
+  document.getElementById('stageEvid').value = s.evidence||'';
+  document.getElementById('stageDate').value = s.date||'';
+  document.getElementById('stageModal').classList.add('show');
+}
+
+function closeStageModal(){
+  document.getElementById('stageModal').classList.remove('show');
+  stageEditing = {iid:null,key:null};
+}
+
+function saveStage(){
+  if(!stageEditing.iid) return;
+  const ind = indicators.find(i=>i.id===stageEditing.iid);
+  if(!ind) return;
+  ind.stages[stageEditing.key] = {
+    status: document.getElementById('stageStatus').value,
+    desc: document.getElementById('stageDesc').value.trim(),
+    evidence: document.getElementById('stageEvid').value.trim(),
+    date: document.getElementById('stageDate').value
+  };
+  saveData();
+  closeStageModal();
+  refreshView();
+}
+
+// ============ INDICATOR ADD/EDIT ============
+let editingIndId = null;
+
+function openIndAddModal(moduleId){
+  editingIndId = null;
+  document.getElementById('indModalTitle').textContent = '新增指标';
+  document.getElementById('fid').value = '';
+  document.getElementById('fname').value = '';
+  document.getElementById('fmodule').innerHTML = MODULES.map(m=>`<option value="${m.id}"${m.id===moduleId?' selected':''}>${m.name}</option>`).join('');
+  document.getElementById('ftarget').value = '';
+  document.getElementById('fowner').value = '';
+  document.getElementById('fdesc').value = '';
+  document.getElementById('fparent').value = moduleId||'';
+  document.getElementById('indModal').classList.add('show');
+}
+
+function editIndicator(id){
+  const ind = indicators.find(i=>i.id===id);
+  if(!ind) return;
+  editingIndId = id;
+  document.getElementById('indModalTitle').textContent = '编辑指标';
+  document.getElementById('fid').value = ind.id;
+  document.getElementById('fname').value = ind.name;
+  document.getElementById('fmodule').innerHTML = MODULES.map(m=>`<option value="${m.id}"${m.id===ind.module?' selected':''}>${m.name}</option>`).join('');
+  document.getElementById('ftarget').value = ind.target||'';
+  document.getElementById('fowner').value = ind.owner||'';
+  document.getElementById('fdesc').value = ind.desc||'';
+  document.getElementById('indModal').classList.add('show');
+}
+
+function closeIndModal(){
+  document.getElementById('indModal').classList.remove('show');
+  editingIndId = null;
+}
+
+function saveIndicator(){
+  const name = document.getElementById('fname').value.trim();
+  if(!name){ alert('请输入指标名称'); return; }
+
+  if(editingIndId){
+    const ind = indicators.find(i=>i.id===editingIndId);
+    if(ind){
+      ind.name = name;
+      ind.module = document.getElementById('fmodule').value;
+      ind.target = document.getElementById('ftarget').value.trim();
+      ind.owner = document.getElementById('fowner').value.trim();
+      ind.desc = document.getElementById('fdesc').value.trim();
+    }
+  } else {
+    indicators.push({
+      id: 'I'+Date.now().toString(36),
+      name,
+      module: document.getElementById('fmodule').value,
+      target: document.getElementById('ftarget').value.trim(),
+      owner: document.getElementById('fowner').value.trim(),
+      desc: document.getElementById('fdesc').value.trim(),
+      createdAt: new Date().toISOString().slice(0,10),
+      stages: {
+        requirement:{status:'pending',desc:'',evidence:'',date:''},
+        design:{status:'pending',desc:'',evidence:'',date:''},
+        implementation:{status:'pending',desc:'',evidence:'',date:''},
+        verification:{status:'pending',desc:'',evidence:'',date:''},
+        closure:{status:'pending',desc:'',evidence:'',date:''}
+      }
+    });
+  }
+  saveData();
+  closeIndModal();
+  refreshView();
+}
+
+function delInd(id){
+  const ind = indicators.find(i=>i.id===id);
+  if(!ind) return;
+  if(!confirm(`确定删除指标「${ind.name}」？`)) return;
+  indicators = indicators.filter(i=>i.id!==id);
+  saveData();
+  refreshView();
+}
+
+// ============ MAPPING ============
+function renderMapping(){
+  const reqs = [
+    {req:'整体布局和集成设计',clause:'5.1.1',detail:'系统总体架构设计、热力循环计算、部件KPI分解、三类系统模板',resp:'方案第1.3节 总体技术路线',respDetail:'Hysim基座+定制开发分层架构，六大模块按业务流程串联',status:'done'},
+    {req:'压缩机选型',clause:'5.1.2',detail:'规格型号/制冷剂/功率/排量/自定义扩容',resp:'方案附录G 压缩机选型方案',respDetail:'厂家曲线插值为主+多变模型辅助+经验兜底，Phase1-3开发计划',status:'done'},
+    {req:'风机/泵/节流元件选型',clause:'5.1.2',detail:'规格型号+特性参数+自定义扩容',resp:'方案第1.3节 部件模型体系',respDetail:'已在部件模型体系覆盖，数据库待建设',status:'partial'},
+    {req:'管路+负载+控制策略',clause:'5.1.2',detail:'弯管/阀建模；热源型+空间型负载；连续/离散控制',resp:'方案第5.5节+第8章',respDetail:'集总热容-热阻模型+PID/开关控制闭环+负载接口',status:'done'},
+    {req:'六类换热器设计',clause:'5.1.3',detail:'微通道/翅片管/板翅式/板式/管壳式/管带式',resp:'方案第4.1-4.3节+第5.1-5.4节',respDetail:'3类已有工程初版(微通道/翅片管/管壳式)，3类设计完成待开发',status:'partial'},
+    {req:'换热器标定精度≥95%',clause:'5.1.5',detail:'蒸发器/冷凝器/Chiller专用标定工具箱',resp:'方案第7章 L1-L4验证体系',respDetail:'分层验证+最终算例库≥208条，标定工具箱待开发',status:'partial'},
+    {req:'图形化拖拽建模',clause:'5.1.4',detail:'拖拽选取部件至画布+端口连接+模型库+参数边界校验',resp:'方案第2.2节 Hysim可视化框架',respDetail:'基于Hysim基座页面承载和可视化框架',status:'done'},
+    {req:'空调/散热/液冷仿真',clause:'5.1.5',detail:'稳态+瞬态分析，物理-控制联合',resp:'方案第4.4节+第9.3节',respDetail:'稳态演示已实现(COP=3.92)，三类系统待分阶段开发',status:'partial'},
+    {req:'参数寻优+迭代优化',clause:'5.1.6',detail:'多目标优化+负载-环控-控制联合仿真',resp:'方案第4.5节+第9.4节',respDetail:'展示级多方案对比已实现，真实算法待接入',status:'partial'},
+    {req:'自主可控B级',clause:'3',detail:'自主可控等级≥B级+软件测评报告',resp:'方案第1.3节+附录H第3/8条',respDetail:'核心算法自研+开源受控+测评计划',status:'done'},
+    {req:'飞腾+麒麟适配',clause:'5.2',detail:'飞腾CPU+麒麟操作系统国产化平台',resp:'方案附录H第3条',respDetail:'国产适配需求和计划已明确，待实施',status:'done'},
+    {req:'2027.5试运行/6月验收',clause:'5.3',detail:'试运行1个月后验收',resp:'方案第3.2节+附录H第4条',respDetail:'方案调整为7月预验收/8月验收(更稳健)',status:'partial'},
+    {req:'浮动License≥3',clause:'3',detail:'并发License≥3+不限终端',resp:'方案附录H第10条',respDetail:'确认≥3并发+不限制终端安装',status:'done'},
+    {req:'资料移交13项',clause:'5.6.1',detail:'13类文档+安装光盘',resp:'方案第1.4节',respDetail:'全生命周期覆盖，资料清单已对齐',status:'done'},
+    {req:'培训≥8学时',clause:'5.6.2',detail:'环控系统开发人员培训',resp:'方案第3.3节',respDetail:'方案承诺≥48学时(超指标响应)',status:'done'},
+    {req:'3年免费维护',clause:'5.6.3',detail:'灾难恢复<12h,一般故障<24h',resp:'方案第3.3节',respDetail:'确认3年+电话/远程/现场/升级/安全补丁',status:'done'},
+  ];
+
+  document.getElementById('mappingTable').innerHTML = `
+    <table class="req-map-table">
+      <thead><tr>
+        <th class="req-col">招标技术要求项</th>
+        <th class="resp-col">投标方案响应</th>
+        <th class="status-col">响应状态</th>
+      </tr></thead>
+      <tbody>${reqs.map(r=>`
+        <tr>
+          <td>
+            <strong>${esc(r.req)}</strong>
+            <div style="font-size:10px;color:var(--text-muted)">条款 ${r.clause}</div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-top:3px">${esc(r.detail)}</div>
+          </td>
+          <td>
+            <div style="font-size:12px;color:var(--info)">${esc(r.resp)}</div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-top:3px">${esc(r.respDetail)}</div>
+          </td>
+          <td style="text-align:center">
+            <span class="badge ${r.status==='done'?'badge-ok':r.status==='partial'?'badge-info':'badge-warn'}">${r.status==='done'?'已覆盖':r.status==='partial'?'部分覆盖':'待补充'}</span>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+// ============ REPORT ============
+function renderReport(){
+  const total = indicators.length;
+  const closed = indicators.filter(i=>getLoopStatus(i)==='closed').length;
+  const broken = indicators.filter(i=>getLoopStatus(i)==='broken').length;
+  const partial = indicators.filter(i=>getLoopStatus(i)==='partial').length;
+
+  const sk = ['requirement','design','implementation','verification','closure'];
+  const sn = ['需求定义','方案设计','实施执行','验收验证','闭环确认'];
+
+  const brokenItems = indicators.filter(i=>getLoopStatus(i)==='broken'||getLoopStatus(i)==='partial');
+
+  document.getElementById('reportContent').innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:28px">
+      <div class="report-title">
+        <h2>XX车环控系统综合研发及验证平台<br>审计指标闭环检查报告</h2>
+        <div style="font-size:11px;color:var(--text-muted)">生成时间：${new Date().toLocaleString('zh-CN')} &middot; 招标技术要求V20260723 &middot; 投标方案V2.3</div>
+      </div>
+
+      <div class="report-section">
+        <h3>闭环概览</h3>
+        <div class="report-grid">
+          <div class="report-grid-item"><div class="val" style="color:var(--primary-dark)">${total}</div><div class="lbl">指标总数</div></div>
+          <div class="report-grid-item"><div class="val" style="color:var(--success)">${total>0?Math.round(closed/total*100):0}%</div><div class="lbl">闭环率 (${closed}/${total})</div></div>
+          <div class="report-grid-item"><div class="val" style="color:var(--warning)">${broken}</div><div class="lbl">存在断点指标数</div></div>
+          <div class="report-grid-item"><div class="val" style="color:var(--info)">${partial}</div><div class="lbl">进行中</div></div>
+        </div>
+      </div>
+
+      <div class="report-section">
+        <h3>五阶段完成情况</h3>
+        <table style="width:100%" cellpadding="8" cellspacing="0">
+          <thead><tr style="background:#fafbfc">
+            <th style="text-align:left;padding:8px 12px;border:1px solid var(--border)">阶段</th>
+            <th style="text-align:center;padding:8px 12px;border:1px solid var(--border)">已完成</th>
+            <th style="text-align:center;padding:8px 12px;border:1px solid var(--border)">存在问题</th>
+            <th style="text-align:center;padding:8px 12px;border:1px solid var(--border)">未完成</th>
+            <th style="text-align:center;padding:8px 12px;border:1px solid var(--border)">完成率</th>
+          </tr></thead>
+          <tbody>${sk.map((k,i)=>{
+            const done = indicators.filter(ii=>ii.stages[k].status==='done').length;
+            const issue = indicators.filter(ii=>ii.stages[k].status==='issue').length;
+            return `<tr>
+              <td style="padding:8px 12px;border:1px solid var(--border)">${i+1}. ${sn[i]}</td>
+              <td style="text-align:center;padding:8px 12px;border:1px solid var(--border);color:var(--success);font-weight:600">${done}</td>
+              <td style="text-align:center;padding:8px 12px;border:1px solid var(--border);color:var(--warning)">${issue}</td>
+              <td style="text-align:center;padding:8px 12px;border:1px solid var(--border);color:var(--text-muted)">${total-done-issue}</td>
+              <td style="text-align:center;padding:8px 12px;border:1px solid var(--border);font-weight:600">${Math.round(done/total*100)}%</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>
+
+      <div class="report-section">
+        <h3>断点与问题清单</h3>
+        ${brokenItems.length===0 ? '<p style="color:var(--success)">所有指标状态正常。</p>' : `
+        <div>${brokenItems.map(ind=>{
+          const loop = getLoopStatus(ind);
+          const breakStage = sk.find(k=>ind.stages[k].status==='issue'||ind.stages[k].status==='pending');
+          return `<div style="padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;background:${loop==='broken'?'var(--warning-light)':'var(--info-light)'}">
+            <strong>${esc(ind.name)}</strong>
+            <span style="font-size:11px;color:var(--text-muted)"> — ${esc(getModuleName(ind.module))}</span>
+            <div style="font-size:11px;color:var(--text-secondary);margin-top:4px">
+              断点阶段：${breakStage?sn[sk.indexOf(breakStage)]:'未知'} &middot; 负责人：${esc(ind.owner||'-')}
+            </div>
+          </div>`;
+        }).join('')}</div>`}
+      </div>
+
+      <div class="report-section">
+        <h3>需求-方案覆盖情况</h3>
+        <table style="width:100%">
+          <thead><tr style="background:#fafbfc">
+            <th style="text-align:left;padding:8px 12px;border:1px solid var(--border)">技术要求</th>
+            <th style="text-align:left;padding:8px 12px;border:1px solid var(--border)">方案覆盖</th>
+          </tr></thead>
+          <tbody>${['整体布局和集成设计','压缩机/风机/泵/节流元件选型','六类换热器设计','图形化拖拽建模','空调/散热/液冷仿真','参数寻优+迭代优化','自主可控B级','国产平台适配','交付节点','License','资料移交','培训','维护'].map(r=>`
+            <tr>
+              <td style="padding:8px 12px;border:1px solid var(--border);font-size:12px">${r}</td>
+              <td style="padding:8px 12px;border:1px solid var(--border);font-size:12px;color:var(--success)">已覆盖</td>
+            </tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+// ============ RISKS ============
+function renderRisks(){
+  const issues = indicators.filter(i=>getLoopStatus(i)==='broken');
+  const risks = [
+    {level:'M',item:'微通道两相模型未固化','指标ID':'I11',desc:'两相工程模型待完善，需补充验证算例和精度证据',mitigation:'按第5.4节分阶段补强计划执行，单相先行、两相分区、逐步校准'},
+    {level:'M',item:'板翅式/板式/管带式算法开发中','指标ID':'I13/I14/I16',desc:'3类换热器算法代码编写中，影响6类换热器全覆盖',mitigation:'复用现有微通道/翅片管模块，分Phase1-5推进'},
+    {level:'M',item:'压缩机数据库和选型功能待开发','指标ID':'I04',desc:'厂家性能曲线插值算法和数据库建设',mitigation:'按附录G Phase1计划2-3周完成最小可用版本'},
+    {level:'H',item:'系统稳态求解器未接入','指标ID':'I19',desc:'当前为演示级求解，需接入TESPy或自研热力网络求解器',mitigation:'采用TESPy稳态求解+自研模型封装+后续替代'},
+    {level:'H',item:'换热器标定工具箱未开发','指标ID':'I22',desc:'标定精度≥95%要求需建设专用工具箱',mitigation:'建立L1-L4分层验证+算例库，标定工具箱在第三阶段实现'},
+    {level:'L',item:'交付节点差异','指标ID':'I29',desc:'招标要求2027.5/6月，方案调整为7/8月',mitigation:'建议投标响应中与客户达成一致节点'},
+    {level:'L',item:'国产环境适配待实施','指标ID':'I27',desc:'飞腾+麒麟平台适配测试工作量大',mitigation:'实施阶段优先确认适配范围，分期完成适配'},
+    {level:'H',item:'工程模板数量不足','指标ID':'I03',desc:'招标要求内置若干典型模板',mitigation:'分阶段增加模板，优先空调系统模板'},
+  ];
+
+  document.getElementById('risksContent').innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden">
+      <div class="panel-header"><h3>风险与问题清单（${issues.length}项断点指标）</h3></div>
+      <div class="panel-body">
+        <div class="risk-matrix">
+          ${risks.map(r=>`
+            <div class="risk-item risk-${r.level}">
+              <div style="flex-shrink:0;font-size:20px">${r.level==='H'?'&#9989;':r.level==='M'?'&#9888;':'&#10060;'}</div>
+              <div>
+                <strong style="font-size:12px">${esc(r.item)}</strong>
+                <span style="font-size:10px;color:var(--text-muted)">(${r['指标ID']})</span>
+                <div style="font-size:10.5px;color:var(--text-secondary);margin-top:3px">${esc(r.desc)}</div>
+                <div style="font-size:10px;color:var(--primary);margin-top:3px">应对：${esc(r.mitigation)}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+// ============ IMPORT/EXPORT ============
+function exportData(){
+  const data = JSON.stringify(indicators, null, 2);
+  const blob = new Blob([data],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `环控平台_审计闭环数据_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(){
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.json';
+  inp.onchange = function(e){
+    const f = e.target.files[0];
+    if(!f) return;
+    const r = new FileReader();
+    r.onload = function(ev){
+      try{
+        const data = JSON.parse(ev.target.result);
+        if(!Array.isArray(data)) throw new Error('格式错误');
+        if(!confirm(`即将导入${data.length}条数据，当前数据将被覆盖。确认？`)) return;
+        indicators = data;
+        saveData();
+        refreshView();
+        alert('导入成功');
+      }catch(err){
+        alert('导入失败：格式不正确');
+      }
+    };
+    r.readAsText(f);
+  };
+  inp.click();
+}
+
+// ============ MODALS ============
+document.getElementById('indModal').addEventListener('click',function(e){if(e.target===this)closeIndModal();});
+document.getElementById('stageModal').addEventListener('click',function(e){if(e.target===this)closeStageModal();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeIndModal();closeStageModal();}});
+
+// ============ INIT ============
+refreshView();
+</script>
+</body>
+</html>
