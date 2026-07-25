@@ -304,7 +304,7 @@ function defaults(){
   const bd=new Date('2026-01-01');function ad(n){const d=new Date(bd);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
   const mkSt=()=>({requirement:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},design:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},implementation:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},verification:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]});
   return {projects:[{
-    id:'P1',name:'XX军工集团数控车间智能化改造项目',tpl:'技改项目',sd:ad(0),ed:ad(390),
+    id:'P1',name:'XX机械集团智能制造产线升级项目',tpl:'技改项目',sd:ad(0),ed:ad(390),
     org:{depts:[
       {id:'D1',name:'计划处（固投办公室）',status:'active',hist:[]},
       {id:'D2',name:'技术研发部',status:'active',hist:[]},
@@ -322,8 +322,8 @@ function defaults(){
       {id:'P6',name:'孙建国',dept:'D6',role:'基建管理员',status:'inactive',hist:[{note:'2025年3月退休',date:'2025-03-31'}],note:'已退休'}
     ]},
     deliverables:[
-      {id:'DL01',name:'招标文件-数控车间技术改造要求',type:'招标文件',ver:'V1.0',file:'数控车间改造招标技术要求.pdf',owner:'P1',status:'finalized',desc:'含38项技术指标',linked:['I01','I02','I03','I04','I05','I06','I07','I08'],hist:[{ver:'V1.0',date:ad(5),op:'P1',note:'初始版本'}]},
-      {id:'DL02',name:'投标技术方案-数控车间改造',type:'技术协议',ver:'V3.1',file:'投标方案_V3.1.docx',owner:'P2',status:'finalized',desc:'逐项响应38项指标',linked:['I01','I02','I03','I04','I05','I06','I07','I08'],hist:[{ver:'V1.0',date:ad(8),op:'P2',note:'初版'},{ver:'V2.0',date:ad(45),op:'P2',note:'专家修订'},{ver:'V3.0',date:ad(75),op:'P2',note:'增加分析'},{ver:'V3.1',date:ad(88),op:'P2',note:'定稿'}]},
+      {id:'DL01',name:'招标文件-智能制造产线技术改造要求',type:'招标文件',ver:'V1.0',file:'智能制造产线改造招标技术要求.pdf',owner:'P1',status:'finalized',desc:'含38项技术指标',linked:['I01','I02','I03','I04','I05','I06','I07','I08'],hist:[{ver:'V1.0',date:ad(5),op:'P1',note:'初始版本'}]},
+      {id:'DL02',name:'投标技术方案-智能制造产线改造',type:'技术协议',ver:'V3.1',file:'投标方案_V3.1.docx',owner:'P2',status:'finalized',desc:'逐项响应38项指标',linked:['I01','I02','I03','I04','I05','I06','I07','I08'],hist:[{ver:'V1.0',date:ad(8),op:'P2',note:'初版'},{ver:'V2.0',date:ad(45),op:'P2',note:'专家修订'},{ver:'V3.0',date:ad(75),op:'P2',note:'增加分析'},{ver:'V3.1',date:ad(88),op:'P2',note:'定稿'}]},
       {id:'DL03',name:'数控设备采购合同',type:'合同',ver:'V1.0',file:'采购合同.pdf',owner:'P1',status:'finalized',desc:'总价1180万元',linked:[],hist:[{ver:'V1.0',date:ad(105),op:'P1',note:'签章生效'}]},
       {id:'DL04',name:'五轴加工中心安装调试记录',type:'交付物',ver:'V1.0',file:'',owner:'P5',status:'draft',desc:'2026年5月到货安装',linked:['I01','I02','I03','I04'],hist:[]},
       {id:'DL05',name:'技术指标验证测试报告',type:'交付物',ver:'V1.0',file:'',owner:'P3',status:'draft',desc:'待编制',linked:['I01','I02','I03','I04'],hist:[]},
@@ -372,7 +372,7 @@ function defaults(){
       },
       // C5: 财务审计类
       {id:'M12',name:'竣工结算书',cat:'C5',rule:'基本建设财务规则',owner:'P4',deadline:ad(300),wf:'draft',ver:1,hist:[],linkedInds:['I05'],linkedDocs:[]},
-      {id:'M13',name:'第三方审计报告',cat:'C5',rule:'国防科技工业项目审计管理办法',owner:'P4',deadline:ad(330),wf:'draft',ver:1,hist:[],linkedInds:[],linkedDocs:[]},
+      {id:'M13',name:'第三方审计报告',cat:'C5',rule:'企业固定资产投资审计管理办法',owner:'P4',deadline:ad(330),wf:'draft',ver:1,hist:[],linkedInds:[],linkedDocs:[]},
       // C6: 专项验收类
       {id:'M14',name:'消防验收意见书',cat:'C6',owner:'P1',deadline:ad(250),wf:'approved',op:'P1',date:ad(245),ver:1,hist:[{s:'approved',desc:'消防验收合格',date:ad(245),op:'P1',ver:1}],linkedInds:[],linkedDocs:[]},
       {id:'M15',name:'安全设施竣工验收',cat:'C6',rule:'安全设施三同时管理办法',owner:'P2',deadline:ad(260),wf:'draft',ver:1,hist:[],linkedInds:[],linkedDocs:[]},
