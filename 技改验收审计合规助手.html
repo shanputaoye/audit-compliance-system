@@ -649,7 +649,7 @@ function rrpt(){
   var risks=[];
   if(brokenInds)risks.push(brokenInds+'项技术指标存在断点，需立即启动纠偏程序');
   if(overdueMats.length)risks.push(overdueMats.length+'份审计材料已逾期：'+overdueMats.map(function(m){return m.name}).join('、'));
-  if(rejMats.length)risks.push(rejMats.length+'份材料被退回修订：'+rejMats.map(function(m){return m.name+(m.rjReason?'（'+m.rjReason+'）':''）).join('、'));
+  if(rejMats.length)risks.push(rejMats.length+'份材料被退回修订：'+rejMats.map(function(m){return m.name+(m.rjReason?'（'+m.rjReason+'）':'');}).join('、'));
   if(msOv.length)risks.push(msOv.length+'个里程碑已逾期：'+msOv.map(function(m){return m.n+'（计划'+m.pd+'）'}).join('、'));
   var orphanDocs=docs.filter(function(d){var pp=(p.org?.persons||[]).find(function(ppp){return ppp.id===d.owner});return pp&&pp.status==='inactive'});
   if(orphanDocs.length)risks.push(orphanDocs.length+'份交付物归属离职/退休人员，需尽快移交');
