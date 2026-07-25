@@ -600,12 +600,12 @@ function wizStep2(){
     h+='<div style="border:1px solid '+(active?'var(--p)':'var(--bd)')+';border-radius:4px;padding:8px;margin-bottom:6px;background:'+(active?'var(--pl)':'#fafbfc')+'">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'+
       '<strong style="font-size:10.5px">'+esc(m.n)+'</strong>'+
-      '<button class="btn btn-xs '+(active?'btn-s':'btn-p')+'" onclick="wizToggleMod(''+m.id+'')">'+(active?'已选择('+count+'项)':'+ 选择模块')+'</button></div>'+
+      '<button class="btn btn-xs '+(active?'btn-s':'btn-p')+'" onclick="wizToggleMod(\x27'+m.id+'\x27)">'+(active?'已选择('+count+'项)':'+ 选择模块')+'</button></div>'+
       '<div id="wizModInds_'+m.id+'">';
     (wizData.modInds[m.id]||[]).forEach(function(ik){
-      h+='<div style="display:flex;gap:4px;margin-top:3px;font-size:10px"><input class="form-input" style="flex:1" value="'+esc(ik)+'" onchange="wizUpdateInd(\x27'+m.id+'\x27,\x27'+ik+'',this.value)"><button class="btn btn-xs btn-gh" style="color:var(--d)" onclick="wizDelInd(\x27'+m.id+'\x27,\x27'+ik+'')">x</button></div>';
+      h+='<div style="display:flex;gap:4px;margin-top:3px;font-size:10px"><input class="form-input" style="flex:1" value="'+esc(ik)+'" onchange="wizUpdateInd(\x27'+m.id+'\x27,\x27'+ik+'\x27,this.value)"><button class="btn btn-xs btn-gh" style="color:var(--d)" onclick="wizDelInd(\x27'+m.id+'\x27,\x27'+ik+'\x27)">x</button></div>';
     });
-    h+=active?'<button class="btn btn-xs btn-gh" style="margin-top:3px;font-size:9px" onclick="wizAddInd(''+m.id+'')">+ 添加指标</button>':'';
+    h+=active?'<button class="btn btn-xs btn-gh" style="margin-top:3px;font-size:9px" onclick="wizAddInd(\x27'+m.id+'\x27)">+ 添加指标</button>':'';
     h+='</div></div>';
   });
   h+='</div><p style="font-size:9.5px;color:var(--t3)">点击"选择模块"激活该模块，然后添加该模块下的验收指标。可以自定义指标名称和目标要求。</p>';
@@ -619,7 +619,7 @@ function wizStep3(){
   var matNames=wizData.matNames||{};
 
   var h='<div class="wiz-section"><h4>选择材料分类 ('+wizData.matCats.length+'/'+cats.length+'类已选)</h4><div class="wiz-check-grid">';
-  cats.forEach(function(c){var sel=wizData.matCats.indexOf(c.id)>=0;h+='<label><input type="checkbox"'+(sel?' checked':'')+' onchange="wizToggleCat(''+c.id+'',this.checked)">'+esc(c.n)+'</label>'});
+  cats.forEach(function(c){var sel=wizData.matCats.indexOf(c.id)>=0;h+='<label><input type="checkbox"'+(sel?' checked':'')+' onchange="wizToggleCat(\x27'+c.id+'\x27,this.checked)">'+esc(c.n)+'</label>'});
   h+='</div></div>';
 
   // Custom materials per category
@@ -632,7 +632,7 @@ function wizStep3(){
     items.forEach(function(n,idx){
       h+='<div style="display:flex;gap:4px;margin-top:2px;font-size:10px"><input class="form-input" style="flex:1" value="'+esc(n)+'" onchange="wizUpdateMat(\x27'+cid+'\x27,'+idx+',this.value)"><button class="btn btn-xs btn-gh" style="color:var(--d)" onclick="wizDelMat(\x27'+cid+'\x27,'+idx+')">x</button></div>';
     });
-    h+='<button class="btn btn-xs btn-gh" style="margin-top:2px;font-size:9px" onclick="wizAddMat(''+cid+'')">+ 添加材料</button></div>';
+    h+='<button class="btn btn-xs btn-gh" style="margin-top:2px;font-size:9px" onclick="wizAddMat(\x27'+cid+'\x27)">+ 添加材料</button></div>';
   });
   h+='</div>';
   return h;
