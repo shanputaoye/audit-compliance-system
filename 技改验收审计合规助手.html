@@ -931,44 +931,7 @@ function aiGanttPath(){var p=AP();if(!p)return;var ms=p.milestones||[],td=nw();
 }
 
 // ==== REVIEW INTERACTIVE ANALYSIS ====
-function aiAnalyzeReview(id){var p=AP();if(!p)return;var m=p.materials.find(function(mm){return mm.id===id});if(!m)return;
-  var lb={submitted:'待审核',rejected:'需重做',approved:'已通过'};
-  var hist=m.hist||[];
-  var owner=p.org?.persons?.find(function(pp){return pp.id===m.owner});
-  var linkedInds=(m.linkedInds||[]).map(function(iid){return p.indicators.find(function(i){return i.id===iid})}).filter(Boolean);
-  // Build analysis
-  var h='<div style="max-height:400px;overflow-y:auto">';
-  // 1. 审核状态
-  h+='<div style="margin-bottom:8px"><strong style="font-size:11px">审核状态</strong><br>';
-  h+='<span class="badge '+(m.wf==='submitted'?'badge-info':'badge-err')+'">'+lb[m.wf]+'</span>';
-  if(m.rjReason)h+=' <span style="font-size:9px;color:var(--d)">('+esc(m.rjReason)+')</span>';
-  if(m.deadline){var td=nw();if(m.deadline<td&&m.wf!=='approved')h+='<br><span style="color:var(--d);font-size:9px">⚠ 已逾期 '+Math.floor((new Date(td)-new Date(m.deadline))/86400000)+'天 (截止'+m.deadline+')</span>'}
-  h+='</div>';
-  // 2. 审核链路
-  h+='<div style="margin-bottom:8px"><strong style="font-size:11px">审核链路</strong>';
-  if(hist.length){h+='<div style="font-size:9px;margin-top:2px">';hist.forEach(function(hh,i){var sl={submitted:'提交',approved:'通过',rejected:'退回',draft:'编制',pending:'待启动'};h+='<div style="padding:2px 0;border-bottom:1px dotted var(--bd)"><span style="color:var(--a)">v'+hh.ver+'</span> '+sl[hh.s]+' <span style="color:var(--t3)">'+hh.date.slice(0,10)+'</span> '+pn(p,hh.op)+'<br><span style="font-size:8px">'+esc(hh.desc||'')+'</span>'+(hh.rjReason?'<br><span style="color:var(--d);font-size:8px">原因：'+esc(hh.rjReason)+'</span>':'')+'</div>'})h+='</div>'}
-  else{h+='<br><span style="font-size:9px;color:var(--t3)">暂无审核记录</span>'}
-  h+='</div>';
-  // 3. 责任人
-  h+='<div style="margin-bottom:8px"><strong style="font-size:11px">责任人</strong><br>';
-  h+=(owner?esc(owner.name)+' ('+dn(p,owner.dept)+' | '+(owner.role||'未指定')+')':'未指定');
-  h+='</div>';
-  // 4. 关联指标
-  if(linkedInds.length){h+='<div style="margin-bottom:8px"><strong style="font-size:11px">关联指标 ('+linkedInds.length+'项)</strong><br>';linkedInds.forEach(function(i){h+='<span style="font-size:9px">· '+esc(i.name)+' ['+esc(i.target)+']</span><br>'})}h+='</div>';
-  // 5. 审核建议
-  h+='<div style="margin-bottom:8px;padding:6px;background:#fffbe6;border-radius:4px"><strong style="font-size:10px;color:var(--w)">审核建议</strong><br><span style="font-size:9px">';
-  if(m.wf==='submitted'){
-    if(m.deadline&&m.deadline<nw())h+='该材料已逾期提交，请核实延期原因后决定是否通过。';
-    else h+='该材料已完成编制提交审核，请核实内容完整性和合规性。';
-  }else if(m.wf==='rejected'){
-    h+='需修正驳回问题后重新提交。建议：联系责任人'+(owner?esc(owner.name):'')+'核实'+(m.rjReason?esc(m.rjReason):'驳回原因')+'的处理进度。';
-  }
-  h+='</span></div>';
-  // 6. 审核操作
-  h+='<div style="display:flex;gap:4px"><button class="btn btn-xs btn-p" onclick="qrMat(\''+m.id+'\',\'approved\');addAIMsg(\'已通过：\'+esc(m.name))" style="flex:1">✓ 审核通过</button><button class="btn btn-xs btn-gh" onclick="qrMat(\''+m.id+'\',\'rejected\');addAIMsg(\'已退回：\'+esc(m.name))" style="flex:1;color:var(--d);border:1px solid var(--d)">✗ 退回修订</button></div>';
-  h+='</div>';
-  addAIMsg(h);
-}
+function aiAnalyzeReview(id){var p=AP();if(!p)return;var m=p.materials.find(function(mm){return mm.id===id});if(!m)return;addAIMsg("分析："+esc(m.name)+"<br>状态："+(m.wf==="submitted"?"待审核":"需重做")+(m.rjReason?"（"+esc(m.rjReason)+"）":""));}
 
 // ==== WIZARD SAFE HANDLERS (data-attr, no quote injection) ====
 function wizFromTpl(btn){openWiz(btn.getAttribute('data-type'))}
