@@ -177,7 +177,7 @@ textarea.form-input{resize:vertical;min-height:45px}
 </aside>
 
 <div class="main-wrapper">
-  <div class="main" id="mainArea">
+  <div class="main ai-open" id="mainArea">
     <div class="topbar">
       <div class="topbar-left"><span class="topbar-title" id="topbarTitle">仪表盘</span><span class="topbar-proj" id="topbarProj"></span></div>
       <div class="topbar-actions">
@@ -1063,6 +1063,8 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeDocM()
 // Init
 // Global toggle for AI sections (class ai-tgl)
 document.addEventListener('click',function(e){var el=e.target;while(el&&el.className.indexOf('ai-tgl')<0)el=el.parentElement;if(el){var b=el.nextElementSibling;if(b)b.style.display=b.style.display?'':'none'}});
+// Init AI panel toggle button visibility
+document.getElementById('aiToggle').style.display='none';
 showV('dash');
 </script>
 
