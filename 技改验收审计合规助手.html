@@ -514,7 +514,7 @@ function rrpt(){
 }
 
 // ============ TEMPLATES ============
-function rt(){document.getElementById('tplContent').innerHTML=Object.entries(TPL).map(function(e){var n=e[0],t=e[1];return'<div class="panel" style="margin-bottom:8px"><div class="phead"><h3>'+n+'</h3><button class="btn btn-p btn-xs" onclick="openWiz(''+n+'')">创建项目</button></div><div class="pbody" style="font-size:10px">'+t.cats.length+'类材料 · '+t.mods.length+'指标模块 · '+t.defDocs.length+'交付物 · '+t.milestones.length+'节点</div></div>'}).join('')}
+function rt(){document.getElementById('tplContent').innerHTML=Object.entries(TPL).map(function(e){var n=e[0],t=e[1];return'<div class="panel" style="margin-bottom:8px"><div class="phead"><h3>'+n+'</h3><button class="btn btn-p btn-xs" data-type="'+n+'" onclick="wizFromTpl(this)">创建项目</button></div><div class="pbody" style="font-size:10px">'+t.cats.length+'类材料 · '+t.mods.length+'指标模块 · '+t.defDocs.length+'交付物 · '+t.milestones.length+'节点</div></div>'}).join('')}
 
 // ============ PROJECT WIZARD ============
 var WS={step:0,steps:['项目信息','组织架构','指标模块','材料清单','里程碑','确认创建'],data:{}};
@@ -602,7 +602,7 @@ WS.render4=function(){
   var t=TPL[WS.data.type]||TPL['技改项目'];
   if(!WS.data.milestones.length)WS.data.milestones=(t.milestones||[]).map(function(m){return{n:m.n,o:m.o}});
   var h='<div class="wiz-section"><h4>里程碑节点</h4><p style="font-size:9px;color:var(--t3);margin-bottom:8px">天数从项目开始日期起算。</p>';
-  WS.data.milestones.forEach(function(m,idx){h+='<div class="form-row" style="margin-bottom:4px"><div class="form-g"><input class="form-input" value="'+esc(m.n)+'" data-idx="'+idx+'" onchange="WS.data.milestones['+idx+'].n=this.value"></div><div class="form-g"><input type="number" class="form-input" value="'+m.o+'" data-idx="'+idx+'" onchange="WS.data.milestones['+idx+'].o=parseInt(this.value)||0" style="width:80px"> 天</div><button class="btn btn-xs btn-gh" style="color:var(--d)" onclick="WS.data.milestones.splice('+idx+',1);renderWiz()">x</button></div>'});
+  WS.data.milestones.forEach(function(m,idx){h+='<div class="form-row" style="margin-bottom:4px"><div class="form-g"><input class="form-input" value="'+esc(m.n)+'" data-idx="'+idx+'" data-field="n" onchange="wizUpdateMs(this)"></div><div class="form-g"><input type="number" class="form-input" value="'+m.o+'" data-idx="'+idx+'" data-field="o" onchange="wizUpdateMsNum(this)" style="width:80px"> 天</div><button class="btn btn-xs btn-gh" style="color:var(--d)" data-idx="'+idx+'" onclick="wizDelMsItem(this)">x</button></div>'});
   h+='</div><button class="btn btn-xs btn-out" data-n="新节点" data-o="90" onclick="wizAddMs(this)">+ 添加节点</button>';return h;
 };
 function wizAddMs(btn){WS.data.milestones.push({n:btn.getAttribute('data-n'),o:parseInt(btn.getAttribute('data-o'))});renderWiz()}
@@ -630,6 +630,14 @@ function wizCreate(){
   (WS.data.matCats||[]).forEach(function(cid){var names=WS.data.matNames[cid]||['材料'];names.forEach(function(n){if(n==='新材料')return;proj.materials.push({id:uid(),name:n,cat:cid,rule:'',owner:'',deadline:ad(90),wf:'pending',ver:1,hist:[],linkedInds:[],linkedDocs:[]})})});
   D.projects.push(proj);D.activeProjectId=proj.id;save();closeWiz();showV('dash');
 }
+
+// ==== WIZARD SAFE HANDLERS (data-attr, no quote injection) ====
+function wizFromTpl(btn){openWiz(btn.getAttribute('data-type'))}
+function wizUpdateMs(inp){var idx=parseInt(inp.getAttribute('data-idx'));WS.data.milestones[idx].n=inp.value}
+function wizUpdateMsNum(inp){var idx=parseInt(inp.getAttribute('data-idx'));WS.data.milestones[idx].o=parseInt(inp.value)||0}
+function wizDelMsItem(btn){var idx=parseInt(btn.getAttribute('data-idx'));WS.data.milestones.splice(idx,1);renderWiz()}
+function aiPushNotifyBtn(btn){aiPushNotify(btn.getAttribute('data-iid'))}
+function aiPushNotify2Btn(btn){aiPushNotify2(btn.getAttribute('data-mid'))}
 
 
 // ============ DELIVERABLE CRUD (owner mandatory) ============
