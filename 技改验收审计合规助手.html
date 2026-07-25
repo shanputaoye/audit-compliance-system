@@ -572,11 +572,11 @@ function wizStep1(){
   if(!wizData.persons.length)wizData.persons=persons.filter(function(p){return p.status==='active'}).map(function(p){return p.id});
 
   var dh='<div class="wiz-check-grid">';
-  depts.forEach(function(d){var sel=wizData.depts.indexOf(d.id)>=0;dh+='<label><input type="checkbox"'+(sel?' checked':'')+' onchange="wizToggleDept('"+d.id+"',this.checked)">'+esc(d.name)+(d.status==='inactive'?' (已撤销)':'')+'</label>'});
+  depts.forEach(function(d){var sel=wizData.depts.indexOf(d.id)>=0;dh+='<label><input type="checkbox"'+(sel?' checked':'')+' onchange="wizToggleDept(\x27'+d.id+'\x27,this.checked)">'+esc(d.name)+(d.status==='inactive'?' (已撤销)':'')+'</label>'});
   dh+='</div><button class="btn btn-xs btn-out" style="margin-top:6px" onclick="wizAddDept()">+ 添加部门</button>';
 
   var ph='<div class="wiz-check-grid">';
-  persons.forEach(function(p){var sel=wizData.persons.indexOf(p.id)>=0;ph+='<label><input type="checkbox"'+(sel?' checked':'')+' onchange="wizTogglePerson('"+p.id+"',this.checked)">'+esc(p.name)+' ('+esc(p.role||'')+')'+(p.status==='inactive'?' 已离职':'')+'</label>'});
+  persons.forEach(function(p){var sel=wizData.persons.indexOf(p.id)>=0;ph+='<label><input type="checkbox"'+(sel?' checked':'')+' onchange="wizTogglePerson(\x27'+p.id+'\x27,this.checked)">'+esc(p.name)+' ('+esc(p.role||'')+')'+(p.status==='inactive'?' 已离职':'')+'</label>'});
   ph+='</div><button class="btn btn-xs btn-out" style="margin-top:6px" onclick="wizAddPerson()">+ 添加人员</button>';
 
   return '<div class="wiz-section"><h4>选择参与部门 ('+wizData.depts.length+'个已选)</h4>'+dh+'</div>'+
@@ -603,7 +603,7 @@ function wizStep2(){
       '<button class="btn btn-xs '+(active?'btn-s':'btn-p')+'" onclick="wizToggleMod(''+m.id+'')">'+(active?'已选择('+count+'项)':'+ 选择模块')+'</button></div>'+
       '<div id="wizModInds_'+m.id+'">';
     (wizData.modInds[m.id]||[]).forEach(function(ik){
-      h+='<div style="display:flex;gap:4px;margin-top:3px;font-size:10px"><input class="form-input" style="flex:1" value="'+esc(ik)+'" onchange="wizUpdateInd('"+m.id+"','"+ik+'',this.value)"><button class="btn btn-xs btn-gh" style="color:var(--d)" onclick="wizDelInd('"+m.id+"','"+ik+'')">x</button></div>';
+      h+='<div style="display:flex;gap:4px;margin-top:3px;font-size:10px"><input class="form-input" style="flex:1" value="'+esc(ik)+'" onchange="wizUpdateInd(\x27'+m.id+'\x27,\x27'+ik+'',this.value)"><button class="btn btn-xs btn-gh" style="color:var(--d)" onclick="wizDelInd(\x27'+m.id+'\x27,\x27'+ik+'')">x</button></div>';
     });
     h+=active?'<button class="btn btn-xs btn-gh" style="margin-top:3px;font-size:9px" onclick="wizAddInd(''+m.id+'')">+ 添加指标</button>':'';
     h+='</div></div>';
@@ -630,7 +630,7 @@ function wizStep3(){
     if(!items.length&&TPL[wizData.type]&&TPL[wizData.type].defMats){TPL[wizData.type].defMats.forEach(function(dm){if(dm.cat===cid)items.push(dm.name)});matNames[cid]=items}
     h+='<div style="margin-bottom:6px"><strong style="font-size:10px">'+esc(c?c.n:cid)+'</strong>';
     items.forEach(function(n,idx){
-      h+='<div style="display:flex;gap:4px;margin-top:2px;font-size:10px"><input class="form-input" style="flex:1" value="'+esc(n)+'" onchange="wizUpdateMat('"+cid+"','+idx+',this.value)"><button class="btn btn-xs btn-gh" style="color:var(--d)" onclick="wizDelMat('"+cid+"','+idx+')">x</button></div>';
+      h+='<div style="display:flex;gap:4px;margin-top:2px;font-size:10px"><input class="form-input" style="flex:1" value="'+esc(n)+'" onchange="wizUpdateMat(\x27'+cid+'\x27,'+idx+',this.value)"><button class="btn btn-xs btn-gh" style="color:var(--d)" onclick="wizDelMat(\x27'+cid+'\x27,'+idx+')">x</button></div>';
     });
     h+='<button class="btn btn-xs btn-gh" style="margin-top:2px;font-size:9px" onclick="wizAddMat(''+cid+'')">+ 添加材料</button></div>';
   });
