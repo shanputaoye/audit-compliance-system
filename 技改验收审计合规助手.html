@@ -556,12 +556,13 @@ WS.render1=function(){
   if(!WS.data.depts.length)WS.data.depts=depts.filter(function(d){return d.status==='active'}).map(function(d){return d.id});
   if(!WS.data.persons.length)WS.data.persons=persons.filter(function(p){return p.status==='active'}).map(function(p){return p.id});
   var dh='<div class="wiz-section"><h4>部门 ('+WS.data.depts.length+'个已选)</h4><div class="wiz-chk-grid">';
-  depts.forEach(function(d){var ch=WS.data.depts.indexOf(d.id)>=0;dh+='<label><input type="checkbox" data-did="'+d.id+'"'+(ch?' checked':'')+' onchange="wizOnCheck(this,'dept')">'+esc(d.name)+'</label>'});dh+='</div></div>';
+  depts.forEach(function(d){var ch=WS.data.depts.indexOf(d.id)>=0;dh+='<label><input type="checkbox" data-did="'+d.id+'"'+(ch?' checked':'')+' data-wtype="dept" onchange="wizOnCheckEl(this)">'+esc(d.name)+'</label>'});dh+='</div></div>';
   var ph='<div class="wiz-section"><h4>人员 ('+WS.data.persons.length+'人已选)</h4><div class="wiz-chk-grid">';
-  persons.forEach(function(p){var ch=WS.data.persons.indexOf(p.id)>=0;ph+='<label><input type="checkbox" data-pid="'+p.id+'"'+(ch?' checked':'')+' onchange="wizOnCheck(this,'person')">'+esc(p.name)+' ('+esc(p.role||'')+')</label>'});ph+='</div></div>';
+  persons.forEach(function(p){var ch=WS.data.persons.indexOf(p.id)>=0;ph+='<label><input type="checkbox" data-pid="'+p.id+'"'+(ch?' checked':'')+' data-wtype="person" onchange="wizOnCheckEl(this)">'+esc(p.name)+' ('+esc(p.role||'')+')</label>'});ph+='</div></div>';
   return dh+ph+'<p style="font-size:9px;color:var(--t3)">勾选的部门/人员将被纳入项目。</p>';
 };
-function wizOnCheck(el,type){var id=el.getAttribute('data-did')||el.getAttribute('data-pid');var arr=type==='dept'?WS.data.depts:WS.data.persons;if(el.checked&&arr.indexOf(id)<0)arr.push(id);if(!el.checked)WS.data[type==='dept'?'depts':'persons']=arr.filter(function(v){return v!==id});renderWiz()}
+function wizOnCheck(el,type){var id=el.getAttribute('data-did')||el.getAttribute('data-pid')||el.getAttribute('data-cid');var arr;if(type==='dept')arr=WS.data.depts;else if(type==='person')arr=WS.data.persons;else arr=WS.data.matCats;if(el.checked&&arr.indexOf(id)<0)arr.push(id);if(!el.checked){var key=type==='dept'?'depts':type==='person'?'persons':'matCats';WS.data[key]=arr.filter(function(v){return v!==id})}renderWiz()}
+function wizOnCheckEl(el){var type=el.getAttribute('data-wtype');wizOnCheck(el,type)}
 
 // Step 2: Indicators
 WS.render2=function(){
@@ -586,13 +587,13 @@ WS.render3=function(){
   if(!WS.data.matCats.length)WS.data.matCats=cats.map(function(c){return c.id});
   if(!WS.data.matNames||Object.keys(WS.data.matNames).length===0){WS.data.matNames={};cats.forEach(function(c){WS.data.matNames[c.id]=['材料']})}
   var h='<div class="wiz-section"><h4>材料分类 ('+WS.data.matCats.length+'/'+cats.length+'类已选)</h4><div class="wiz-chk-grid">';
-  cats.forEach(function(c){var sel=WS.data.matCats.indexOf(c.id)>=0;h+='<label><input type="checkbox" data-cid="'+c.id+'"'+(sel?' checked':'')+' onchange="wizOnCheck(this,'cat')">'+esc(c.n)+'</label>'});h+='</div></div>';
+  cats.forEach(function(c){var sel=WS.data.matCats.indexOf(c.id)>=0;h+='<label><input type="checkbox" data-cid="'+c.id+'"'+(sel?' checked':'')+' data-wtype="cat" onchange="wizOnCheckEl(this)">'+esc(c.n)+'</label>'});h+='</div></div>';
   WS.data.matCats.forEach(function(cid){var c=cats.find(function(cc){return cc.id===cid});var items=WS.data.matNames[cid]||['材料'];h+='<div style="margin-bottom:6px"><strong style="font-size:10px">'+esc(c?c.n:cid)+'</strong>';
     items.forEach(function(n,idx){h+='<div class="wiz-ind-row"><input class="form-input" style="flex:1" value="'+esc(n)+'" data-cid="'+cid+'" data-idx="'+idx+'" onchange="wizUpdateMat(this)"><button class="btn btn-xs btn-gh" style="color:var(--d)" data-cid="'+cid+'" data-idx="'+idx+'" onclick="wizDelMat(this)">x</button></div>'});
     h+='<button class="btn btn-xs btn-gh" style="margin-top:2px;font-size:9px" data-cid="'+cid+'" onclick="wizAddMat(this)">+ 添加材料</button></div>'});
   return h+'<p style="font-size:9px;color:var(--t3)">勾选需要的材料分类，每种分类可自定义材料名称。</p>';
 };
-function wizOnCheck(el,type){var id=el.getAttribute('data-did')||el.getAttribute('data-pid')||el.getAttribute('data-cid');var arr=type==='dept'?WS.data.depts:type==='person'?WS.data.persons:WS.data.matCats;if(el.checked&&arr.indexOf(id)<0)arr.push(id);if(!el.checked){var key=type==='dept'?'depts':type==='person'?'persons':'matCats';WS.data[key]=arr.filter(function(v){return v!==id})}renderWiz()}
+
 function wizAddMat(btn){var cid=btn.getAttribute('data-cid');if(!WS.data.matNames[cid])WS.data.matNames[cid]=[];WS.data.matNames[cid].push('新材料');renderWiz()}
 function wizDelMat(btn){var cid=btn.getAttribute('data-cid'),idx=parseInt(btn.getAttribute('data-idx'));WS.data.matNames[cid].splice(idx,1);renderWiz()}
 function wizUpdateMat(inp){var cid=inp.getAttribute('data-cid'),idx=parseInt(inp.getAttribute('data-idx'));WS.data.matNames[cid][idx]=inp.value}
