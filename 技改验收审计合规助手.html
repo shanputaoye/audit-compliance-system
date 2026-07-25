@@ -488,7 +488,7 @@ function renderDocGroup(grouped_){
       <span style="font-size:9px;color:var(--t3)">定稿${items.filter(d=>d.status==='finalized').length}/${items.length}</span></div>
       <div>${items.map(d=>{
         const linkedInds=(d.linked||[]).map(iid=>{const ind=p.indicators.find(i=>i.id===iid);return ind?ind.name:''}).filter(Boolean);
-        return`<div class="row" onclick="openDocM('${d.id}')">
+        return`<div class="row" onclick="aiAnalyzeDoc('${d.id}')" style="cursor:pointer">
           <span style="font-size:14px">${dc[d.type]||'📄'}</span>
           <span style="flex:1;font-weight:500">${esc(d.name)}</span>
           <span style="font-size:9px;color:var(--t3)">${esc(d.ver)} · ${esc(d.file||'无文件')}</span>
@@ -533,7 +533,7 @@ function rorg(){
   document.getElementById('orgContent').innerHTML=`<div class="prow">
     <div class="panel"><div class="phead"><h3>🏢 部门</h3><button class="btn btn-p btn-xs" onclick="openOrgM('dept')">+ 新增</button></div><div class="pbody">${depts.map(d=>{
       const pc=persons.filter(pp=>pp.dept===d.id);
-      return`<div class="dept-card ${d.status==='inactive'?'inactive':''}"><h4>${esc(d.name)} ${d.status==='inactive'?'<span class="badge badge-err">已撤销</span>':d.status==='renamed'?'<span class="badge badge-warn">已更名</span>':'<span class="badge badge-ok">正常</span>'}</h4>${d.note?`<div style="font-size:9px;color:var(--w)">${esc(d.note)}</div>`:''}<div style="font-size:9.5px;margin-top:4px">成员：${pc.map(pp=>`<span style="${pp.status==='inactive'?'text-decoration:line-through;color:var(--d)':''}">${esc(pp.name)}</span>`).join(' · ')||'无'}</div><button class="btn btn-xs btn-gh" onclick="openOrgM('dept','${d.id}')">编辑</button></div>`}).join('')}</div></div>
+      return`<div class="dept-card ${d.status==='inactive'?'inactive':''}" style="cursor:pointer" onclick="aiAnalyzeDept('${d.id}')"><h4>${esc(d.name)} ${d.status==='inactive'?'<span class="badge badge-err">已撤销</span>':d.status==='renamed'?'<span class="badge badge-warn">已更名</span>':'<span class="badge badge-ok">正常</span>'}</h4>${d.note?`<div style="font-size:9px;color:var(--w)">${esc(d.note)}</div>`:''}<div style="font-size:9.5px;margin-top:4px">成员：${pc.map(pp=>`<span style="${pp.status==='inactive'?'text-decoration:line-through;color:var(--d)':''}">${esc(pp.name)}</span>`).join(' · ')||'无'}</div><button class="btn btn-xs btn-gh" onclick="openOrgM('dept','${d.id}')">编辑</button></div>`}).join('')}</div></div>
     <div class="panel"><div class="phead"><h3>👤 人员</h3><button class="btn btn-p btn-xs" onclick="openOrgM('person')">+ 新增</button></div><div class="pbody">${persons.map(pp=>`<div class="dept-card ${pp.status==='inactive'?'inactive':''}"><h4>${esc(pp.name)} ${pp.status==='inactive'?'<span class="badge badge-err">离职</span>':'<span class="badge badge-ok">在职</span>'}</h4><div style="font-size:9.5px">${dn(p,pp.dept)} · ${esc(pp.role||'未指定')}</div>${pp.note?`<div style="font-size:8.5px;color:var(--w)">${esc(pp.note)}</div>`:''}<button class="btn btn-xs btn-gh" onclick="openOrgM('person','${pp.id}')">编辑</button></div>`).join('')}</div></div>
   </div>`;
 }
@@ -558,13 +558,117 @@ function addMs(){const n=prompt('名称：');if(!n)return;const d=prompt('计划
 
 // ============ REPORT ============
 function rrpt(){
-  const p=AP();if(!p)return;const inds=p.indicators||[],mats=p.materials||[],docs=p.deliverables||[];
+  const p=AP();if(!p)return;const inds=p.indicators||[],mats=p.materials||[],docs=p.deliverables||[],ms=p.milestones||[],td=nw();
   const indApp=inds.reduce((s,i)=>s+Object.values(i.stages||{}).filter(st=>st.wf==='approved').length,0);
   const matApp=mats.filter(m=>m.wf==='approved').length,docDone=docs.filter(d=>d.status==='finalized').length;
-  document.getElementById('reportContent').innerHTML=`<div style="background:var(--s);border:1px solid var(--bd);border-radius:var(--r);padding:20px"><div style="text-align:center;padding-bottom:10px;margin-bottom:12px;border-bottom:2px solid var(--bd)"><h2 style="font-size:16px">${esc(p.name)}<br>审计综合报告</h2></div>
-    <h3 style="font-size:11px;margin:8px 0">交付物：${docs.length}项 (${docDone}定稿)</h3>
-    <h3 style="font-size:11px;margin:8px 0">指标：${inds.length*5>0?Math.round(indApp/(inds.length*5)*100):0}%阶段通过</h3>
-    <h3 style="font-size:11px;margin:8px 0">材料：${mats.length>0?Math.round(matApp/mats.length*100):0}%定稿率</h3></div>`;
+  const totalStages=inds.length*5;
+  const indPct=totalStages>0?Math.round(indApp/totalStages*100):0;
+  const matPct=mats.length>0?Math.round(matApp/mats.length*100):0;
+  const closedInds=inds.filter(i=>{const ks=['requirement','design','implementation','verification','closure'];const vs=ks.map(k=>{const s=i.stages[k];return s&&s.wf==='approved'?1:0});return vs.filter(v=>v===1).length===5}).length;
+  const brokenInds=inds.filter(i=>{const ks=['requirement','design','implementation','verification','closure'];const vs=ks.map(k=>{const s=i.stages[k];return s&&s.wf==='rejected'?.5:0});return vs.filter(v=>v===.5).length>0}).length;
+  const overdueMats=mats.filter(m=>m.deadline&&m.deadline<td&&m.wf!=='approved');
+  const rejMats=mats.filter(m=>m.wf==='rejected');
+  const msDone=ms.filter(m=>m.ad).length,msOv=ms.filter(m=>!m.ad&&m.pd<td);
+
+  let h='<div style="background:var(--s);border:1px solid var(--bd);border-radius:var(--r);padding:24px;max-width:900px;margin:0 auto;line-height:1.8">';
+  // Header
+  h+='<div style="text-align:center;padding-bottom:16px;margin-bottom:16px;border-bottom:2px solid var(--p)">';
+  h+='<h2 style="font-size:17px;color:var(--p);margin:0 0 4px 0">'+esc(p.name)+'</h2>';
+  h+='<h3 style="font-size:14px;margin:0 0 8px 0">项目验收审计综合报告</h3>';
+  h+='<div style="font-size:10px;color:var(--t3)">报告生成日期：'+td+' | 项目类型：'+esc(p.tpl)+' | 工期：'+esc(p.sd)+' ~ '+esc(p.ed)+'</div>';
+  h+='</div>';
+
+  // 一、项目概况
+  h+='<h3 style="font-size:13px;color:var(--p);border-left:3px solid var(--p);padding-left:8px;margin:16px 0 10px 0">一、项目概况</h3>';
+  h+='<table style="width:100%;font-size:10px;border-collapse:collapse"><tr><td style="padding:4px 8px;background:#fafbfc;width:120px">项目名称</td><td style="padding:4px 8px">'+esc(p.name)+'</td></tr>';
+  h+='<tr><td style="padding:4px 8px;background:#fafbfc">项目类型</td><td style="padding:4px 8px">'+esc(p.tpl)+'</td></tr>';
+  h+='<tr><td style="padding:4px 8px;background:#fafbfc">起止日期</td><td style="padding:4px 8px">'+esc(p.sd)+' ~ '+esc(p.ed)+'</td></tr>';
+  h+='<tr><td style="padding:4px 8px;background:#fafbfc">组织规模</td><td style="padding:4px 8px">'+(p.org?.depts||[]).length+'个部门 · '+(p.org?.persons||[]).length+'名人员</td></tr></table>';
+
+  // 二、验收指标闭环情况
+  h+='<h3 style="font-size:13px;color:var(--p);border-left:3px solid var(--p);padding-left:8px;margin:16px 0 10px 0">二、技术指标闭环验证</h3>';
+  h+='<table style="width:100%;font-size:10px;border-collapse:collapse;margin-bottom:8px"><tr style="background:var(--p);color:#fff"><th style="padding:4px 8px;text-align:left">统计项</th><th style="padding:4px 8px;text-align:right">数值</th></tr>';
+  h+='<tr><td style="padding:4px 8px;background:#fafbfc">指标总数</td><td style="padding:4px 8px;text-align:right;font-weight:600">'+inds.length+'项</td></tr>';
+  h+='<tr><td style="padding:4px 8px;background:#fafbfc">阶段完成率</td><td style="padding:4px 8px;text-align:right;font-weight:600;color:'+(indPct>=70?'var(--su)':indPct>=40?'var(--w)':'var(--d)')+'">'+indPct+'%</td></tr>';
+  h+='<tr><td style="padding:4px 8px;background:#fafbfc">已闭环指标</td><td style="padding:4px 8px;text-align:right;font-weight:600;color:var(--su)">'+closedInds+'项</td></tr>';
+  h+='<tr><td style="padding:4px 8px;background:#fafbfc">存在断点指标</td><td style="padding:4px 8px;text-align:right;font-weight:600;color:'+(brokenInds?'var(--d)':'var(--su)')+'">'+brokenInds+'项</td></tr></table>';
+
+  // Indicator detail by module
+  const mods=TPL[p.tpl]?.mods||[];
+  mods.forEach(function(mod){
+    const mi=inds.filter(function(i){return i.mod===mod.id});
+    if(!mi.length)return;
+    h+='<div style="margin-bottom:6px"><strong style="font-size:10px">'+esc(mod.n)+' ('+mi.length+'项)</strong>';
+    h+='<table style="width:100%;font-size:9px;border-collapse:collapse;margin-top:2px"><tr style="background:#fafbfc"><th style="padding:2px 6px;text-align:left">指标名称</th><th style="padding:2px 6px">目标</th><th style="padding:2px 6px">完成</th><th style="padding:2px 6px">状态</th></tr>';
+    mi.forEach(function(i){
+      const ks=['requirement','design','implementation','verification','closure'];
+      const vs=ks.map(function(k){const s=i.stages[k];return s&&s.wf==='approved'?1:0});
+      const d=vs.filter(function(v){return v===1}).length;
+      const cls=d===5?'badge-ok':d>=3?'badge-info':d>0?'badge-warn':'badge-pending';
+      const lbl=d===5?'已闭环':d+'/5';
+      h+='<tr><td style="padding:2px 6px">'+esc(i.name)+'</td><td style="padding:2px 6px;font-size:8px;color:var(--t3)">'+esc(i.target)+'</td><td style="padding:2px 6px;text-align:center">'+d+'/5</td><td style="padding:2px 6px;text-align:center"><span class="badge '+cls+'">'+lbl+'</span></td></tr>';
+    });
+    h+='</table></div>';
+  });
+
+  // 三、审计材料合规情况
+  h+='<h3 style="font-size:13px;color:var(--p);border-left:3px solid var(--p);padding-left:8px;margin:16px 0 10px 0">三、审计材料合规检查</h3>';
+  h+='<table style="width:100%;font-size:10px;border-collapse:collapse;margin-bottom:8px"><tr style="background:var(--p);color:#fff"><th style="padding:4px 8px;text-align:left">统计项</th><th style="padding:4px 8px;text-align:right">数值</th></tr>';
+  h+='<tr><td style="padding:4px 8px;background:#fafbfc">材料总数</td><td style="padding:4px 8px;text-align:right;font-weight:600">'+mats.length+'份</td></tr>';
+  h+='<tr><td style="padding:4px 8px;background:#fafbfc">已定稿</td><td style="padding:4px 8px;text-align:right;font-weight:600;color:var(--su)">'+matApp+'份 ('+matPct+'%)</td></tr>';
+  h+='<tr><td style="padding:4px 8px;background:#fafbfc">退回修订</td><td style="padding:4px 8px;text-align:right;font-weight:600;color:'+(rejMats.length?'var(--d)':'var(--su)')+'">'+rejMats.length+'份</td></tr>';
+  h+='<tr><td style="padding:4px 8px;background:#fafbfc">逾期未完成</td><td style="padding:4px 8px;text-align:right;font-weight:600;color:'+(overdueMats.length?'var(--d)':'var(--su)')+'">'+overdueMats.length+'份</td></tr></table>';
+
+  // Material by category
+  (TPL[p.tpl]?.cats||[]).forEach(function(cat){
+    const cm=mats.filter(function(m){return m.cat===cat.id});
+    if(!cm.length)return;
+    const ap=cm.filter(function(m){return m.wf==='approved'}).length;
+    h+='<div style="margin-bottom:6px"><strong style="font-size:10px">'+esc(cat.n)+' ('+ap+'/'+cm.length+'定稿)</strong>';
+    h+='<table style="width:100%;font-size:9px;border-collapse:collapse;margin-top:2px"><tr style="background:#fafbfc"><th style="padding:2px 6px;text-align:left">材料名称</th><th style="padding:2px 6px">依据</th><th style="padding:2px 6px">责任人</th><th style="padding:2px 6px">状态</th></tr>';
+    cm.forEach(function(m){
+      const lb={approved:'已定稿',submitted:'审核中',draft:'编制中',rejected:'退回',pending:'待启动'};
+      const cb={approved:'badge-ok',submitted:'badge-info',draft:'badge-warn',rejected:'badge-err',pending:'badge-pending'};
+      h+='<tr><td style="padding:2px 6px">'+esc(m.name)+'</td><td style="padding:2px 6px;font-size:8px">'+esc(m.rule||'-')+'</td><td style="padding:2px 6px;font-size:8px">'+pn(p,m.owner)+'</td><td style="padding:2px 6px;text-align:center"><span class="badge '+cb[m.wf]+'">'+lb[m.wf]+'</span></td></tr>';
+    });
+    h+='</table></div>';
+  });
+
+  // 四、里程碑进度
+  h+='<h3 style="font-size:13px;color:var(--p);border-left:3px solid var(--p);padding-left:8px;margin:16px 0 10px 0">四、里程碑进度</h3>';
+  h+='<table style="width:100%;font-size:10px;border-collapse:collapse"><tr style="background:#fafbfc"><th style="padding:3px 8px;text-align:left">节点名称</th><th style="padding:3px 8px">计划日期</th><th style="padding:3px 8px">实际日期</th><th style="padding:3px 8px">状态</th></tr>';
+  ms.forEach(function(m){
+    var cls=m.ad?'done':m.pd<td?'late':'future';
+    var lbl=m.ad?'已完成 ('+m.ad+')':m.pd<td?'<span style="color:var(--d);font-weight:600">逾期 '+Math.floor((new Date(td)-new Date(m.pd))/86400000)+'天</span>':'待完成';
+    h+='<tr><td style="padding:3px 8px">'+esc(m.n)+'</td><td style="padding:3px 8px;text-align:center">'+m.pd+'</td><td style="padding:3px 8px;text-align:center">'+(m.ad||'-')+'</td><td style="padding:3px 8px;text-align:center;font-size:9px">'+lbl+'</td></tr>';
+  });
+  h+='</table>';
+
+  // 五、风险与建议
+  h+='<h3 style="font-size:13px;color:var(--p);border-left:3px solid var(--p);padding-left:8px;margin:16px 0 10px 0">五、风险提示与整改建议</h3>';
+  var risks=[];
+  if(brokenInds)risks.push(brokenInds+'项技术指标存在断点，需立即启动纠偏程序');
+  if(overdueMats.length)risks.push(overdueMats.length+'份审计材料已逾期：'+overdueMats.map(function(m){return m.name}).join('、'));
+  if(rejMats.length)risks.push(rejMats.length+'份材料被退回修订：'+rejMats.map(function(m){return m.name+(m.rjReason?'（'+m.rjReason+'）':''）).join('、'));
+  if(msOv.length)risks.push(msOv.length+'个里程碑已逾期：'+msOv.map(function(m){return m.n+'（计划'+m.pd+'）'}).join('、'));
+  var orphanDocs=docs.filter(function(d){var pp=(p.org?.persons||[]).find(function(ppp){return ppp.id===d.owner});return pp&&pp.status==='inactive'});
+  if(orphanDocs.length)risks.push(orphanDocs.length+'份交付物归属离职/退休人员，需尽快移交');
+  if(!risks.length){h+='<div style="padding:8px;background:#e8f5e9;border-radius:4px;font-size:10px;color:var(--su)">当前未发现重大风险项。</div>'}
+  else{h+='<ol style="font-size:10px;padding-left:20px;margin:0">'+risks.map(function(r){return'<li style="margin-bottom:6px;color:var(--d)">'+r+'</li>'}).join('')+'</ol>';}
+
+  h+='<div style="margin-top:12px;padding:10px;background:#fafbfc;border-radius:4px;font-size:10px">';
+  h+='<strong>综合建议：</strong>';
+  if(matPct<60)h+='材料定稿率偏低（'+matPct+'%），建议加快编制进度，确保审计进场前材料定稿率≥80%。';
+  else if(indPct<50)h+='指标阶段完成率偏低（'+indPct+'%），建议优先推动存在断点和实施阶段的指标验证工作。';
+  else if(msOv.length)h+='存在逾期里程碑，建议立即启动赶工计划，重新评估后续节点可行性。';
+  else h+='项目整体推进正常，建议按计划继续推进材料定稿和指标闭环。';
+  h+='</div>';
+
+  // Footer
+  h+='<div style="text-align:center;padding-top:16px;margin-top:16px;border-top:1px solid var(--bd);font-size:9px;color:var(--t3)">本报告由验收审计智能合规管理系统自动生成 | 数据截至 '+td+'</div>';
+
+  h+='</div>';
+  document.getElementById('reportContent').innerHTML=h;
 }
 
 // ============ TEMPLATES ============
@@ -693,6 +797,122 @@ function wizCreate(){
   Object.entries(WS.data.mods||{}).forEach(function(e){var mod=e[0],names=e[1];if(!names||!names.length)return;names.forEach(function(n){if(n==='新指标')return;proj.indicators.push({id:uid(),name:n,mod:mod,target:'',owner:persons.length?persons[0].id:'',deadline:ad(180),priority:'normal',dept:depts.length?depts[0].id:'',linkedDocs:[],linkedMats:[],stages:{requirement:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},design:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},implementation:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},verification:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]}})})});
   (WS.data.matCats||[]).forEach(function(cid){var names=WS.data.matNames[cid]||['材料'];names.forEach(function(n){if(n==='新材料')return;proj.materials.push({id:uid(),name:n,cat:cid,rule:'',owner:'',deadline:ad(90),wf:'pending',ver:1,hist:[],linkedInds:[],linkedDocs:[]})})});
   D.projects.push(proj);D.activeProjectId=proj.id;save();closeWiz();showV('dash');
+}
+
+
+// ==== PAGE-SPECIFIC AI FUNCTIONS ====
+// Docs helpers
+function aiAnalyzeDoc(id){var p=AP();if(!p)return;var d=p.deliverables.find(function(dd){return dd.id===id});if(!d)return;
+  var linked=(d.linked||[]).map(function(iid){return p.indicators.find(function(i){return i.id===iid})}).filter(Boolean);
+  var owner=p.org?.persons?.find(function(pp){return pp.id===d.owner});
+  var msg='<strong>'+esc(d.name)+'</strong><br>类型：'+d.type+' | 版本：'+d.ver+' | 状态：'+(d.status==='finalized'?'已定稿':'草稿')+'<br>';
+  msg+='责任人：'+(owner?owner.name+' ('+dn(p,owner.dept)+')':'未指定')+'<br>';
+  msg+='关联指标：'+linked.length+'项<br>';
+  linked.forEach(function(i){var ks=['requirement','design','implementation','verification','closure'];var vs=ks.map(function(k){var s=i.stages[k];return s&&s.wf==='approved'?1:0});var done=vs.filter(function(v){return v===1}).length;msg+='· '+esc(i.name)+' ['+done+'/5]'+'<br>'});
+  if(d.status!=='finalized')msg+='<span style="color:var(--w)">建议：尽快完成交付物定稿，驱动关联指标闭环推进。</span>';
+  else msg+='<span style="color:var(--su)">该交付物已定稿，可作为审计证据。</span>';
+  addAIMsg(msg);
+  // Also show details
+  var h='<strong>'+esc(d.name)+'</strong><br>'+d.type+' · '+d.ver+' · '+(d.status==='finalized'?'已定稿':'草稿')+'<br>关联指标：'+linked.length+'项';
+  document.getElementById('aiParseResult').innerHTML=h;
+}
+function aiDocsStats(){
+  var p=AP();if(!p)return;var docs=p.deliverables||[];
+  var byType={};docs.forEach(function(d){if(!byType[d.type])byType[d.type]=[];byType[d.type].push(d)});
+  var msg='<strong>交付物健康度检查</strong><br>';
+  msg+='总数：'+docs.length+' | 定稿：'+docs.filter(function(d){return d.status==='finalized'}).length+'<br><br>';
+  Object.keys(byType).forEach(function(t){var items=byType[t];msg+=t+'：'+items.length+'项 (定稿'+items.filter(function(d){return d.status==='finalized'}).length+'/'+items.length+')<br>'});
+  var wl=docs.filter(function(d){return (d.linked||[]).length>0}).length;
+  msg+='<br>已关联指标：'+wl+'/'+docs.length+' 份 ('+Math.round(wl/docs.length*100)+'%)';
+  addAIMsg(msg);
+}
+
+// Org helpers
+function aiAnalyzeDept(id){var p=AP();if(!p)return;var d=(p.org?.depts||[]).find(function(dd){return dd.id===id});if(!d)return;
+  var members=(p.org?.persons||[]).filter(function(pp){return pp.dept===id});
+  var docs=p.deliverables||[];
+  var memberDocs=docs.filter(function(dd){return members.some(function(m){return m.id===dd.owner})});
+  var msg='<strong>部门：'+esc(d.name)+'</strong> ('+(d.status==='active'?'正常':d.status==='inactive'?'已撤销':'已更名')+')<br>';
+  msg+='成员：'+members.length+'人<br>';
+  msg+='负责交付物：'+memberDocs.length+'份';
+  if(d.status!=='active')msg+='<br><span style="color:var(--d)">⚠ 该部门已不可用，相关任务需重新分配</span>';
+  addAIMsg(msg);
+}
+function aiAnalyzePerson(id){var p=AP();if(!p)return;var pp=(p.org?.persons||[]).find(function(ppp){return ppp.id===id});if(!pp)return;
+  var docs=(p.deliverables||[]).filter(function(d){return d.owner===id});
+  var inds=(p.indicators||[]).filter(function(i){return i.owner===id});
+  var msg='<strong>人员：'+esc(pp.name)+'</strong> ('+(pp.status==='active'?'在职':pp.status==='inactive'?'离职':'')+')<br>';
+  msg+='部门：'+dn(p,pp.dept)+' | 角色：'+(pp.role||'未指定')+'<br>';
+  msg+='交付物：'+docs.length+'份 (定稿'+docs.filter(function(d){return d.status==='finalized'}).length+')<br>';
+  msg+='指标：'+inds.length+'项';
+  if(pp.status!=='active')msg+='<br><span style="color:var(--d)">⚠ 该人员已离职，名下任务需移交</span>';
+  addAIMsg(msg);
+}
+function aiOrgScan(){var p=AP();if(!p)return;
+  var persons=p.org?.persons||[],docs=p.deliverables||[],inds=p.indicators||[];
+  var msg='<strong>人员工作量分析</strong><br>';
+  persons.filter(function(pp){return pp.status==='active'}).forEach(function(pp){
+    var dc=docs.filter(function(d){return d.owner===pp.id}).length;
+    var ic=inds.filter(function(i){return i.owner===pp.id}).length;
+    if(dc||ic)msg+=pp.name+'：'+dc+'交付物 + '+ic+'指标<br>';
+  });
+  if(msg.indexOf('<br>')<0)msg+='暂无可统计数据';
+  addAIMsg(msg);
+}
+function aiOrgRisk(){var p=AP();if(!p)return;
+  var docs=p.deliverables||[],orph=docs.filter(function(d){var pp=(p.org?.persons||[]).find(function(ppp){return ppp.id===d.owner});return pp&&pp.status==='inactive'});
+  var inactiveDs=(p.org?.depts||[]).filter(function(d){return d.status!=='active'});
+  var msg='<strong>组织风险检查</strong><br>';
+  if(orph.length)msg+=orph.length+'份交付物归属离职人员<br>'+orph.map(function(d){return '· '+d.name}).join('<br>')+'<br>';
+  if(inactiveDs.length)msg+=inactiveDs.length+'个部门已撤销/更名<br>';
+  if(!orph.length&&!inactiveDs.length)msg+='未发现组织风险';
+  addAIMsg(msg);
+}
+
+// Review helpers
+function aiReviewBatch(){var p=AP();if(!p)return;var mats=p.materials||[];
+  var sub=mats.filter(function(m){return m.wf==='submitted'}),rej=mats.filter(function(m){return m.wf==='rejected'});
+  var msg='<strong>批量审核建议</strong><br>';
+  msg+='待审核：'+sub.length+'项<br>';
+  if(sub.length){msg+='可快速通过项：'+sub.filter(function(m){return m.deadline&&m.deadline>=nw()}).length+'（未逾期）<br>';}
+  msg+='需重做：'+rej.length+'项<br>';
+  if(rej.length)msg+='建议优先处理：'+rej.map(function(m){return m.name}).join('、')+'<br>';
+  msg+='<span style="font-size:9px;color:var(--t3)">建议操作路径：先处理逾期项 -> 退回重做项 -> 正常审核项</span>';
+  addAIMsg(msg);
+}
+function aiReviewRisk(){var p=AP();if(!p)return;var mats=p.materials||[];
+  var rej=mats.filter(function(m){return m.wf==='rejected'});
+  if(!rej.length){addAIMsg('无驳回项，风险可控');return}
+  var msg='<strong>驳回项风险评估</strong><br>';
+  rej.forEach(function(m){msg+='<strong>'+esc(m.name)+'</strong>：'+esc(m.rjReason||'未填写原因')+'<br>建议：修正后重新提交审核<br><br>'});
+  msg+='<span style="color:var(--w)">驳回项共'+rej.length+'项，需在审计进场前全部整改完成</span>';
+  addAIMsg(msg);
+}
+
+// Gantt helpers
+function aiGanttRisk(){var p=AP();if(!p)return;var ms=p.milestones||[],td=nw();
+  var ov=ms.filter(function(m){return !m.ad&&m.pd<td});
+  if(!ov.length){addAIMsg('无逾期里程碑，进度正常');return}
+  var msg='<strong>逾期影响分析</strong><br>';
+  ov.forEach(function(m){var days=Math.floor((new Date(td)-new Date(m.pd))/86400000);msg+=m.n+'：逾期'+days+'天 ('+m.pd+')<br>'});
+  var nextOpen=ms.filter(function(m){return !m.ad&&m.pd>=td}).sort(function(a,b){return a.pd.localeCompare(b.pd)})[0];
+  if(nextOpen)msg+='<br>下一个到期节点：'+nextOpen.n+' ('+nextOpen.pd+')';
+  msg+='<br><span style="color:var(--w)">建议：立即调整工作计划，评估后续节点赶工可行性</span>';
+  addAIMsg(msg);
+}
+function aiGanttPath(){var p=AP();if(!p)return;var ms=p.milestones||[],td=nw();
+  var done=ms.filter(function(m){return m.ad}).length;
+  var total=ms.length;
+  var remain=ms.filter(function(m){return !m.ad}).sort(function(a,b){return a.pd.localeCompare(b.pd)});
+  var msg='<strong>关键路径建议</strong><br>';
+  msg+='已完成：'+done+'/'+total+' ('+Math.round(done/total*100)+'%)<br>';
+  if(remain.length){
+    msg+='剩余节点（按计划日期排序）：<br>';
+    remain.forEach(function(m){msg+=m.n+' -> '+m.pd+'<br>'});
+    var gap=Math.ceil((new Date(remain[remain.length-1].pd)-new Date(td))/86400000);
+    msg+='<br>距最后节点还有'+gap+'天';
+  }
+  addAIMsg(msg);
 }
 
 // ==== WIZARD SAFE HANDLERS (data-attr, no quote injection) ====
@@ -896,7 +1116,8 @@ function updateAI(){
   function sec(t,c,o){return'<div class="ai-section"><div class="ai-shead ai-tgl">'+t+'</div><div class="ai-sbody"'+(o===false?' style="display:none"':'')+'>'+c+'</div></div>'}
   const td=nw();
   if(cv==='docs'){
-    body.innerHTML=sec('文档解析器','<select id="aiDocSel" style="width:100%;padding:4px;font-size:9.5px;margin-bottom:6px"><option value="">-- 选择交付物 --</option>'+docs.map(d=>'<option value="'+d.id+'">'+esc(d.name)+'</option>').join('')+'</select><button class="btn btn-xs" style="width:100%;background:var(--ai);color:#fff;margin-bottom:4px" onclick="aiParseDoc()">解析文档</button><button class="btn btn-xs btn-s" style="width:100%" onclick="aiBatchParse()">全量扫描</button><div id="aiParseResult" style="font-size:9.5px;margin-top:6px;color:var(--t3)">选择交付物后点击解析，AI提取技术指标和合规要点。</div>');
+    body.innerHTML=sec('文档解析器','<select id="aiDocSel" style="width:100%;padding:4px;font-size:9.5px;margin-bottom:6px"><option value="">-- 选择交付物 --</option>'+docs.map(d=>'<option value="'+d.id+'">'+esc(d.name)+'</option>').join('')+'</select><button class="btn btn-xs" style="width:100%;background:var(--ai);color:#fff;margin-bottom:4px" onclick="aiParseDoc()">解析文档</button><button class="btn btn-xs btn-s" style="width:100%" onclick="aiBatchParse()">全量扫描</button><div id="aiParseResult" style="font-size:9.5px;margin-top:6px;color:var(--t3)">选择交付物后点击解析，AI提取技术指标和合规要点。</div>')+
+      sec('交付物统计','<button class="btn btn-xs btn-s" style="width:100%" onclick="aiDocsStats()">交付物健康度检查</button><div id="aiDocsStatsResult" style="font-size:9px;margin-top:3px;color:var(--t3)">分析交付物定稿率和归属情况</div>',false);
   }
   else if(cv==='indicators'){
     body.innerHTML=sec('智能检查','<select id="aiIndSel" style="width:100%;padding:4px;font-size:9.5px;margin-bottom:4px"><option value="">-- 选择指标 --</option>'+inds.map(i=>'<option value="'+i.id+'">'+esc(i.name)+'</option>').join('')+'</select><button class="btn btn-xs" style="width:100%;background:var(--ai);color:#fff;margin-bottom:3px" onclick="aiCheckInd()">检查指标状态</button><button class="btn btn-xs btn-s" style="width:100%;margin-bottom:3px" onclick="aiCheckAll()">批量扫描</button><div id="aiIndResult" style="font-size:9.5px;margin-top:4px;color:var(--t3)">选择指标后点击检查，AI评估当前阶段并给出闭环建议。</div>')+
@@ -909,15 +1130,19 @@ function updateAI(){
   }
   else if(cv==='review'){
     const sub=mats.filter(m=>m.wf==='submitted'),rej=mats.filter(m=>m.wf==='rejected');
-    body.innerHTML=sec('审核队列','待审核：'+sub.length+'项 · 需重做：'+rej.length+'项'+(rej.length?'<br><span style="color:var(--d)">'+rej.map(m=>m.name).join('、')+'</span>':''));
+    body.innerHTML=sec('审核队列','待审核：'+sub.length+'项 · 需重做：'+rej.length+'项'+(rej.length?'<br><span style="color:var(--d)">'+rej.map(m=>m.name).join('、')+'</span>':''))+
+      sec('智能审核','<button class="btn btn-xs btn-s" style="width:100%;margin-bottom:3px" onclick="aiReviewBatch()">批量审核建议</button><button class="btn btn-xs btn-s" style="width:100%" onclick="aiReviewRisk()">驳回项风险评估</button><div id="aiReviewResult" style="font-size:9px;margin-top:3px;color:var(--t3)">AI审核辅助功能</div>',false);
   }
   else if(cv==='gantt'){
     const ms=p.milestones||[],done=ms.filter(m=>m.ad).length,ov=ms.filter(m=>!m.ad&&m.pd<td),next=ms.filter(m=>!m.ad&&m.pd>=td).sort((a,b)=>a.pd.localeCompare(b.pd))[0];
-    body.innerHTML=sec('进度',done+'/'+ms.length+'完成'+(ov.length?'<br><span style="color:var(--d)">逾期：'+ov.map(m=>m.n).join('、')+'</span>':'')+(next?'<br>下一节点：'+next.n+'('+next.pd+')':''));
+    body.innerHTML=sec('进度总览',done+'/'+ms.length+'完成 · 完成率'+Math.round(done/ms.length*100)+'%'+(ov.length?'<br><span style="color:var(--d)">⚠ 逾期：'+ov.map(m=>m.n).join('、')+'</span>':'')+(next?'<br>下一节点：'+next.n+'('+next.pd+')':''))+
+      sec('风险分析','<button class="btn btn-xs btn-s" style="width:100%;margin-bottom:3px" onclick="aiGanttRisk()">逾期影响分析</button><button class="btn btn-xs btn-s" style="width:100%" onclick="aiGanttPath()">关键路径建议</button><div id="aiGanttResult" style="font-size:9px;margin-top:3px;color:var(--t3)">里程碑智能分析</div>',false);
   }
   else if(cv==='org'){
     const act=(p.org?.persons||[]).filter(pp=>pp.status==='active'),orph=docs.filter(d=>{const per=(p.org?.persons||[]).find(pp=>pp.id===d.owner);return per&&per.status==='inactive'});
-    body.innerHTML=sec('人员','在职：'+act.length+'人'+(orph.length?'<br><span style="color:var(--d)">⚠ '+orph.length+'份交付物归属离职人员</span>':''));
+    const inactiveDs=(p.org?.depts||[]).filter(d=>d.status!=='active');
+    body.innerHTML=sec('组织概览','在职：'+act.length+'人 · 部门：'+(p.org?.depts||[]).length+'个'+(orph.length?'<br><span style="color:var(--d)">⚠ '+orph.length+'份交付物归属离职人员</span>':'')+(inactiveDs.length?'<br><span style="color:var(--d)">⚠ '+inactiveDs.length+'个部门已撤销/更名</span>':''))+
+      sec('智能分析','<button class="btn btn-xs btn-s" style="width:100%;margin-bottom:3px" onclick="aiOrgScan()">人员工作量分析</button><button class="btn btn-xs btn-s" style="width:100%" onclick="aiOrgRisk()">组织风险检查</button><div id="aiOrgResult" style="font-size:9px;margin-top:3px;color:var(--t3)">点击按钮进行组织架构智能分析</div>',false);
   }
   else{
     const indApp=inds.reduce((s,i)=>s+Object.values(i.stages||{}).filter(st=>st.wf==='approved').length,0),matAp=mats.filter(m=>m.wf==='approved').length;
