@@ -295,34 +295,14 @@ const TPL={
 };
 
 // ============ STORAGE ============
-const SK='audit_v7';let D=null;
+const SK='audit_v9';let D=null;
 function nw(){return new Date().toISOString().slice(0,10)}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 function AP(){return D?D.projects.find(p=>p.id===D.activeProjectId):null}
 
 function defaults(){
   const bd=new Date('2026-01-01');function ad(n){const d=new Date(bd);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
-  const mkSt=()=>({requirement:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[],reviewer:'',expertOpinion:'',opinionClosed:''},design:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[],reviewer:'',expertOpinion:'',opinionClosed:''},implementation:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[],reviewer:'',expertOpinion:'',opinionClosed:''},verification:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[],reviewer:'',expertOpinion:'',opinionClosed:''},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[],reviewer:'',expertOpinion:'',opinionClosed:''},oHistory:[]});
-
-  // ===== 创建阶段数据（带完整历史） =====
-  function mkApprovedStage(wf,date,op,desc,evid,reviewer){
-    return {wf:wf,desc:desc||'',evid:evid||'',date:date,op:op||'',reviewer:reviewer||'',expertOpinion:'',opinionClosed:'',ver:1,hist:[{s:wf,desc:desc||'',date:date,op:op||'',ver:1}]};
-  }
-  function mkRejectedStage(wf,date,op,desc,reason,reviewer){
-    return {wf:wf,desc:desc||'',evid:'',date:date,op:op||'',reviewer:reviewer||'',expertOpinion:'',opinionClosed:'',ver:2,hist:[{s:'submitted',desc:'初次提交',date:ad(date=='implementation'?180:ad_idx(date)),op:op||'',ver:1},{s:'rejected',desc:desc||'',date:date,op:op||'',ver:2,rjReason:reason}]};
-  }
-
-  // Use a helper for creating approved stages with specific dates
-  function app(dateOffset,desc,evid,reviewer){
-    return {wf:'approved',desc:desc||'',evid:evid||'',date:ad(dateOffset),op:'P2',reviewer:reviewer||'P1',expertOpinion:'',opinionClosed:'',ver:1,hist:[{s:'approved',desc:desc||'',date:ad(dateOffset),op:'P2',ver:1}]};
-  }
-  function rej(dateOffset,desc,reason){
-    return {wf:'rejected',desc:desc||'',evid:'',date:ad(dateOffset),op:'P2',reviewer:'P1',expertOpinion:'',opinionClosed:'',ver:2,hist:[{s:'submitted',desc:'提交审核',date:ad(dateOffset-5),op:'P2',ver:1},{s:'rejected',desc:desc||'',date:ad(dateOffset),op:'P1',ver:2,rjReason:reason}]};
-  }
-  function draft(dateOffset,desc){
-    return {wf:'draft',desc:desc||'',evid:'',date:ad(dateOffset),op:'P2',reviewer:'',expertOpinion:'',opinionClosed:'',ver:1,hist:[]};
-  }
-
+  const mkSt=()=>({requirement:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},design:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},implementation:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},verification:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]});
   return {projects:[{
     id:'P1',name:'XX军工集团数控车间智能化改造项目',tpl:'技改项目',sd:ad(0),ed:ad(390),
     org:{depts:[
@@ -342,120 +322,60 @@ function defaults(){
       {id:'P6',name:'孙建国',dept:'D6',role:'基建管理员',status:'inactive',hist:[{note:'2025年3月退休',date:'2025-03-31'}],note:'已退休'}
     ]},
     deliverables:[
-      {id:'DL01',name:'招标文件-数控车间技术改造要求',type:'招标文件',ver:'V1.0',file:'数控车间改造招标技术要求.pdf',owner:'P1',status:'finalized',desc:'含38项技术指标要求',linked:['I01','I02','I03','I04','I05','I06','I07','I08'],hist:[{ver:'V1.0',date:ad(5),op:'P1',note:'初始版本'}]},
-      {id:'DL02',name:'投标技术方案-数控车间改造',type:'技术协议',ver:'V3.1',file:'数控车间改造投标技术方案_V3.1.docx',owner:'P2',status:'finalized',desc:'针对38项指标逐项响应',linked:['I01','I02','I03','I04','I05','I06','I07','I08'],hist:[{ver:'V1.0',date:ad(8),op:'P2',note:'初版编制'},{ver:'V2.0',date:ad(45),op:'P2',note:'专家评审后修订'},{ver:'V3.0',date:ad(75),op:'P2',note:'增加疲劳寿命分析'},{ver:'V3.1',date:ad(88),op:'P2',note:'格式规范化定稿'}]},
-      {id:'DL03',name:'数控设备采购合同',type:'合同',ver:'V1.0',file:'设备采购合同-数控车间.pdf',owner:'P1',status:'finalized',desc:'总价1180万元',linked:[],hist:[{ver:'V1.0',date:ad(105),op:'P1',note:'双方签章生效'}]},
+      {id:'DL01',name:'招标文件-数控车间技术改造要求',type:'招标文件',ver:'V1.0',file:'数控车间改造招标技术要求.pdf',owner:'P1',status:'finalized',desc:'含38项技术指标',linked:['I01','I02','I03','I04','I05','I06','I07','I08'],hist:[{ver:'V1.0',date:ad(5),op:'P1',note:'初始版本'}]},
+      {id:'DL02',name:'投标技术方案-数控车间改造',type:'技术协议',ver:'V3.1',file:'投标方案_V3.1.docx',owner:'P2',status:'finalized',desc:'逐项响应38项指标',linked:['I01','I02','I03','I04','I05','I06','I07','I08'],hist:[{ver:'V1.0',date:ad(8),op:'P2',note:'初版'},{ver:'V2.0',date:ad(45),op:'P2',note:'专家修订'},{ver:'V3.0',date:ad(75),op:'P2',note:'增加分析'},{ver:'V3.1',date:ad(88),op:'P2',note:'定稿'}]},
+      {id:'DL03',name:'数控设备采购合同',type:'合同',ver:'V1.0',file:'采购合同.pdf',owner:'P1',status:'finalized',desc:'总价1180万元',linked:[],hist:[{ver:'V1.0',date:ad(105),op:'P1',note:'签章生效'}]},
       {id:'DL04',name:'五轴加工中心安装调试记录',type:'交付物',ver:'V1.0',file:'',owner:'P5',status:'draft',desc:'2026年5月到货安装',linked:['I01','I02','I03','I04'],hist:[]},
       {id:'DL05',name:'技术指标验证测试报告',type:'交付物',ver:'V1.0',file:'',owner:'P3',status:'draft',desc:'待编制',linked:['I01','I02','I03','I04'],hist:[]},
-      {id:'DL06',name:'旧设备资产处置清单',type:'交付物',ver:'V1.0',file:'',owner:'P6',status:'draft',desc:'原归属孙建国（已退休），需移交',linked:[],hist:[]}
+      {id:'DL06',name:'旧设备资产处置清单',type:'交付物',ver:'V1.0',file:'',owner:'P6',status:'draft',desc:'需移交',linked:[],hist:[]}
     ],
     indicators:[
-      // M5: 设备采购与验收
-      {id:'I01',name:'机床定位精度（X/Y/Z轴）',mod:'M5',target:'重复定位精度≤0.005mm',owner:'P2',deadline:ad(180),priority:'critical',dept:'D2',linkedDocs:['DL01','DL02'],linkedMats:['M11'],
-        stages:{
-          requirement:app(15,'依据招标文件3.2.1条款，精度要求已明确','招标文件P23技术规格表','P1'),
-          design:app(45,'采用海德汉光栅尺+全闭环控制方案','投标方案V3.1第3.2节','P1'),
-          implementation:app(145,'设备到厂安装完成，光栅尺已校准','安装调试记录DL04','P1'),
-          verification:app(178,'激光干涉仪实测：X轴0.003mm Y轴0.004mm Z轴0.002mm 满足指标','检测报告编号JC-2026-047','P1'),
-          closure:{wf:'approved',desc:'三级评审通过，纳入设备档案',evid:'闭环评审记录表',date:ad(182),op:'P2',reviewer:'P1',expertOpinion:'王教授：检测方法符合GB/T17421标准\n李高工：三轴精度均优于指标要求',opinionClosed:'已闭环',ver:1,hist:[{s:'approved',desc:'三级评审通过',date:ad(182),op:'P2',ver:1}]},
-          oHistory:[]
-        }
-      },
-      {id:'I02',name:'主轴转速范围与温升',mod:'M5',target:'50-8000rpm，连续运转2h温升≤25℃',owner:'P2',deadline:ad(180),priority:'critical',dept:'D2',linkedDocs:['DL01','DL02'],linkedMats:['M11'],
-        stages:{
-          requirement:app(15,'招标文件3.2.3条款：主轴转速50-8000rpm','招标文件P25','P1'),
-          design:app(48,'选用电主轴直驱方案，额定功率30kW','投标方案V3.1第3.3节','P1'),
-          implementation:app(148,'电主轴已安装，冷却系统管路接通','安装调试记录DL04','P1'),
-          verification:app(180,'8000rpm连续运转2小时，实测温升22.3℃ 满足','检测报告JC-2026-051','P1'),
-          closure:{wf:'draft',desc:'闭环报告编制中',evid:'',date:ad(185),op:'P2',reviewer:'',expertOpinion:'',opinionClosed:'',ver:1,hist:[]},
-          oHistory:[]
-        }
-      },
-      {id:'I03',name:'自动换刀时间',mod:'M5',target:'刀对刀换刀时间≤2.5秒',owner:'P5',deadline:ad(185),priority:'high',dept:'D5',linkedDocs:['DL01','DL02'],linkedMats:['M11'],
-        stages:{
-          requirement:app(15,'招标文件3.4.1条款','招标文件P27','P1'),
-          design:app(50,'采用双臂式ATC刀库，理论换刀时间2.0秒','投标方案第3.5节','P1'),
-          implementation:app(152,'刀库安装到位，PLC程序已写入','赵刚','P1'),
-          verification:{wf:'draft',desc:'换刀测试进行中，初次测试2.8秒未达标，需优化PLC时序',evid:'',date:ad(188),op:'P5',reviewer:'',expertOpinion:'',opinionClosed:'',ver:1,hist:[]},
-          closure:{wf:'pending',desc:'',evid:'',date:'',op:'',reviewer:'',expertOpinion:'',opinionClosed:'',ver:1,hist:[]},
-          oHistory:[]
-        }
-      },
-      {id:'I04',name:'加工件表面粗糙度',mod:'M5',target:'Ra≤1.6μm（45#钢端铣）',owner:'P2',deadline:ad(190),priority:'high',dept:'D2',linkedDocs:['DL01','DL02'],linkedMats:['M11'],
-        stages:{
-          requirement:app(15,'招标文件3.5.2条款','招标文件P29','P1'),
-          design:app(52,'选用CBN刀具+切削参数优化','投标方案第3.6节','P1'),
-          implementation:rej(165,'切削试验参数记录不全，未附粗糙度仪校准证书','校准证书缺失，需补充'),
-          verification:{wf:'pending',desc:'',evid:'',date:'',op:'',reviewer:'',expertOpinion:'',opinionClosed:'',ver:1,hist:[]},
-          closure:{wf:'pending',desc:'',evid:'',date:'',op:'',reviewer:'',expertOpinion:'',opinionClosed:'',ver:1,hist:[]},
-          oHistory:[]
-        }
-      },
+      // M5: 设备采购与验收 - I01 已闭环
+      {id:'I01',name:'机床定位精度（X/Y/Z轴）',mod:'M5',target:'重复定位精度<=0.005mm',owner:'P2',deadline:ad(180),priority:'critical',dept:'D2',linkedDocs:['DL01','DL02'],linkedMats:['M11'],
+        stages:{requirement:{wf:'approved',desc:'招标文件3.2.1条款明确',evid:'招标文件P23',date:ad(15),op:'P2',ver:1,hist:[{s:'approved',desc:'招标文件3.2.1条款明确',date:ad(15),op:'P2',ver:1}]},design:{wf:'approved',desc:'海德汉光栅尺+全闭环控制方案',evid:'投标方案V3.1第3.2节',date:ad(45),op:'P2',ver:1,hist:[{s:'approved',desc:'海德汉光栅尺+全闭环控制方案',date:ad(45),op:'P2',ver:1}]},implementation:{wf:'approved',desc:'设备到厂安装完成，光栅尺已校准',evid:'安装调试记录DL04',date:ad(145),op:'P5',ver:1,hist:[{s:'approved',desc:'光栅尺已校准',date:ad(145),op:'P5',ver:1}]},verification:{wf:'approved',desc:'激光干涉仪实测 X0.003 Y0.004 Z0.002mm 满足',evid:'检测报告JC-2026-047',date:ad(178),op:'P3',ver:1,hist:[{s:'approved',desc:'实测精度满足',date:ad(178),op:'P3',ver:1}]},closure:{wf:'approved',desc:'三级评审通过，纳入设备档案',evid:'闭环评审记录表',date:ad(182),op:'P2',ver:1,hist:[{s:'approved',desc:'三级评审通过',date:ad(182),op:'P2',ver:1}]},oHistory:[]}},
+      // I02 进行中-验证通过待闭环
+      {id:'I02',name:'主轴转速范围与温升',mod:'M5',target:'50-8000rpm 连续2h温升<=25度',owner:'P2',deadline:ad(180),priority:'critical',dept:'D2',linkedDocs:['DL01','DL02'],linkedMats:['M11'],
+        stages:{requirement:{wf:'approved',desc:'招标文件3.2.3条款',evid:'招标文件P25',date:ad(15),op:'P2',ver:1,hist:[{s:'approved',desc:'招标文件3.2.3条款',date:ad(15),op:'P2',ver:1}]},design:{wf:'approved',desc:'电主轴直驱方案 30kW',evid:'投标方案V3.1第3.3节',date:ad(48),op:'P2',ver:1,hist:[{s:'approved',desc:'电主轴直驱方案',date:ad(48),op:'P2',ver:1}]},implementation:{wf:'approved',desc:'电主轴已安装 冷却系统管路接通',evid:'安装调试记录DL04',date:ad(148),op:'P5',ver:1,hist:[{s:'approved',desc:'电主轴已安装',date:ad(148),op:'P5',ver:1}]},verification:{wf:'approved',desc:'8000rpm连续2h 实测温升22.3度 满足',evid:'检测报告JC-2026-051',date:ad(180),op:'P3',ver:1,hist:[{s:'approved',desc:'温升22.3度满足',date:ad(180),op:'P3',ver:1}]},closure:{wf:'draft',desc:'闭环报告编制中',evid:'',date:ad(185),op:'P2',ver:1,hist:[]},oHistory:[]}},
+      // I03 验证未达标
+      {id:'I03',name:'自动换刀时间',mod:'M5',target:'刀对刀换刀时间<=2.5秒',owner:'P5',deadline:ad(185),priority:'high',dept:'D5',linkedDocs:['DL01','DL02'],linkedMats:['M11'],
+        stages:{requirement:{wf:'approved',desc:'招标文件3.4.1条款',evid:'招标文件P27',date:ad(15),op:'P2',ver:1,hist:[{s:'approved',desc:'招标文件3.4.1条款',date:ad(15),op:'P2',ver:1}]},design:{wf:'approved',desc:'双臂式ATC刀库 理论换刀2.0秒',evid:'投标方案第3.5节',date:ad(50),op:'P2',ver:1,hist:[{s:'approved',desc:'双臂式ATC刀库',date:ad(50),op:'P2',ver:1}]},implementation:{wf:'approved',desc:'刀库安装到位 PLC程序已写入',evid:'赵刚',date:ad(152),op:'P5',ver:1,hist:[{s:'approved',desc:'刀库安装到位',date:ad(152),op:'P5',ver:1}]},verification:{wf:'draft',desc:'初次测试2.8秒未达标 需优化PLC时序',evid:'',date:ad(188),op:'P5',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]}},
+      // I04 实施被驳回
+      {id:'I04',name:'加工件表面粗糙度',mod:'M5',target:'Ra<=1.6um 45钢端铣',owner:'P2',deadline:ad(190),priority:'high',dept:'D2',linkedDocs:['DL01','DL02'],linkedMats:['M11'],
+        stages:{requirement:{wf:'approved',desc:'招标文件3.5.2条款',evid:'招标文件P29',date:ad(15),op:'P2',ver:1,hist:[{s:'approved',desc:'招标文件3.5.2条款',date:ad(15),op:'P2',ver:1}]},design:{wf:'approved',desc:'CBN刀具+切削参数优化',evid:'投标方案第3.6节',date:ad(52),op:'P2',ver:1,hist:[{s:'approved',desc:'CBN刀具方案',date:ad(52),op:'P2',ver:1}]},implementation:{wf:'rejected',desc:'切削试验参数记录不全 未附粗糙度仪校准证书',evid:'',date:ad(165),op:'P1',ver:2,hist:[{s:'submitted',desc:'初次提交',date:ad(160),op:'P2',ver:1},{s:'rejected',desc:'校准证书缺失',date:ad(165),op:'P1',ver:2}]},verification:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]}},
       // M7: 财务决算
       {id:'I05',name:'项目总投资控制',mod:'M7',target:'不超过批复概算1200万元',owner:'P4',deadline:ad(300),priority:'critical',dept:'D4',linkedDocs:['DL03'],linkedMats:['M12','M13'],
-        stages:{
-          requirement:app(20,'可研批复明确总投资≤1200万元','可研批复文件','P1'),
-          design:app(55,'分项预算已编制：设备980万 安装120万 其他100万','概算明细表','P1'),
-          implementation:app(160,'已支出1050万，剩余150万。其中设备960万','财务支出台账','P1'),
-          verification:{wf:'draft',desc:'待全部支出完成后编制竣工结算','',date:ad(290),op:'P4',reviewer:'',expertOpinion:'',opinionClosed:'',ver:1,hist:[]},
-          closure:{wf:'pending',desc:'',evid:'',date:'',op:'',reviewer:'',expertOpinion:'',opinionClosed:'',ver:1,hist:[]},
-          oHistory:[]
-        }
-      },
+        stages:{requirement:{wf:'approved',desc:'可研批复明确<=1200万',evid:'可研批复文件',date:ad(20),op:'P4',ver:1,hist:[{s:'approved',desc:'可研批复明确',date:ad(20),op:'P4',ver:1}]},design:{wf:'approved',desc:'分项预算:设备980万 安装120万 其他100万',evid:'概算明细表',date:ad(55),op:'P4',ver:1,hist:[{s:'approved',desc:'分项预算编制',date:ad(55),op:'P4',ver:1}]},implementation:{wf:'approved',desc:'已支出1050万 剩余150万',evid:'财务支出台账',date:ad(160),op:'P4',ver:1,hist:[{s:'approved',desc:'已支出1050万',date:ad(160),op:'P4',ver:1}]},verification:{wf:'draft',desc:'待全部支出完成后编制竣工结算',evid:'',date:ad(290),op:'P4',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]}},
       // M8: 竣工验收
-      {id:'I06',name:'产能提升指标',mod:'M8',target:'改造后年产能≥12000件（原9000件，提升≥33%）',owner:'P5',deadline:ad(350),priority:'critical',dept:'D5',linkedDocs:['DL01','DL02'],linkedMats:['M17'],
-        stages:{
-          requirement:app(18,'招标文件1.2条款：产能提升≥30%','招标文件P5','P1'),
-          design:app(55,'通过增加双工位+自动上下料实现产能目标','投标方案第4.1节','P1'),
-          implementation:{wf:'draft',desc:'设备安装完成，待联调联试',evid:'',date:ad(190),op:'P5',reviewer:'',expertOpinion:'',opinionClosed:'',ver:1,hist:[]},
-          verification:{wf:'pending',desc:'',evid:'',date:'',op:'',reviewer:'',expertOpinion:'',opinionClosed:'',ver:1,hist:[]},
-          closure:{wf:'pending',desc:'',evid:'',date:'',op:'',reviewer:'',expertOpinion:'',opinionClosed:'',ver:1,hist:[]},
-          oHistory:[]
-        }
-      },
-      {id:'I07',name:'加工废品率',mod:'M8',target:'综合废品率≤0.5%（原1.2%）',owner:'P3',deadline:ad(350),priority:'high',dept:'D3',linkedDocs:['DL01'],linkedMats:['M17'],
-        stages:{
-          requirement:app(18,'招标文件1.3条款质量指标','招标文件P6','P1'),
-          design:app(58,'在线检测+SPC过程控制方案','投标方案第4.3节','P1'),
-          implementation:{wf:'pending',desc:'',evid:'',date:'',op:'',reviewer:'',expertOpinion:'',opinionClosed:'',ver:1,hist:[]},
-          verification:{wf:'pending',desc:'',evid:'',date:'',op:'',reviewer:'',expertOpinion:'',opinionClosed:'',ver:1,hist:[]},
-          closure:{wf:'pending',desc:'',evid:'',date:'',op:'',reviewer:'',expertOpinion:'',opinionClosed:'',ver:1,hist:[]},
-          oHistory:[]
-        }
-      },
-      {id:'I08',name:'综合能耗降低',mod:'M8',target:'单件能耗降低≥15%',owner:'P5',deadline:ad(350),priority:'normal',dept:'D5',linkedDocs:['DL01'],linkedMats:[],
-        stages:{
-          requirement:app(20,'招标文件1.4条款','招标文件P7','P1'),
-          design:{wf:'draft',desc:'初步方案：变频驱动+余热回收',evid:'',date:ad(80),op:'P2',reviewer:'',expertOpinion:'',opinionClosed:'',ver:1,hist:[]},
-          implementation:{wf:'pending',desc:'',evid:'',date:'',op:'',reviewer:'',expertOpinion:'',opinionClosed:'',ver:1,hist:[]},
-          verification:{wf:'pending',desc:'',evid:'',date:'',op:'',reviewer:'',expertOpinion:'',opinionClosed:'',ver:1,hist:[]},
-          closure:{wf:'pending',desc:'',evid:'',date:'',op:'',reviewer:'',expertOpinion:'',opinionClosed:'',ver:1,hist:[]},
-          oHistory:[]
-        }
-      }
+      {id:'I06',name:'产能提升指标',mod:'M8',target:'年产能>=12000件 提升>=33%',owner:'P5',deadline:ad(350),priority:'critical',dept:'D5',linkedDocs:['DL01','DL02'],linkedMats:['M18'],
+        stages:{requirement:{wf:'approved',desc:'招标文件1.2条款 产能提升>=30%',evid:'招标文件P5',date:ad(18),op:'P2',ver:1,hist:[{s:'approved',desc:'招标文件1.2条款',date:ad(18),op:'P2',ver:1}]},design:{wf:'approved',desc:'双工位+自动上下料方案',evid:'投标方案第4.1节',date:ad(55),op:'P2',ver:1,hist:[{s:'approved',desc:'双工位方案',date:ad(55),op:'P2',ver:1}]},implementation:{wf:'draft',desc:'设备安装完成 待联调联试',evid:'',date:ad(190),op:'P5',ver:1,hist:[]},verification:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]}},
+      {id:'I07',name:'加工废品率',mod:'M8',target:'综合废品率<=0.5%',owner:'P3',deadline:ad(350),priority:'high',dept:'D3',linkedDocs:['DL01'],linkedMats:['M18'],
+        stages:{requirement:{wf:'approved',desc:'招标文件1.3条款',evid:'招标文件P6',date:ad(18),op:'P2',ver:1,hist:[{s:'approved',desc:'招标文件1.3条款',date:ad(18),op:'P2',ver:1}]},design:{wf:'approved',desc:'在线检测+SPC过程控制',evid:'投标方案第4.3节',date:ad(58),op:'P2',ver:1,hist:[{s:'approved',desc:'在线检测+SPC方案',date:ad(58),op:'P2',ver:1}]},implementation:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},verification:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]}},
+      {id:'I08',name:'综合能耗降低',mod:'M8',target:'单件能耗降低>=15%',owner:'P5',deadline:ad(350),priority:'normal',dept:'D5',linkedDocs:['DL01'],linkedMats:[],
+        stages:{requirement:{wf:'approved',desc:'招标文件1.4条款',evid:'招标文件P7',date:ad(20),op:'P2',ver:1,hist:[{s:'approved',desc:'招标文件1.4条款',date:ad(20),op:'P2',ver:1}]},design:{wf:'draft',desc:'初步方案:变频驱动+余热回收',evid:'',date:ad(80),op:'P2',ver:1,hist:[]},implementation:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},verification:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]}}
     ],
     materials:[
       // C1: 立项审批类
-      {id:'M01',name:'项目建议书批复',cat:'C1',rule:'《国防科技工业固定资产投资管理办法》第十三条',owner:'P1',deadline:ad(30),wf:'approved',op:'P1',date:ad(18),ver:1,hist:[{s:'approved',desc:'集团已批复 批文号:JT-2026-0031',date:ad(18),op:'P1',ver:1}],linkedInds:[],linkedDocs:[]},
-      {id:'M02',name:'可行性研究报告及批复',cat:'C1',rule:'《国防科技工业固定资产投资管理办法》第十五条',owner:'P1',deadline:ad(50),wf:'approved',op:'P1',date:ad(35),ver:1,hist:[{s:'approved',desc:'已批复，同意投资1200万元',date:ad(35),op:'P1',ver:1}],linkedInds:[],linkedDocs:[]},
-      {id:'M03',name:'初步设计及概算批复',cat:'C1',rule:'《国防科技工业固定资产投资管理办法》第十七条',owner:'P2',deadline:ad(70),wf:'rejected',op:'P1',date:ad(72),ver:2,rjReason:'环评专篇深度不足，需补充噪声与废液处理方案',hist:[{s:'submitted',desc:'初设及概算提交',date:ad(65),op:'P2',ver:1},{s:'rejected',desc:'退回：环评专篇深度不足',date:ad(72),op:'P1',ver:2}],linkedInds:[],linkedDocs:[]},
+      {id:'M01',name:'项目建议书批复',cat:'C1',rule:'固投管理办法第十三条',owner:'P1',deadline:ad(30),wf:'approved',op:'P1',date:ad(18),ver:1,hist:[{s:'approved',desc:'集团已批复 JT-2026-0031',date:ad(18),op:'P1',ver:1}],linkedInds:[],linkedDocs:[]},
+      {id:'M02',name:'可行性研究报告及批复',cat:'C1',rule:'固投管理办法第十五条',owner:'P1',deadline:ad(50),wf:'approved',op:'P1',date:ad(35),ver:1,hist:[{s:'approved',desc:'同意投资1200万元',date:ad(35),op:'P1',ver:1}],linkedInds:[],linkedDocs:[]},
+      {id:'M03',name:'初步设计及概算批复',cat:'C1',rule:'固投管理办法第十七条',owner:'P2',deadline:ad(70),wf:'rejected',op:'P1',date:ad(72),ver:2,rjReason:'环评专篇深度不足，需补充噪声及废液处理方案',hist:[{s:'submitted',desc:'初设及概算提交',date:ad(65),op:'P2',ver:1},{s:'rejected',desc:'环评专篇深度不足',date:ad(72),op:'P1',ver:2}],linkedInds:[],linkedDocs:[]},
       // C2: 招标采购类
-      {id:'M04',name:'招标方案备案表',cat:'C2',rule:'《招标投标法》第十二条',owner:'P1',deadline:ad(80),wf:'approved',op:'P1',date:ad(75),ver:1,hist:[{s:'approved',desc:'备案通过',date:ad(75),op:'P1',ver:1}],linkedInds:[],linkedDocs:['DL01']},
-      {id:'M05',name:'评标报告及中标通知书',cat:'C2',rule:'《招标投标法》第四十条',owner:'P1',deadline:ad(100),wf:'approved',op:'P1',date:ad(98),ver:1,hist:[{s:'approved',desc:'中标单位：XX精密机械有限公司',date:ad(98),op:'P1',ver:1}],linkedInds:[],linkedDocs:[]},
+      {id:'M04',name:'招标方案备案表',cat:'C2',rule:'招标投标法第十二条',owner:'P1',deadline:ad(80),wf:'approved',op:'P1',date:ad(75),ver:1,hist:[{s:'approved',desc:'备案通过',date:ad(75),op:'P1',ver:1}],linkedInds:[],linkedDocs:['DL01']},
+      {id:'M05',name:'评标报告及中标通知书',cat:'C2',rule:'招标投标法第四十条',owner:'P1',deadline:ad(100),wf:'approved',op:'P1',date:ad(98),ver:1,hist:[{s:'approved',desc:'中标:XX精密机械有限公司',date:ad(98),op:'P1',ver:1}],linkedInds:[],linkedDocs:[]},
       {id:'M06',name:'合同备案表',cat:'C2',rule:'合同管理办法',owner:'P1',deadline:ad(110),wf:'approved',op:'P4',date:ad(108),ver:1,hist:[{s:'approved',desc:'已备案',date:ad(108),op:'P4',ver:1}],linkedInds:[],linkedDocs:['DL03']},
       // C3: 实施过程类
-      {id:'M07',name:'施工组织设计',cat:'C3',owner:'P5',deadline:ad(120),wf:'approved',op:'P2',date:ad(115),ver:1,hist:[{s:'approved',desc:'方案合理 同意实施',date:ad(115),op:'P2',ver:1}],linkedInds:[],linkedDocs:[]},
-      {id:'M08',name:'设备安装调试验收记录',cat:'C3',owner:'P5',deadline:ad(170),wf:'submitted',op:'P5',date:ad(168),ver:1,hist:[{s:'submitted',desc:'五轴加工中心等8台设备安装完成，提交审核',date:ad(168),op:'P5',ver:1}],linkedInds:['I01','I02'],linkedDocs:['DL04']},
+      {id:'M07',name:'施工组织设计',cat:'C3',owner:'P5',deadline:ad(120),wf:'approved',op:'P2',date:ad(115),ver:1,hist:[{s:'approved',desc:'方案合理同意实施',date:ad(115),op:'P2',ver:1}],linkedInds:[],linkedDocs:[]},
+      {id:'M08',name:'设备安装调试验收记录',cat:'C3',owner:'P5',deadline:ad(170),wf:'submitted',op:'P5',date:ad(168),ver:1,hist:[{s:'submitted',desc:'8台设备安装完成，提交审核',date:ad(168),op:'P5',ver:1}],linkedInds:['I01','I02'],linkedDocs:['DL04']},
       {id:'M09',name:'隐蔽工程验收记录',cat:'C3',owner:'P5',deadline:ad(130),wf:'approved',op:'P2',date:ad(128),ver:1,hist:[{s:'approved',desc:'地基及电缆沟验收合格',date:ad(128),op:'P2',ver:1}],linkedInds:[],linkedDocs:[]},
       // C4: 设备验收类
-      {id:'M10',name:'设备到货开箱验收单',cat:'C4',owner:'P3',deadline:ad(155),wf:'approved',op:'P3',date:ad(153),ver:1,hist:[{s:'approved',desc:'8台/套设备全部到货，型号数量与合同一致',date:ad(153),op:'P3',ver:1}],linkedInds:[],linkedDocs:[]},
-      {id:'M11',name:'技术指标验证报告',cat:'C4',rule:'《项目验收管理办法》第八条',owner:'P3',deadline:ad(200),wf:'draft',op:'P3',date:ad(190),ver:1,hist:[],linkedInds:['I01','I02','I03','I04'],linkedDocs:['DL05'],meeting:'指标评审会 2026-06-20 讨论I01/I02验证方法\n专家评审会 2026-07-05 审查检测数据',expertSign:'王建国教授：精度指标满足要求 ✓已签名 2026-07-05\n李伟高工：主轴温升测试需补充环境温度记录 ○待签'},
+      {id:'M10',name:'设备到货开箱验收单',cat:'C4',owner:'P3',deadline:ad(155),wf:'approved',op:'P3',date:ad(153),ver:1,hist:[{s:'approved',desc:'8台/套设备全部到货无误',date:ad(153),op:'P3',ver:1}],linkedInds:[],linkedDocs:[]},
+      {id:'M11',name:'技术指标验证报告',cat:'C4',rule:'项目验收管理办法第八条',owner:'P3',deadline:ad(200),wf:'draft',op:'P3',date:ad(190),ver:1,hist:[],linkedInds:['I01','I02','I03','I04'],linkedDocs:['DL05']
+      },
       // C5: 财务审计类
-      {id:'M12',name:'竣工结算书',cat:'C5',rule:'《基本建设财务规则》',owner:'P4',deadline:ad(300),wf:'draft',ver:1,hist:[],linkedInds:['I05'],linkedDocs:[]},
-      {id:'M13',name:'第三方审计报告',cat:'C5',rule:'《国防科技工业项目审计管理办法》',owner:'P4',deadline:ad(330),wf:'draft',ver:1,hist:[],linkedInds:[],linkedDocs:[]},
+      {id:'M12',name:'竣工结算书',cat:'C5',rule:'基本建设财务规则',owner:'P4',deadline:ad(300),wf:'draft',ver:1,hist:[],linkedInds:['I05'],linkedDocs:[]},
+      {id:'M13',name:'第三方审计报告',cat:'C5',rule:'国防科技工业项目审计管理办法',owner:'P4',deadline:ad(330),wf:'draft',ver:1,hist:[],linkedInds:[],linkedDocs:[]},
       // C6: 专项验收类
       {id:'M14',name:'消防验收意见书',cat:'C6',owner:'P1',deadline:ad(250),wf:'approved',op:'P1',date:ad(245),ver:1,hist:[{s:'approved',desc:'消防验收合格',date:ad(245),op:'P1',ver:1}],linkedInds:[],linkedDocs:[]},
-      {id:'M15',name:'安全设施竣工验收',cat:'C6',rule:'《建设项目安全设施"三同时"管理办法》',owner:'P2',deadline:ad(260),wf:'draft',ver:1,hist:[],linkedInds:[],linkedDocs:[]},
+      {id:'M15',name:'安全设施竣工验收',cat:'C6',rule:'安全设施三同时管理办法',owner:'P2',deadline:ad(260),wf:'draft',ver:1,hist:[],linkedInds:[],linkedDocs:[]},
       {id:'M16',name:'职业卫生验收',cat:'C6',owner:'P2',deadline:ad(260),wf:'draft',ver:1,hist:[],linkedInds:[],linkedDocs:[]},
       {id:'M17',name:'档案验收报告',cat:'C6',owner:'P1',deadline:ad(280),wf:'draft',ver:1,hist:[],linkedInds:[],linkedDocs:[]},
       // C7: 综合验收类
