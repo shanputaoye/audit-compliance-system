@@ -931,7 +931,59 @@ function aiGanttPath(){var p=AP();if(!p)return;var ms=p.milestones||[],td=nw();
 }
 
 // ==== REVIEW INTERACTIVE ANALYSIS ====
-function aiAnalyzeReview(id){var p=AP();if(!p)return;var m=p.materials.find(function(mm){return mm.id===id});if(!m)return;addAIMsg("分析："+esc(m.name)+"<br>状态："+(m.wf==="submitted"?"待审核":"需重做")+(m.rjReason?"（"+esc(m.rjReason)+"）":""));}
+function aiAnalyzeReview(id){
+  var p=AP();if(!p)return;
+  var m=p.materials.find(function(mm){return mm.id===id});if(!m)return;
+  var lb={submitted:'待审核',rejected:'需重做',approved:'已通过'};
+  var owner=null;
+  if(p.org&&p.org.persons)owner=p.org.persons.find(function(pp){return pp.id===m.owner});
+  var h='';
+  // 1. Status
+  h+='<strong>'+esc(m.name)+'</strong><br>';
+  if(m.wf==='submitted')h+='<span class="badge badge-info">待审核</span> ';
+  else h+='<span class="badge badge-err">需重做</span> ';
+  if(m.rjReason)h+='<span style="font-size:9px;color:var(--d)">('+esc(m.rjReason)+')</span>';
+  // 2. Deadline
+  if(m.deadline){
+    var td=nw();
+    if(m.deadline<td&&m.wf!=='approved'){
+      h+='<br><span style="color:var(--d);font-size:9px">已逾期'+Math.floor((new Date(td)-new Date(m.deadline))/86400000)+'天</span>';
+    }
+  }
+  // 3. Owner
+  h+='<br><strong>责任人：</strong>';
+  if(owner)h+=esc(owner.name)+' ('+dn(p,owner.dept)+')';
+  else h+='未指定';
+  // 4. Review history
+  var hist=m.hist||[];
+  if(hist.length){
+    h+='<br><br><strong>审核记录：</strong>';
+    var sl2={submitted:'提交审核',approved:'审核通过',rejected:'退回修订'};
+    for(var i=0;i<hist.length;i++){
+      var hh=hist[i];
+      h+='<br><span style="font-size:9px;color:var(--a)">v'+hh.ver+'</span> ';
+      h+=(sl2[hh.s]||hh.s)+' ';
+      h+='<span style="color:var(--t3);font-size:8px">'+hh.date.slice(0,10)+'</span> '+pn(p,hh.op);
+      if(hh.desc)h+='<br><span style="font-size:8px">'+esc(hh.desc)+'</span>';
+      if(hh.rjReason)h+='<br><span style="color:var(--d);font-size:8px">原因：'+esc(hh.rjReason)+'</span>';
+    }
+  }
+  // 5. Linked indicators
+  var linked=m.linkedInds||[];
+  if(linked.length){
+    h+='<br><br><strong>关联指标：</strong>';
+    for(var j=0;j<linked.length;j++){
+      var ind=p.indicators.find(function(ii){return ii.id===linked[j]});
+      if(ind)h+='<br><span style="font-size:9px">'+esc(ind.name)+' ['+esc(ind.target)+']</span>';
+    }
+  }
+  // 6. Suggestion
+  h+='<br><br><div style="padding:4px;background:#fffbe6;border-radius:3px;font-size:9px">';
+  if(m.wf==='submitted')h+='建议：核实材料内容完整性和合规性后审核通过。';
+  else h+='建议：联系责任人修正驳回问题后重新提交审核。';
+  h+='</div>';
+  addAIMsg(h);
+}
 
 // ==== WIZARD SAFE HANDLERS (data-attr, no quote injection) ====
 function wizFromTpl(btn){openWiz(btn.getAttribute('data-type'))}
