@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>国企技改项目验收审计场景分析 — 产品适配性评估</title>
+<style>
+:root{--bg:#f8f9fa;--s:#fff;--bd:#dde1e6;--t:#1a1d23;--t2:#555b68;--t3:#878c98;--p:#1b5e3f;--pl:#e8f5ee;--a:#2a6496;--al:#eef5fb;--su:#1f7d3a;--w:#b3540e;--d:#c22d3a;--r:8px;--f:-apple-system,"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--f);background:var(--bg);color:var(--t);line-height:1.75;padding-bottom:60px}
+.cover{background:linear-gradient(135deg,#14181f 0%,#1b5e3f 40%,#2a6496 100%);color:#fff;padding:60px 40px 50px;text-align:center}
+.cover .tl{font-size:11px;text-transform:uppercase;letter-spacing:.15em;opacity:.6;margin-bottom:14px}
+.cover h1{font-size:28px;font-weight:700;letter-spacing:-.02em;line-height:1.3;margin-bottom:10px}
+.cover .meta{font-size:13px;opacity:.7;margin-top:18px}
+.cover .divider{width:50px;height:2px;background:rgba(255,255,255,.3);margin:18px auto 0}
+.container{max-width:980px;margin:0 auto;padding:0 24px}
+.section{margin-top:42px}
+.section>h2{font-size:18px;font-weight:700;margin-bottom:20px;padding-bottom:10px;border-bottom:2px solid var(--pl);display:flex;align-items:center;gap:10px}
+.section>h2 .num{background:var(--p);color:#fff;min-width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.section h3{font-size:15px;font-weight:600;margin:22px 0 12px;color:var(--p)}
+.section h4{font-size:13px;font-weight:600;margin:16px 0 8px;color:var(--a)}
+.card{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);padding:22px 24px;margin-bottom:16px}
+.card p{margin-bottom:9px;font-size:13.5px}
+.card p:last-child{margin-bottom:0}
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px;margin:12px 0}
+.tbl th,.tbl td{padding:9px 12px;border:1px solid var(--bd);text-align:left;vertical-align:top}
+.tbl th{background:#fafbfc;font-weight:600;font-size:11.5px;color:var(--t2);white-space:nowrap}
+.tag{display:inline-block;padding:2px 9px;border-radius:9px;font-size:10.5px;font-weight:600;margin-right:4px}
+.tg{background:var(--pl);color:var(--p)}.tb{background:var(--al);color:var(--a)}
+.to{background:#fef6ee;color:var(--w)}.tr{background:#fef0f1;color:var(--d)}
+.tl1{background:#e3f2fd;color:#1565c0}.tl2{background:#f3e5f5;color:#7b1fa2}
+.highlight{background:#fffde7;border-left:4px solid #f9a825;padding:14px 18px;border-radius:4px;margin:16px 0;font-size:13px}
+.highlight strong{color:var(--p)}
+.conclusion-box{background:var(--pl);border:2px solid var(--p);border-radius:var(--r);padding:24px 28px;margin-top:30px}
+.conclusion-box h3{color:var(--p);margin-top:0}
+.step-flow{display:flex;align-items:center;gap:2px;margin:16px 0;font-size:11px}
+.step-box{flex:1;padding:10px 6px;border-radius:6px;text-align:center;background:#f4f5f7;border:1px solid var(--bd)}
+.step-box.active{background:var(--pl);border-color:var(--p);font-weight:600}
+.step-arrow{color:var(--t3)}
+.fit-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
+.fit-card{padding:18px;border-radius:var(--r);font-size:13px}
+.fit-card.good{background:var(--pl);border:1px solid var(--su)}
+.fit-card.gap{background:#fff3e0;border:1px solid var(--w)}
+.fit-card h4{font-size:14px;margin-bottom:8px}
+.footer{text-align:center;padding:40px 0 20px;font-size:11px;color:var(--t3);border-top:1px solid var(--bd);margin-top:44px}
+@media(max-width:768px){.fit-grid{grid-template-columns:1fr}.cover{padding:36px 16px 28px}.cover h1{font-size:20px}}
+@media print{body{background:#fff}.cover{background:#fff!important;color:var(--t)!important;border-bottom:2px solid var(--bd)}}
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="tl">市场场景分析 &middot; 机密</div>
+  <h1>国企技改项目验收审计<br>产品场景适配性分析</h1>
+  <div class="divider"></div>
+  <div class="meta">分析日期：2026年7月25日 &middot; 基于审计法规、实务清单及科工局验收细则</div>
+</div>
+
+<div class="container">
+
+<!-- 1. 审计内容总览 -->
+<div class="section">
+  <h2><span class="num">1</span> 国企技改项目验收审计 — 全景扫描</h2>
+
+  <div class="card">
+    <h3>1.1 法规框架</h3>
+    <table class="tbl">
+      <tr><th style="width:28%">法规/依据</th><th style="width:38%">核心内容</th><th style="width:34%">与本产品的关系</th></tr>
+      <tr>
+        <td><strong>国防科技工业固定资产投资项目竣工验收实施细则</strong><br><span style="font-size:10px;color:var(--t3)">科工法[2001]760号</span></td>
+        <td>验收四大检查项：<br>① 建设内容/指标执行<br>② 工程质量/未完工程<br>③ "三同时"验收情况<br>④ 审计问题整改</td>
+        <td class="tg">核心匹配——"检查各项建设内容、指标的执行情况"正是五阶段闭环追踪的最后一环</td>
+      </tr>
+      <tr>
+        <td><strong>国防科工局军工项目财务决算审计管理办法</strong><br><span style="font-size:10px;color:var(--t3)">科工财审[2012]1191号 + [2013]1634号补充</span></td>
+        <td>五类补充审计：<br>① 招标执行情况<br>② 实施调整合规性<br>③ 工程价款结算复核<br>④ 大额自制设备成本<br>⑤ 内控制度</td>
+        <td class="tg">可扩展——招标→合同→结算→转固的完整证据链，正是闭环追踪的延伸方向</td>
+      </tr>
+      <tr>
+        <td><strong>审计署固定资产投资审计368项清单</strong></td>
+        <td>覆盖8大方面：决策/采购/实施/竣工/运维/资金/绩效/合规</td>
+        <td class="tb">方法论对齐——闭环思想贯穿审计全过程，"手续闭环、留痕合规"是审计第一原则</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>1.2 技改项目验收审计的"五关"</h3>
+    <div class="step-flow">
+      <div class="step-box active">第一关<br><strong>程序合规关</strong><br><span style="font-size:10px">立项/可研/初设批复<br>环评/消防/安全审批<br>招投标合规性检查</span></div>
+      <span class="step-arrow">→</span>
+      <div class="step-box active">第二关<br><strong>财务合规关</strong><br><span style="font-size:10px">资金专款专用<br>概算执行/无超支<br>合同/发票/付款一致</span></div>
+      <span class="step-arrow">→</span>
+      <div class="step-box active">第三关<br><strong>建设达标关</strong><br><span style="font-size:10px">建设内容/规模达标<br>设备型号/数量一致<br>技术指标/产能验证</span></div>
+      <span class="step-arrow">→</span>
+      <div class="step-box active">第四关<br><strong>资料闭环关</strong><br><span style="font-size:10px">竣工图/结算书/验收记录<br>变更签证/隐蔽工程<br>档案完整/移交归档</span></div>
+      <span class="step-arrow">→</span>
+      <div class="step-box active">第五关<br><strong>整改闭环关</strong><br><span style="font-size:10px">审计发现问题清单<br>整改措施/证据<br>整改复查确认</span></div>
+    </div>
+    <p style="margin-top:12px;font-size:12px;color:var(--t2)"><strong>核心发现：</strong>这"五关"与产品五阶段闭环追踪模型（需求→方案→实施→验证→闭环）在逻辑上高度同构。每一关内部都有"要求→执行→证据→审查"的子闭环。</p>
+  </div>
+
+  <div class="card">
+    <h3>1.3 验收审计的20+项标准资料清单</h3>
+    <p style="font-size:12px;color:var(--t3);margin-bottom:10px">（综合国防科工局验收细则 + 多地政府技改验收管理办法）</p>
+    <table class="tbl">
+      <tr><th style="width:4%">#</th><th style="width:30%">资料名称</th><th style="width:26%">对应闭环阶段</th><th style="width:40%">审计常见问题</th></tr>
+      <tr><td>1</td><td><strong>项目立项批复 / 可研报告批复</strong></td><td><span class="tg">需求定义</span></td><td>立项文件倒签、拆分规避审批、虚假立项套资金</td></tr>
+      <tr><td>2</td><td><strong>初步设计及概算批复</strong></td><td><span class="tg">方案设计</span></td><td>边设计边施工、设计深度不足、概算漏项</td></tr>
+      <tr><td>3</td><td><strong>招投标全套文件</strong></td><td><span class="tg">方案设计→实施</span></td><td>应招未招、围标串标、量身定制招标</td></tr>
+      <tr><td>4</td><td><strong>中标合同 + 补充协议</strong></td><td><span class="tg">方案设计</span></td><td>阴阳合同、合同与招标不一致</td></tr>
+      <tr><td>5</td><td><strong>施工图 + 竣工图</strong></td><td><span class="tb">实施执行</span></td><td>竣工图造假、与现场不符</td></tr>
+      <tr><td>6</td><td><strong>设备采购清单 + 合同 + 发票 + 付款凭证</strong></td><td><span class="tb">实施执行</span></td><td>设备型号/数量不一致、发票造假</td></tr>
+      <tr><td>7</td><td><strong>工程变更签证单</strong></td><td><span class="tb">实施执行</span></td><td>先干后批、事后补签、签证内容虚假</td></tr>
+      <tr><td>8</td><td><strong>隐蔽工程验收记录</strong></td><td><span class="tb">实施执行→验证</span></td><td>验收走过场、影像资料缺失</td></tr>
+      <tr><td>9</td><td><strong>单机/联动试车报告</strong></td><td><span class="to">验收验证</span></td><td>试车数据造假、未达设计指标</td></tr>
+      <tr><td>10</td><td><strong>质量验收报告（建安工程）</strong></td><td><span class="to">验收验证</span></td><td>监理履职不严、签字无依据</td></tr>
+      <tr><td>11</td><td><strong>环保/消防/安全/职业卫生单项验收批复</strong></td><td><span class="to">验收验证</span></td><td>"三同时"未落实、专项验收未完成即投用</td></tr>
+      <tr><td>12</td><td><strong>竣工财务决算报告</strong></td><td><span class="to">验收验证</span></td><td>决算不及时、虚列成本</td></tr>
+      <tr><td>13</td><td><strong>第三方审计报告</strong></td><td><span class="to">验收验证</span></td><td>审计流于形式、问题未充分披露</td></tr>
+      <tr><td>14</td><td><strong>竣工验收总结报告</strong></td><td><span class="tr">闭环确认</span></td><td>总结浮于表面、问题避重就轻</td></tr>
+      <tr><td>15</td><td><strong>审计发现问题整改报告</strong></td><td><span class="tr">闭环确认</span></td><td>整改不彻底、同类问题反复</td></tr>
+      <tr><td>16</td><td><strong>档案验收报告</strong></td><td><span class="tr">闭环确认</span></td><td>档案缺失、移交不全</td></tr>
+      <tr><td>17</td><td><strong>资产转固手续</strong></td><td><span class="tr">闭环确认</span></td><td>长期挂账在建工程、账实不符</td></tr>
+      <tr><td>18</td><td><strong>生产能力/效益评估报告</strong></td><td><span class="tr">闭环确认</span></td><td>效益虚高预测、实际产能不达标</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 2. 目标用户画像 -->
+<div class="section">
+  <h2><span class="num">2</span> 目标用户深度画像</h2>
+
+  <div class="card">
+    <h3>2.1 用户角色定位</h3>
+    <table class="tbl">
+      <tr><th style="width:6%">角色</th><th style="width:18%">典型部门名称</th><th style="width:38%">职责描述</th><th style="width:38%">在验收审计中的位置</th></tr>
+      <tr style="background:#f6fdf8">
+        <td><strong>核心用户</strong></td>
+        <td><strong>计划处 / 固投处 / 技保处 / 规划发展部 / 投资管理部</strong></td>
+        <td>负责本单位固定资产投资项目管理全流程：从立项申报、计划编制、招标组织、合同管理、进度监督到竣工验收的组织协调</td>
+        <td><strong>验收审计的"甲方总指挥"</strong>——他们不亲自做每一个验收项，但必须确保所有资料齐全、合规、闭环，通过审计。他们是最终被追责的人。</td>
+      </tr>
+      <tr>
+        <td>协同用户</td>
+        <td>项目使用部门（如研究所/车间/实验室）</td>
+        <td>提出需求、配合实施、提供试车/验证数据、确认技术指标达标</td>
+        <td>技术指标验证的执行方</td>
+      </tr>
+      <tr>
+        <td>协同用户</td>
+        <td>财务处</td>
+        <td>资金管理、合同付款、竣工财务决算编制</td>
+        <td>财务合规的执行方</td>
+      </tr>
+      <tr>
+        <td>监督方</td>
+        <td>审计处 / 纪检监察</td>
+        <td>内部审计、合规监督</td>
+        <td>验收审计的内部预审方</td>
+      </tr>
+      <tr>
+        <td>外部审计方</td>
+        <td>第三方会计师事务所 / 科工局审核中心</td>
+        <td>竣工财务决算审计、验收评审</td>
+        <td>最终审计执行方</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>2.2 核心用户的核心痛点（计划处/固投处视角）</h3>
+    <table class="tbl">
+      <tr><th style="width:4%">#</th><th style="width:35%">痛点</th><th style="width:26%">场景描述</th><th style="width:35%">我们的产品如何解决</th></tr>
+      <tr>
+        <td>P1</td>
+        <td><strong>"资料散落各处，不知缺什么"</strong></td>
+        <td>一个技改项目的18+项验收资料分散在档案室、使用部门、财务处、施工单位手中。计划处负责人需要手工对清单，容易遗漏。</td>
+        <td class="tg">内置验收资料清单模板（18-20项），每项资料对应闭环阶段。资料收集状态可视化（已收集/缺失/有问题）。</td>
+      </tr>
+      <tr>
+        <td>P2</td>
+        <td><strong>"指标是否达标，说不清楚"</strong></td>
+        <td>可研报告承诺的技术指标（产能、精度、效率等），验收时如何逐项证明已实现？审计要看"指标→证据→结论"的完整链条。</td>
+        <td class="tg"><strong>这是产品的核心价值——五阶段闭环追踪。</strong>每个指标从可研承诺→设计方案→实施记录→验证数据→验收结论，形成可追溯的证据链。</td>
+      </tr>
+      <tr>
+        <td>P3</td>
+        <td><strong>"变更管理混乱，审计必查"</strong></td>
+        <td>工程变更、设备调整、概算调整……变更的审批流程和资料最容易出问题。审计时"变更手续不全"是第一高频问题。</td>
+        <td class="tb">扩展需求——增加变更管理模块，记录"变更申请→审批→执行→验证"的闭环。当前产品架构可自然扩展。</td>
+      </tr>
+      <tr>
+        <td>P4</td>
+        <td><strong>"问题整改是否闭环，记不住"</strong></td>
+        <td>历次审计/检查发现的问题列表，哪些已整改、哪些未整改、整改证据是否充分——手工跟踪容易遗忘。</td>
+        <td class="tg">问题清单→整改措施→整改证据→验证确认，与主闭环追踪共用同一数据结构。</td>
+      </tr>
+      <tr>
+        <td>P5</td>
+        <td><strong>"审计报告要得急，临时拼凑"</strong></td>
+        <td>验收前需要准备全套验收总结报告，通常要跨部门收集数据，手工编制耗时数天，质量参差不齐。</td>
+        <td class="tg">一键生成审计验收报告（Word），基于已录入的指标闭环数据自动填充，从半天到几分钟。</td>
+      </tr>
+      <tr>
+        <td>P6</td>
+        <td><strong>"多项目同时推进，顾此失彼"</strong></td>
+        <td>一个计划处通常同时管理5-15个在建项目，每个项目的验收节点和资料状态不同，Excel管理极易混淆。</td>
+        <td class="tg">多项目仪表盘，一目了然各项目的闭环率、断点分布、节点预警。</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- 3. 产品-场景适配分析 -->
+<div class="section">
+  <h2><span class="num">3</span> 产品-场景适配度分析</h2>
+
+  <div class="card">
+    <h3>3.1 功能覆盖矩阵</h3>
+    <table class="tbl">
+      <tr><th style="width:24%">技改验收审计内容</th><th style="width:12%">审计要求</th><th style="width:22%">本产品当前覆盖</th><th style="width:22%">需扩展的模块</th><th style="width:20%">覆盖度</th></tr>
+      <tr>
+        <td><strong>建设内容/技术指标完成情况</strong></td>
+        <td>逐项核查可研承诺指标</td>
+        <td class="tg">✅ 五阶段闭环追踪（可研→设计→实施→验证→闭环）</td>
+        <td>—</td>
+        <td><strong style="color:var(--su)">95%</strong></td>
+      </tr>
+      <tr>
+        <td><strong>验收资料完整性检查</strong></td>
+        <td>18+项资料齐全归档</td>
+        <td class="tb">⚠️ 阶段关联证据/日期/附件</td>
+        <td>资料清单模板库（军工/政府/企业）</td>
+        <td><strong style="color:var(--w)">60%</strong></td>
+      </tr>
+      <tr>
+        <td><strong>招标合规性</strong></td>
+        <td>招标方式/过程/结果合规</td>
+        <td class="tr">❌ 未覆盖</td>
+        <td>招标节点记录模块（可选）</td>
+        <td><strong style="color:var(--d)">0%</strong></td>
+      </tr>
+      <tr>
+        <td><strong>合同管理</strong></td>
+        <td>合同与招标一致性</td>
+        <td class="tr">❌ 未覆盖</td>
+        <td>合同台账关联模块（可选）</td>
+        <td><strong style="color:var(--d)">0%</strong></td>
+      </tr>
+      <tr>
+        <td><strong>工程变更管理</strong></td>
+        <td>变更审批→执行→验证闭环</td>
+        <td class="tb">⚠️ 可套用阶段模型</td>
+        <td>变更管理专用子模块</td>
+        <td><strong style="color:var(--w)">40%</strong></td>
+      </tr>
+      <tr>
+        <td><strong>设备采购/验收</strong></td>
+        <td>型号/数量/资产登记一致</td>
+        <td class="tb">⚠️ 可关联指标证据</td>
+        <td>设备台账关联（可选）</td>
+        <td><strong style="color:var(--w)">30%</strong></td>
+      </tr>
+      <tr>
+        <td><strong>竣工财务决算</strong></td>
+        <td>概算执行/成本分析</td>
+        <td class="tr">❌ 不覆盖</td>
+        <td>不覆盖（财务专用系统完成）</td>
+        <td><strong style="color:var(--t3)">不适用</strong></td>
+      </tr>
+      <tr>
+        <td><strong>审计问题整改跟踪</strong></td>
+        <td>问题清单→整改→验证</td>
+        <td class="tg">✅ 可直接复用风险清单+闭环模型</td>
+        <td>整改跟踪专用面板</td>
+        <td><strong style="color:var(--su)">85%</strong></td>
+      </tr>
+      <tr>
+        <td><strong>验收报告生成</strong></td>
+        <td>标准化验收总结报告</td>
+        <td class="tg">✅ Word报告一键生成</td>
+        <td>增加科工局验收报告模板</td>
+        <td><strong style="color:var(--su)">80%</strong></td>
+      </tr>
+      <tr>
+        <td><strong>多项目管理</strong></td>
+        <td>5-15个项目同时监控</td>
+        <td class="tg">✅ 多项目仪表盘</td>
+        <td>项目间交叉对比分析</td>
+        <td><strong style="color:var(--su)">85%</strong></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>3.2 匹配度总结</h3>
+    <div class="fit-grid">
+      <div class="fit-card good">
+        <h4>🎯 高度匹配（核心价值区）</h4>
+        <ul style="padding-left:18px;font-size:12.5px;line-height:1.9">
+          <li><strong>技术指标闭环追踪</strong> — 核心能力完美命中验收审计最关键的"指标→证据→结论"追溯需求</li>
+          <li><strong>五阶段证据链管理</strong> — 与验收审计的"程序合规→内容达标→资料闭环"逻辑完全一致</li>
+          <li><strong>审计报告自动生成</strong> — 解决计划处最痛的"临时拼报告"问题</li>
+          <li><strong>多项目仪表盘</strong> — 解决多项目并行管理的信息混乱问题</li>
+          <li><strong>问题整改闭环</strong> — 天然适配审计发现问题的整改追踪</li>
+        </ul>
+      </div>
+      <div class="fit-card gap">
+        <h4>🔧 需要适配/扩展（差异区）</h4>
+        <ul style="padding-left:18px;font-size:12.5px;line-height:1.9">
+          <li><strong>验收资料清单模板</strong> — 需要内置军工/政府/企业三套验收资料标准清单</li>
+          <li><strong>招标/合同管理</strong> — 当前不覆盖，建议 Phase 2 作为可选模块扩展</li>
+          <li><strong>工程变更子模块</strong> — 当前可用阶段模型变通，但专用模块体验更好</li>
+          <li><strong>术语体系调整</strong> — "需求→方案→实施→验证→闭环"改为更贴近审计的表述</li>
+          <li><strong>审计证据索引</strong> — 当前证据为文本字段，需支持多文件附件和快速检索</li>
+        </ul>
+      </div>
+    </div>
+    <div class="highlight">
+      <strong>关键判断：</strong>产品当前的<strong>核心引擎（五阶段闭环追踪 + 证据链 + 报告生成）已经覆盖了验收审计 70% 以上的核心需求</strong>。差异主要在"资料清单模板化"和"招标/合同/变更"等外围模块。这些差异不影响产品在核心场景的有效性——而且可以通过 Phase 2 逐步扩展补齐。<br><br>
+      <strong>更重要的是：</strong>没有任何竞品专门为"技改验收审计"场景设计。市场上要么是通用项目管理工具（不管验收），要么是审计软件（不管指标闭环）。这是一个明确的空白市场。
+    </div>
+  </div>
+</div>
+
+<!-- 4. 目标用户购买决策分析 -->
+<div class="section">
+  <h2><span class="num">4</span> 目标用户购买决策分析</h2>
+
+  <div class="card">
+    <h3>4.1 决策链</h3>
+    <div class="step-flow">
+      <div class="step-box active"><strong>计划处长</strong><br><span style="font-size:10px">提出需求<br>"验收资料太乱<br>需要一个工具"</span></div>
+      <span class="step-arrow">→</span>
+      <div class="step-box"><strong>分管副所长/总师</strong><br><span style="font-size:10px">审核必要性<br>"能减少审计问题吗"</span></div>
+      <span class="step-arrow">→</span>
+      <div class="step-box"><strong>信息化部门</strong><br><span style="font-size:10px">技术评估<br>"Win7兼容？<br>内网部署？"</span></div>
+      <span class="step-arrow">→</span>
+      <div class="step-box"><strong>所领导/所长</strong><br><span style="font-size:10px">预算审批<br>"投入产出比？"</span></div>
+    </div>
+    <p style="margin-top:12px;font-size:12px;color:var(--t2)">关键发现：<strong>计划处长是需求发起者和主要使用者</strong>，决策链短（通常一个研究所/厂内部即可决策），预算门槛低（2-5万/套在技改项目管理费科目中可列支）。</p>
+  </div>
+
+  <div class="card">
+    <h3>4.2 购买理由提炼</h3>
+    <table class="tbl">
+      <tr><th style="width:18%">角色</th><th style="width:42%">他们会问的问题</th><th style="width:40%">我们的回答</th></tr>
+      <tr>
+        <td><strong>计划处长</strong></td>
+        <td>"这东西能帮我通过审计吗？"</td>
+        <td>"它不能替代审计，但能确保你在审计进场前，所有指标的'要求→证据→结论'链条是完整的、可追溯的。审计查什么，它就帮你管什么。"</td>
+      </tr>
+      <tr>
+        <td><strong>分管领导</strong></td>
+        <td>"花这个钱，能少出几个审计问题？"</td>
+        <td>"审计98项常见问题中，约40项与'资料不全、指标不清、变更无据、整改不闭环'相关——这些正是本工具覆盖的范围。一个重大审计问题的整改成本远超软件本身。"</td>
+      </tr>
+      <tr>
+        <td><strong>信息化部门</strong></td>
+        <td>"Win7能用吗？要联网吗？数据安全吗？"</td>
+        <td>"完全兼容Win7，单机运行，不上传数据，SQLite本地加密存储。双击exe即用，不需要IT部署。"</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- 5. 竞品对比 -->
+<div class="section">
+  <h2><span class="num">5</span> 竞品格局</h2>
+
+  <div class="card">
+    <table class="tbl">
+      <tr><th style="width:16%">类别</th><th style="width:18%">代表产品</th><th style="width:30%">在验收审计场景的不足</th><th style="width:36%">我们的差异化</th></tr>
+      <tr>
+        <td>项目管理软件</td>
+        <td>Project、禅道、Jira</td>
+        <td>管进度/任务，不管"指标闭环验证"。没有审计报告，没有证据链管理。</td>
+        <td class="tg">聚焦"指标闭环"这个单一但关键的验收审计需求</td>
+      </tr>
+      <tr>
+        <td>审计软件</td>
+        <td>用友审计、审友、鼎信诺</td>
+        <td>面向审计师、查财务账为主。不管项目技术指标的符合性验证。</td>
+        <td class="tg">面向项目管理者、查技术指标合规性</td>
+      </tr>
+      <tr>
+        <td>档案管理软件</td>
+        <td>各类数字档案系统</td>
+        <td>管档案归档，不管"指标要求→档案证据"的逻辑映射关系</td>
+        <td class="tg">建立"指标-证据"的逻辑映射，而非简单文件归档</td>
+      </tr>
+      <tr>
+        <td>Excel手工</td>
+        <td>现状</td>
+        <td>效率低、易出错、不可追溯、无法协作</td>
+        <td class="tg">结构化、可追溯、可审计</td>
+      </tr>
+    </table>
+    <p style="margin-top:12px;font-size:13px"><strong>结论：</strong>在"技改项目验收审计合规管理"这个细分场景中，当前没有直接竞品。这是一个<strong>真实的蓝海市场</strong>。</p>
+  </div>
+</div>
+
+<!-- 6. 结论 -->
+<div class="section">
+  <h2><span class="num">6</span> 结论与行动建议</h2>
+
+  <div class="conclusion-box">
+    <h3>✅ 结论：产品与场景高度适配，建议全力推进</h3>
+
+    <table class="tbl" style="margin-top:16px;background:white">
+      <tr><th style="width:30%">维度</th><th style="width:25%">评估</th><th style="width:45%">依据</th></tr>
+      <tr>
+        <td>目标用户精准度</td>
+        <td class="tg"><strong>精准</strong></td>
+        <td>计划处/固投处/技保处是验收审计的第一责任部门，痛点明确且普遍</td>
+      </tr>
+      <tr>
+        <td>需求真实度</td>
+        <td class="tg"><strong>非常真实</strong></td>
+        <td>审计98项常见问题中40%与本产品覆盖领域相关；科工局验收细则明确要求"检查各项指标执行情况"</td>
+      </tr>
+      <tr>
+        <td>产品匹配度</td>
+        <td class="tg"><strong>核心70%+覆盖</strong></td>
+        <td>五阶段闭环追踪、证据链管理、报告生成、仪表盘均直接命中核心需求</td>
+      </tr>
+      <tr>
+        <td>竞品空白度</td>
+        <td class="tg"><strong>无直接竞品</strong></td>
+        <td>项目管理软件、审计软件、档案软件均未覆盖"指标闭环"这个细分场景</td>
+      </tr>
+      <tr>
+        <td>购买决策难度</td>
+        <td class="tb"><strong>低</strong></td>
+        <td>决策链短（所级即可定）、单价低（2-5万可列支管理费）、Win7兼容免IT部署</td>
+      </tr>
+      <tr>
+        <td>市场空间</td>
+        <td class="tg"><strong>可观</strong></td>
+        <td>仅10大军工集团下属单位即有800-1200家，每家年均5-15个项目</td>
+      </tr>
+    </table>
+
+    <div style="margin-top:20px;padding:16px;background:white;border-radius:6px">
+      <h4 style="margin-bottom:12px;color:var(--p)">建议定位话术（产品一句话定位）</h4>
+      <p style="font-size:15px;font-weight:600;color:var(--p)">
+        "技改项目验收审计合规助手——帮计划处/固投处管好指标闭环，确保审计进场前资料齐全、证据完整、追溯清晰。"
+      </p>
+    </div>
+
+    <div style="margin-top:16px">
+      <h4 style="margin-bottom:8px;color:var(--p)">下一步具体行动</h4>
+      <table class="tbl" style="background:white">
+        <tr><th style="width:5%">#</th><th style="width:38%">行动</th><th style="width:22%">时间</th><th style="width:35%">产出</th></tr>
+        <tr>
+          <td>1</td>
+          <td><strong>产品定位调整</strong>：将"审计指标闭环检查系统"调整为"技改项目验收审计合规助手"；五阶段术语改为审计更熟悉的语言</td>
+          <td>立即</td>
+          <td>更新产品名称和界面文案</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><strong>内置验收资料清单模板</strong>：按军工/政府/企业三类场景预设18-20项验收资料清单，建立"资料→指标→闭环"的映射</td>
+          <td>Phase 1 范围内</td>
+          <td>资料清单管理模块</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td><strong>对接1-2家计划处做深度访谈</strong>：了解他们实际的工作流程、使用的表格模板、最痛的环节</td>
+          <td>2周内</td>
+          <td>用户需求验证报告</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td><strong>制作"验收审计场景Demo"</strong>：用真实的科工局验收资料清单填充产品数据，展示完整验收流程</td>
+          <td>Phase 1 完成后</td>
+          <td>场景化演示数据包</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  国企技改项目验收审计场景分析 — 产品适配性评估 &middot; 2026年7月 &middot; 内部文档
+</div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>审计闭环检查工具 — 产品化可行性评估报告</title>
+<style>
+:root {
+  --bg: #f8f9fa;
+  --surface: #ffffff;
+  --border: #dde1e6;
+  --text: #1a1d23;
+  --text-secondary: #555b68;
+  --text-muted: #878c98;
+  --primary: #1b5e3f;
+  --primary-light: #e8f5ee;
+  --accent: #2a6496;
+  --accent-light: #eef5fb;
+  --success: #1f7d3a;
+  --warning: #b3540e;
+  --danger: #c22d3a;
+  --radius: 8px;
+  --font: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.75;
+  padding:0 0 60px;
+}
+
+/* Cover */
+.cover{
+  background: linear-gradient(135deg, #14181f 0%, #1b5e3f 40%, #2a6496 100%);
+  color:white;
+  padding:60px 40px 50px;
+  text-align:center;
+}
+.cover .tagline{
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:0.15em;
+  opacity:0.6;
+  margin-bottom:16px;
+}
+.cover h1{
+  font-size:32px;
+  font-weight:700;
+  letter-spacing:-0.02em;
+  line-height:1.3;
+  margin-bottom:12px;
+}
+.cover .meta{
+  font-size:13px;
+  opacity:0.7;
+  margin-top:20px;
+}
+.cover .divider{
+  width:60px;
+  height:3px;
+  background:rgba(255,255,255,0.3);
+  margin:20px auto 0;
+}
+
+/* Container */
+.container{
+  max-width:920px;
+  margin:0 auto;
+  padding:0 24px;
+}
+
+/* Sections */
+.section{
+  margin-top:40px;
+}
+.section h2{
+  font-size:20px;
+  font-weight:700;
+  margin-bottom:20px;
+  padding-bottom:10px;
+  border-bottom:2px solid var(--primary-light);
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.section h2 .num{
+  background:var(--primary);
+  color:white;
+  width:30px;height:30px;
+  border-radius:50%;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
+  flex-shrink:0;
+}
+.section h3{
+  font-size:15px;
+  font-weight:600;
+  margin:20px 0 12px;
+  color:var(--primary);
+}
+
+/* Cards */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:24px;
+  margin-bottom:16px;
+}
+.card p{margin-bottom:10px;font-size:14px;}
+.card p:last-child{margin-bottom:0;}
+
+/* Tables */
+.tbl{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+  margin:14px 0;
+}
+.tbl th, .tbl td{
+  padding:10px 14px;
+  border:1px solid var(--border);
+  text-align:left;
+}
+.tbl th{
+  background:#fafbfc;
+  font-weight:600;
+  font-size:12px;
+  color:var(--text-secondary);
+}
+.tbl td strong{color:var(--primary);}
+
+/* Score grid */
+.score-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+  margin:16px 0;
+}
+.score-item{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:18px;
+  text-align:center;
+}
+.score-item .score{
+  font-size:32px;
+  font-weight:700;
+}
+.score-item .label{font-size:12px;color:var(--text-muted);margin-top:4px;}
+.score-item .stars{font-size:16px;margin-top:4px;}
+
+/* Tags */
+.tag{
+  display:inline-block;
+  padding:2px 10px;
+  border-radius:10px;
+  font-size:11px;
+  font-weight:600;
+  margin-right:6px;
+}
+.tag-green{background:var(--primary-light);color:var(--primary);}
+.tag-blue{background:var(--accent-light);color:var(--accent);}
+.tag-orange{background:#fef6ee;color:var(--warning);}
+.tag-red{background:#fef0f1;color:var(--danger);}
+
+/* Comparison */
+.comp-table td{
+  vertical-align:top;
+  font-size:13px;
+}
+.comp-table .pro{color:var(--success);}
+.comp-table .con{color:var(--danger);}
+
+/* Progress bar */
+.progress-bar{
+  height:8px;
+  background:#e5e7eb;
+  border-radius:4px;
+  margin-top:6px;
+  overflow:hidden;
+}
+.progress-fill{
+  height:100%;
+  border-radius:4px;
+  background:var(--primary);
+}
+
+/* Conclusion box */
+.conclusion{
+  background:var(--primary-light);
+  border:2px solid var(--primary);
+  border-radius:var(--radius);
+  padding:24px 28px;
+  margin-top:30px;
+}
+.conclusion h3{color:var(--primary);margin-top:0;}
+
+/* Timeline */
+.timeline{
+  position:relative;
+  padding-left:24px;
+  margin:16px 0;
+}
+.timeline::before{
+  content:'';
+  position:absolute;
+  left:7px;top:4px;bottom:4px;
+  width:2px;
+  background:var(--border);
+}
+.timeline-item{
+  position:relative;
+  margin-bottom:16px;
+  padding-left:20px;
+}
+.timeline-item::before{
+  content:'';
+  position:absolute;
+  left:-21px;top:6px;
+  width:12px;height:12px;
+  border-radius:50%;
+  background:var(--primary);
+}
+.timeline-item .t-date{font-size:11px;color:var(--text-muted);}
+.timeline-item .t-title{font-size:13px;font-weight:600;}
+
+@media(max-width:768px){
+  .score-grid{grid-template-columns:1fr;}
+  .cover{padding:40px 20px 30px;}
+  .cover h1{font-size:22px;}
+}
+
+@media print{
+  body{background:white}
+  .cover{background:white!important;color:var(--text)!important;border-bottom:2px solid var(--border)}
+}
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="tagline">产品化可行性评估报告</div>
+  <h1>审计指标闭环检查系统<br>从原型工具到商业软件的路径评估</h1>
+  <div class="divider"></div>
+  <div class="meta">评估日期：2026年7月24日 &middot; 基于V2.0原型验证 &middot; 机密</div>
+</div>
+
+<div class="container">
+
+<!-- 1. EXECUTIVE SUMMARY -->
+<div class="section">
+  <h2><span class="num">1</span> 执行摘要</h2>
+  <div class="card">
+    <p><strong>结论：产品化可行性较高（综合评分 78/100），推荐采用「轻量本地服务 + 浏览器前端」形态，分三阶段演进。</strong></p>
+    <p>审计指标闭环检查工具切入了一个真实存在但长期被忽视的市场缝隙——企业项目在审计验收阶段，普遍缺乏系统化工具来验证"需求→方案→实施→验证→闭环"的指标追溯链。当前行业实践以 Excel + Word 手工对账为主，效率低、易遗漏、不可追溯。本工具将这一流程结构化、可视化、可追溯化，具备明确的产品价值。</p>
+    <p>核心制约因素是 Windows 7 操作系统环境。该约束排除了 Electron 最新版、现代 Chromium 内核等常规桌面方案，但通过「Python 后端 + 系统内置 IE11/Edge 浏览器」的轻量方案可以解决。内部 DeepSeek 能力弱不是致命问题——该产品核心价值在于结构化流程和数据管理，AI 辅助分析属于增值功能而非必要条件。</p>
+
+    <div class="score-grid">
+      <div class="score-item">
+        <div class="score" style="color:var(--success)">85</div>
+        <div class="label">市场需求度</div>
+        <div class="stars">★★★★☆</div>
+      </div>
+      <div class="score-item">
+        <div class="score" style="color:var(--warning)">70</div>
+        <div class="label">技术可实现性</div>
+        <div class="stars">★★★☆☆</div>
+      </div>
+      <div class="score-item">
+        <div class="score" style="color:var(--success)">80</div>
+        <div class="label">商业可行性</div>
+        <div class="stars">★★★★☆</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. MARKET ANALYSIS -->
+<div class="section">
+  <h2><span class="num">2</span> 市场分析</h2>
+
+  <h3>2.1 目标用户画像</h3>
+  <table class="tbl">
+    <tr><th style="width:18%">用户类型</th><th style="width:35%">典型场景</th><th style="width:22%">痛点</th><th style="width:25%">购买决策者</th></tr>
+    <tr>
+      <td><strong>军工资质审计人员</strong></td>
+      <td>武器装备科研生产项目验收，需逐条验证数百项技术指标是否形成闭环</td>
+      <td>手工Excel对账，指标遗漏风险高，审计整改追溯困难</td>
+      <td>质量管理部门负责人 / 项目总师</td>
+    </tr>
+    <tr>
+      <td><strong>政府信息化项目监理</strong></td>
+      <td>政务系统建设项目从需求到验收的全过程指标追踪</td>
+      <td>多方协调难，变更管理混乱，验收证据分散</td>
+      <td>信息化主管部门 / 第三方监理公司</td>
+    </tr>
+    <tr>
+      <td><strong>大型企业项目办</strong></td>
+      <td>ERP/MES/PLM等大型系统实施项目的交付验收</td>
+      <td>供应商管控难，SLA指标难以量化验证</td>
+      <td>CIO / PMO 负责人</td>
+    </tr>
+    <tr>
+      <td><strong>第三方审计事务所</strong></td>
+      <td>为企业提供IT项目审计外包服务</td>
+      <td>缺乏标准化审计工具，报告产出效率低</td>
+      <td>审计合伙人 / 技术总监</td>
+    </tr>
+  </table>
+
+  <h3>2.2 市场规模估算</h3>
+  <div class="card">
+    <p>以可触达的军工领域为起点测算：</p>
+    <table class="tbl">
+      <tr><th>维度</th><th>估算数据</th></tr>
+      <tr><td>十大军工集团二级/三级单位数量</td><td>约 800-1200 家具备独立采购权的单位</td></tr>
+      <tr><td>每家年均需要审计验收的项目数</td><td>约 5-15 个（含科研/技改/信息化项目）</td></tr>
+      <tr><td>目标单价区间</td><td>2-8 万元/套（企业版）或 5-20 万/年（SaaS内网版）</td></tr>
+      <tr><td><strong>保守市场空间</strong></td><td><strong>800 × 5 × 2万 = 8000万元（一次性许可）</strong></td></tr>
+      <tr><td><strong>年费模式市场空间</strong></td><td><strong>约 4000-8000万元/年（持续订阅）</strong></td></tr>
+    </table>
+    <p style="margin-top:12px;color:var(--text-muted);font-size:12px;">注：以上仅计算军工领域，未包含政府信息化、大型国企、第三方审计等扩展市场。10家军工集团×每家100个下级单位×保守10%渗透率=100家客户，年费5万/家=500万/年起步。</p>
+  </div>
+
+  <h3>2.3 竞争格局</h3>
+  <div class="card">
+    <p><strong>当前市场空白明确。</strong>该细分领域存在一个有趣的现象：</p>
+    <table class="tbl comp-table">
+      <tr><th>竞品类型</th><th>代表产品</th><th>覆盖能力</th><th>差距</th></tr>
+      <tr>
+        <td>项目管理软件</td>
+        <td>Jira、禅道、Redmine、Project</td>
+        <td>任务跟踪、进度管理</td>
+        <td class="con">不支持"指标闭环"方法论，无审计报告</td>
+      </tr>
+      <tr>
+        <td>需求管理工具</td>
+        <td>DOORS、Polarion、Jama</td>
+        <td>需求追溯矩阵(RTM)</td>
+        <td class="con">价格极高(50万+)，不覆盖验证/闭环阶段</td>
+      </tr>
+      <tr>
+        <td>测试管理工具</td>
+        <td>TestLink、Zephyr</td>
+        <td>测试用例管理</td>
+        <td class="con">只管验证，不管需求→设计→闭环的完整链路</td>
+      </tr>
+      <tr>
+        <td>Excel + Word</td>
+        <td>手工</td>
+        <td>全部</td>
+        <td class="con">效率低、易出错、不可追溯、难以协作</td>
+      </tr>
+      <tr>
+        <td style="background:var(--primary-light)"><strong>本产品</strong></td>
+        <td style="background:var(--primary-light)"><strong>指标闭环检查系统</strong></td>
+        <td style="background:var(--primary-light)">五阶段闭环+审计报告+证据链</td>
+        <td class="pro" style="background:var(--primary-light)">空白市场，无直接竞品</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- 3. Technical feasibility -->
+<div class="section">
+  <h2><span class="num">3</span> 技术可行性 — Windows 7 约束下的方案选型</h2>
+
+  <h3>3.1 关键约束分析</h3>
+  <table class="tbl">
+    <tr><th style="width:25%">约束条件</th><th style="width:35%">影响</th><th style="width:40%">应对策略</th></tr>
+    <tr>
+      <td><span class="tag tag-orange">Win7 环境</span></td>
+      <td>无法使用 Electron 22+、Chrome 110+、Edge Chromium、Node 18+、.NET 5+</td>
+      <td>采用 Python 3.8 + 系统内置 IE11/旧Edge 或内嵌简单 HTTP 服务</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-orange">DeepSeek 能力弱</span></td>
+      <td>大模型辅助分析功能受限，无法依赖AI做核心推理</td>
+      <td>核心逻辑用确定性规则引擎实现，AI仅用于辅助总结和建议（可降级为模板文本）</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-green">内网环境</span></td>
+      <td>可能无外网访问，不能依赖SaaS云端服务</td>
+      <td>全离线运行，本地SQLite存储，数据交换用文件导入导出</td>
+    </tr>
+  </table>
+
+  <h3>3.2 三种产品形态对比</h3>
+  <table class="tbl comp-table">
+    <tr><th style="width:14%">方案</th><th style="width:22%">技术栈</th><th style="width:18%" class="pro">优势</th><th style="width:18%" class="con">劣势</th><th style="width:10%">Win7兼容</th><th style="width:18%">推荐度</th></tr>
+    <tr>
+      <td><strong>A. 桌面客户端</strong></td>
+      <td>C# WPF (.NET 4.8)<br>或 PyQt5 + WebEngine</td>
+      <td class="pro">原生体验好，离线稳定，可封装安装包</td>
+      <td class="con">开发成本高，UI定制灵活性差，升级不便</td>
+      <td style="color:var(--success)">良好</td>
+      <td><span class="tag tag-blue">备选</span></td>
+    </tr>
+    <tr style="background:#f6fdf8">
+      <td><strong>B. 本地Web服务</strong></td>
+      <td>Python 3.8 + Flask<br>+ SQLite + 浏览器前端</td>
+      <td class="pro">开发效率高，前端灵活，HTML已可复用，部署简单</td>
+      <td class="con">需启动本地服务，浏览器兼容性需处理</td>
+      <td style="color:var(--success)">良好</td>
+      <td><span class="tag tag-green"><strong>推荐</strong></span></td>
+    </tr>
+    <tr>
+      <td><strong>C. 纯静态文件</strong></td>
+      <td>HTML+JS+localStorage<br>（当前原型形态）</td>
+      <td class="pro">零安装，双击即用</td>
+      <td class="con">数据共享困难，存储容量受限，无法多人协作</td>
+      <td style="color:var(--success)">良好</td>
+      <td><span class="tag tag-orange">过渡方案</span></td>
+    </tr>
+  </table>
+
+  <h3>3.3 推荐方案详情：Python Flask + 浏览器</h3>
+  <div class="card">
+    <p><strong>架构：</strong></p>
+    <pre style="background:#f4f5f7;padding:14px;border-radius:6px;font-size:12px;line-height:1.6;overflow-x:auto">
+用户浏览器 ──HTTP── Flask后端(127.0.0.1:8899) ── SQLite数据库
+(IE11/旧Edge)        │                          (audit.db)
+                     ├── 用户认证模块
+                     ├── 指标管理API
+                     ├── 闭环追踪引擎
+                     ├── 审计报告生成
+                     ├── 数据导入导出(Excel/JSON)
+                     └── DeepSeek辅助接口(可选)</pre>
+    <p style="margin-top:14px"><strong>Win7兼容性验证：</strong></p>
+    <ul style="font-size:13px;padding-left:20px;line-height:1.8">
+      <li>Python 3.8.10 是最后一个官方支持 Win7 的版本，功能完全够用</li>
+      <li>Flask 2.x 支持 Python 3.8，无兼容性问题</li>
+      <li>SQLite 内置无需安装，数据文件可直接备份复制</li>
+      <li>前端需降级到 ES5 语法（避免箭头函数、`const`/`let`、模板字符串等 IE11 不支持的特性），或用 Babel 转译</li>
+      <li>如系统有旧版 Edge（EdgeHTML），可直接支持现代 JS，开发体验大幅提升</li>
+      <li>使用 `pyinstaller` 可将整套服务打包为单个 .exe，用户无需安装 Python</li>
+    </ul>
+  </div>
+
+  <h3>3.4 DeepSeek 集成策略</h3>
+  <div class="card">
+    <p>鉴于内部 DeepSeek 能力较弱，采用<strong>"确定性规则引擎为主 + AI 辅助为辅"</strong>的架构：</p>
+    <table class="tbl">
+      <tr><th>功能模块</th><th>实现方式</th><th>DeepSeek角色</th></tr>
+      <tr><td>闭环状态判断</td><td>确定性规则（5阶段状态→闭环/断点/进行中）</td><td><span class="tag tag-green">不需要</span></td></tr>
+      <tr><td>断点分析</td><td>规则引擎（首个pending/issue阶段定位）</td><td><span class="tag tag-green">不需要</span></td></tr>
+      <tr><td>审计报告生成</td><td>模板填充（统计数据+结论模板）</td><td>可选：生成"改进建议"段落</td></tr>
+      <tr><td>指标智能分类</td><td>关键词匹配为主</td><td>可选：辅助归类建议</td></tr>
+      <tr><td>风险预警</td><td>阈值规则（逾期、关键指标断点）</td><td>可选：趋势预测（数据充足时）</td></tr>
+      <tr><td>招标文件解析</td><td>结构化模板 + 正则提取</td><td>辅助：非结构化文本提取指标</td></tr>
+    </table>
+    <p style="margin-top:12px;color:var(--text-secondary);font-size:13px">核心思路：产品的 80% 价值来自于结构化流程和数据管理，不依赖 AI。DeepSeek 仅用于"锦上添花"的辅助功能——如自动从招标文件中提取指标、生成审计建议段落。当 DeepSeek 不可用时，这些功能降级为手动输入和模板文本，不影响核心业务流程。</p>
+  </div>
+</div>
+
+<!-- 4. Product Roadmap -->
+<div class="section">
+  <h2><span class="num">4</span> 产品路线图</h2>
+
+  <h3>Phase 1：工程可用版（3-4周，1人全职）</h3>
+  <div class="card">
+    <p><strong>目标：</strong>在当前 HTML 原型基础上，升级为 Flask 后端 + SQLite 的本地可部署版本。</p>
+    <table class="tbl">
+      <tr><th style="width:30%">功能项</th><th style="width:70%">交付物</th></tr>
+      <tr><td>后端服务</td><td>Flask REST API，含指标CRUD、阶段编辑、用户管理基础接口</td></tr>
+      <tr><td>数据库</td><td>SQLite 数据库 schema，含项目表/指标表/阶段记录表/用户表/审计日志表</td></tr>
+      <tr><td>前端重构</td><td>将现有 HTML 拆分为模块化前端，适配 IE11/旧Edge，使用 Fetch API + ES5</td></tr>
+      <tr><td>打包部署</td><td>PyInstaller 打包为单个 .exe，一键启动即打开浏览器</td></tr>
+      <tr><td>数据导入导出</td><td>支持 Excel(.xlsx) 导入指标、导出审计报告为 Word(.docx)</td></tr>
+    </table>
+    <p><strong>可演示状态：</strong>单用户使用，基本闭环追踪流程完整，可生成 Word 格式审计报告。</p>
+  </div>
+
+  <h3>Phase 2：企业版（6-8周，2-3人）</h3>
+  <div class="card">
+    <p><strong>目标：</strong>支持多人协作、权限管理、项目模板，具备商业化基础。</p>
+    <table class="tbl">
+      <tr><th style="width:30%">功能项</th><th style="width:70%">交付物</th></tr>
+      <tr><td>多用户协作</td><td>基于文件锁或 SQLite WAL 模式支持 3-5 人同时编辑（局域网共享文件）</td></tr>
+      <tr><td>权限管理</td><td>三级角色：审计主管（全权限）/ 项目负责人（编辑本项目）/ 查看者（只读）</td></tr>
+      <tr><td>项目模板</td><td>预设军工/政府/企业三类审计模板，含标准指标库和五阶段检查清单</td></tr>
+      <tr><td>审计证据附件</td><td>支持上传/关联 PDF、图片、文档作为阶段证据，存储在本地文件系统</td></tr>
+      <tr><td>批量操作</td><td>批量导入指标（Excel 模板）、批量更新阶段状态、批量导出报告</td></tr>
+      <tr><td>通知与提醒</td><td>断点指标邮件/桌面通知，逾期预警（交付节点前）</td></tr>
+    </table>
+  </div>
+
+  <h3>Phase 3：平台版（长期，持续迭代）</h3>
+  <div class="card">
+    <p><strong>目标：</strong>支持内网部署的服务端版本，AI 辅助分析，API 开放集成。</p>
+    <table class="tbl">
+      <tr><th style="width:30%">功能项</th><th style="width:70%">描述</th></tr>
+      <tr><td>内网B/S架构</td><td>部署在客户内网服务器（Linux/Windows Server），浏览器访问，支持 50+ 用户</td></tr>
+      <tr><td>DeepSeek深度集成</td><td>招标文件自动解析→指标提取→方案对照建议→风险预警，形成"AI审计助手"</td></tr>
+      <tr><td>API开放平台</td><td>RESTful API 供PLM/ERP/测试管理工具接入，实现指标数据自动同步</td></tr>
+      <tr><td>审计知识库</td><td>行业审计规则库、历史项目经验库，辅助新项目审计方案制定</td></tr>
+      <tr><td>国产环境适配</td><td>支持麒麟/统信操作系统 + 达梦/人大金仓数据库，满足信创要求</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 5. Business Model -->
+<div class="section">
+  <h2><span class="num">5</span> 商业模式建议</h2>
+
+  <div class="score-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="score-item">
+      <div style="font-size:24px">&#128187;</div>
+      <div class="label" style="font-weight:600;margin-top:8px">单机许可</div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-top:4px">2-5万/套<br>永久授权+1年维护</div>
+    </div>
+    <div class="score-item">
+      <div style="font-size:24px">&#127760;</div>
+      <div class="label" style="font-weight:600;margin-top:8px">内网订阅</div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-top:4px">5-15万/年<br>不限用户+持续升级</div>
+    </div>
+    <div class="score-item">
+      <div style="font-size:24px">&#128736;</div>
+      <div class="label" style="font-weight:600;margin-top:8px">实施服务</div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-top:4px">3-8万/项目<br>模板定制+数据迁移+培训</div>
+    </div>
+    <div class="score-item">
+      <div style="font-size:24px">&#128214;</div>
+      <div class="label" style="font-weight:600;margin-top:8px">审计咨询</div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-top:4px">按人天计费<br>审计方案+报告编制</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <p><strong>推荐定价策略：</strong>以"单机许可"为入门产品降低决策门槛（2万/套），以内网订阅为主力营收（10万/年）。</p>
+    <p style="font-size:13px;color:var(--text-muted);margin-top:6px">参考：DOORS 需求管理软件约 50-80万/套，Polarion 约 30-50万/年。本产品定位在"轻量、专注、低价"，与巨头形成差异化。</p>
+  </div>
+</div>
+
+<!-- 6. Risk Assessment -->
+<div class="section">
+  <h2><span class="num">6</span> 风险评估</h2>
+
+  <table class="tbl">
+    <tr><th style="width:6%">等级</th><th style="width:22%">风险项</th><th style="width:38%">描述</th><th style="width:34%">缓解措施</th></tr>
+    <tr>
+      <td><span class="tag tag-red">高</span></td>
+      <td>Win7 浏览器兼容性</td>
+      <td>IE11 对现代 JS/CSS 支持差，可能导致前端大幅返工</td>
+      <td>优先确认客户实际浏览器版本；Phase 1 用 ES5+Babel 确保兼容；如客户有旧 Edge 则大幅简化</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-orange">中</span></td>
+      <td>商业模式验证不足</td>
+      <td>当前只有一个客户案例（环控平台），需求代表性存疑</td>
+      <td>Phase 1 完成后找 3-5 家潜在客户做概念验证（PoC），收集反馈再投入 Phase 2</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-orange">中</span></td>
+      <td>竞品快速跟进</td>
+      <td>大厂看到市场机会后可能快速推出类似功能</td>
+      <td>深耕行业 Know-how（军工审计规则、闭环方法论），建立领域壁垒而非纯技术壁垒</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-green">低</span></td>
+      <td>DeepSeek 能力瓶颈</td>
+      <td>AI 辅助功能表现不佳影响用户体验</td>
+      <td>核心功能不依赖 AI，AI 功能设为可选模块，有降级方案</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-green">低</span></td>
+      <td>数据安全合规</td>
+      <td>军工客户对数据存储有严格要求</td>
+      <td>全本地存储，SQLite 文件加密，支持客户指定存储路径，不上传任何数据</td>
+    </tr>
+  </table>
+</div>
+
+<!-- 7. Conclusion -->
+<div class="section">
+  <h2><span class="num">7</span> 结论与建议</h2>
+
+  <div class="conclusion">
+    <h3>&#9989; 建议推进产品化，分三步走</h3>
+
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="t-date">第 1 步 — 立即（2周内）</div>
+        <div class="t-title">确认客户浏览器环境，完成 Phase 1 技术验证</div>
+        <p style="font-size:12px;color:var(--text-secondary);margin-top:4px">确认目标客户的 Win7 机器上实际可用的浏览器（IE11 / 旧Edge / 是否允许安装 Firefox ESR）；完成 Python Flask + SQLite 后端的最小可行版本，验证在 Win7 上的运行可行性。</p>
+      </div>
+      <div class="timeline-item">
+        <div class="t-date">第 2 步 — 短期（2-3个月）</div>
+        <div class="t-title">完成 Phase 1 工程版 + 3家 PoC 验证</div>
+        <p style="font-size:12px;color:var(--text-secondary);margin-top:4px">在环控平台项目验收过程中实际使用本工具，同步找 2-3 家类似客户（二院其他所、其他军工单位）做免费试用。收集反馈，验证需求普遍性。</p>
+      </div>
+      <div class="timeline-item">
+        <div class="t-date">第 3 步 — 中期（6个月）</div>
+        <div class="t-title">完成 Phase 2 企业版 + 首个付费客户</div>
+        <p style="font-size:12px;color:var(--text-secondary);margin-top:4px">在 PoC 反馈基础上完善为商业版本，完成软件著作权登记，通过现有二院项目关系获取首个正式付费客户。</p>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;padding:16px;background:white;border-radius:6px">
+      <p style="font-weight:600;margin-bottom:8px">一句话总结：</p>
+      <p style="font-size:15px;color:var(--primary);font-weight:600">
+        这个工具不是"又一个项目管理软件"，而是解决了"项目验收时如何证明指标闭环"这个军工/政府/大型企业都痛的、但一直没有专用工具的问题。Windows 7 约束可解，DeepSeek 弱不影响核心价值，市场空白明确——值得投入。
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div style="text-align:center;padding:40px 0 20px;font-size:12px;color:var(--text-muted);border-top:1px solid var(--border);margin-top:40px">
+  审计指标闭环检查系统 — 产品化可行性评估报告 &middot; 2026年7月 &middot; 内部评估文档
+</div>
+
+</div>
+
+</body>
+</html>

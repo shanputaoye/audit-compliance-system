@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>技改项目验收审计 — 智能合规管理系统（开源版）</title>
+<style>
+:root{--bg:#f4f5f7;--s:#fff;--bd:#dfe2e7;--t:#1d2129;--t2:#5a6170;--t3:#8f95a3;--p:#1b5e3f;--pl:#e8f5ee;--a:#2a6496;--al:#eef5fb;--su:#1f7d3a;--w:#b3540e;--d:#c22d3a;--ai:#7c3aed;--ai-bg:#faf5ff;--r:6px;--f:-apple-system,"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--f);background:var(--bg);color:var(--t);display:flex;min-height:100vh;line-height:1.55;overflow-x:hidden}
+/* LEFT SIDEBAR */
+.sidebar{width:200px;background:#14181f;color:#8a8f9a;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;flex-shrink:0;overflow-y:auto}
+.sidebar-header{padding:14px 12px 11px;border-bottom:1px solid rgba(255,255,255,.06)}
+.sidebar-header .logo{font-size:12px;font-weight:700;color:#fff}.sidebar-header .logo span{color:#4aad6e}
+.sidebar-header .sub{font-size:8.5px;opacity:.5;margin-top:1px}
+.nav-sec{padding:8px 12px 2px;font-size:8px;text-transform:uppercase;letter-spacing:.1em;opacity:.35;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:7px;padding:7px 12px;margin:1px 5px;border-radius:var(--r);cursor:pointer;font-size:11px;color:#8a8f9a;transition:.15s;border:none;background:none;width:calc(100% - 10px);text-align:left}
+.nav-item:hover{background:#1e232c;color:#c8cdd5}
+.nav-item.active{background:var(--p);color:#fff}.nav-item .i{font-size:12px;width:16px;text-align:center;flex-shrink:0}
+.nav-badge{margin-left:auto;background:var(--w);color:#fff;font-size:8px;padding:1px 5px;border-radius:7px;font-weight:600;min-width:15px;text-align:center}
+.nav-badge.good{background:var(--su)}
+.sidebar-footer{padding:10px 12px;border-top:1px solid rgba(255,255,255,.04);font-size:8px;opacity:.35}
+
+/* MAIN WRAPPER */
+.main-wrapper{display:flex;flex:1;margin-left:200px;min-height:100vh;position:relative}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;transition:margin-right .3s}
+.main.ai-open{margin-right:340px}
+
+/* AI PANEL */
+.ai-panel{position:fixed;top:0;right:0;bottom:0;width:340px;background:var(--s);border-left:1px solid var(--bd);z-index:90;display:flex;flex-direction:column;transform:translateX(0);transition:transform .3s}
+.ai-panel.collapsed{transform:translateX(300px)}
+.ai-toggle{position:fixed;right:0;top:50%;transform:translateY(-50%);width:28px;height:60px;background:var(--ai);color:#fff;border:none;border-radius:8px 0 0 8px;cursor:pointer;z-index:91;font-size:12px;display:flex;align-items:center;justify-content:center;writing-mode:vertical-lr;letter-spacing:2px;font-family:var(--f)}
+.ai-panel:not(.collapsed)+.ai-toggle{right:340px;background:var(--bd);color:var(--t2)}
+.ai-head{padding:11px 14px;border-bottom:1px solid var(--bd);background:linear-gradient(135deg,#faf5ff,#f3e8ff);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ai-head h3{font-size:12.5px;color:var(--ai);display:flex;align-items:center;gap:6px}
+.ai-body{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+.ai-section{border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
+.ai-section .ai-shead{padding:8px 10px;background:#fafbfc;border-bottom:1px solid var(--bd);font-size:10.5px;font-weight:600;cursor:pointer;display:flex;justify-content:space-between}
+.ai-section .ai-sbody{padding:8px 10px;font-size:10.5px;max-height:180px;overflow-y:auto}
+.ai-chat{border-top:1px solid var(--bd);padding:8px 10px;display:flex;gap:6px}
+.ai-chat input{flex:1;padding:6px 8px;border:1px solid var(--bd);border-radius:var(--r);font-size:10.5px;font-family:var(--f);outline:none}
+.ai-chat input:focus{border-color:var(--ai)}
+.ai-chat button{padding:6px 10px;background:var(--ai);color:#fff;border:none;border-radius:var(--r);cursor:pointer;font-size:10.5px;white-space:nowrap}
+.ai-msg{padding:6px 8px;border-radius:4px;margin-bottom:6px;font-size:10px;line-height:1.5}
+.ai-msg.user{background:var(--ai-bg);color:var(--ai);text-align:right}
+.ai-msg.bot{background:#f4f5f7;color:var(--t2)}
+.ai-msg .meta{font-size:8px;color:var(--t3);margin-top:2px}
+
+/* TOPBAR */
+.topbar{background:var(--s);border-bottom:1px solid var(--bd);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;gap:8px}
+.topbar-left{display:flex;align-items:center;gap:8px;min-width:0}.topbar-title{font-size:13px;font-weight:600;white-space:nowrap}
+.topbar-proj{font-size:9.5px;color:var(--t3);padding:2px 7px;background:#f0f1f3;border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+.topbar-actions{display:flex;gap:4px;flex-shrink:0}
+.content{padding:12px 16px;flex:1}.view{display:none}.view.active{display:block}
+
+.btn{display:inline-flex;align-items:center;gap:3px;padding:5px 10px;border-radius:var(--r);font-size:10.5px;font-weight:500;font-family:var(--f);cursor:pointer;border:1px solid transparent;transition:.15s;white-space:nowrap}
+.btn-p{background:var(--p);color:#fff}.btn-p:hover{background:#124a30}
+.btn-s{background:var(--s);color:var(--t2);border-color:var(--bd)}.btn-s:hover{background:#f0f1f3}
+.btn-xs{padding:3px 6px;font-size:9px;border-radius:3px}
+.btn-gh{background:transparent;border-color:transparent;color:var(--t2)}.btn-gh:hover{background:rgba(0,0,0,.03)}
+.btn-out{background:transparent;border-color:var(--p);color:var(--p)}.btn-out:hover{background:var(--pl)}
+
+.sgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px}
+.scard{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);padding:12px}
+.scard .sl{font-size:9.5px;color:var(--t3);margin-bottom:2px}.scard .sv{font-size:18px;font-weight:700}
+.scard .ss{font-size:9px;color:var(--t3)}.scard.good .sv{color:var(--su)}.scard.warn .sv{color:var(--w)}.scard.bad .sv{color:var(--d)}
+
+.prow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.panel{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
+.phead{padding:9px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;background:#fafbfc;gap:6px}
+.phead h3{font-size:11.5px;font-weight:600;white-space:nowrap}.pbody{padding:10px 12px}
+
+.cat-card{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:8px;overflow:hidden}
+.cat-head{padding:8px 12px;background:#fafbfc;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;gap:6px}
+.cat-head h3{font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:5px}
+.cat-num{background:var(--p);color:#fff;min-width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700}
+.row{display:flex;align-items:center;padding:6px 12px;border-bottom:1px solid #f0f1f3;gap:6px;font-size:10.5px;cursor:pointer;transition:.1s}
+.row:hover{background:#fafbfc}.row:last-child{border-bottom:none}
+
+.badge{display:inline-flex;align-items:center;gap:2px;padding:2px 6px;border-radius:6px;font-size:8.5px;font-weight:600}
+.badge-ok{background:var(--pl);color:var(--su)}.badge-warn{background:#fef6ee;color:var(--w)}
+.badge-err{background:#fef0f1;color:var(--d)}.badge-info{background:var(--al);color:var(--a)}
+.badge-pending{background:#f0f1f3;color:var(--t3)}.badge-ai{background:#f3e8ff;color:var(--ai)}
+
+.gantt{overflow-x:auto;font-size:9.5px}.gantt-row{display:flex;align-items:center;border-bottom:1px solid #f0f1f3;padding:2px 0}
+.gantt-label{width:110px;flex-shrink:0;font-weight:500;font-size:9px;padding-right:4px}
+.gantt-bar-area{flex:1;position:relative;height:16px;background:#f4f5f7;border-radius:3px;min-width:140px}
+.gantt-bar{position:absolute;top:2px;height:12px;border-radius:3px;display:flex;align-items:center;padding:0 3px;font-size:7.5px;color:#fff}
+.gantt-bar.done{background:var(--su)}.gantt-bar.ongoing{background:var(--a)}.gantt-bar.late{background:var(--d)}.gantt-bar.future{background:#c8ccd2}
+.gantt-today{position:absolute;top:0;bottom:0;width:1.5px;background:var(--d);z-index:2}
+
+.tbl-wrap{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
+.tbl-bar{padding:7px 10px;border-bottom:1px solid var(--bd);display:flex;gap:5px;align-items:center;flex-wrap:wrap;font-size:10px}
+.tbl-bar input[type=text],.tbl-bar select{padding:4px 7px;border:1px solid var(--bd);border-radius:var(--r);font-size:10.5px;font-family:var(--f);outline:none;background:var(--s)}
+.tbl-bar input[type=text]:focus,.tbl-bar select:focus{border-color:var(--p)}
+.tbl-bar input[type=text]{width:130px}.spacer{flex:1}
+table{width:100%;border-collapse:collapse;font-size:10.5px}
+thead th{text-align:left;padding:6px 8px;font-weight:600;font-size:9.5px;color:var(--t3);background:#fafbfc;border-bottom:1px solid var(--bd);white-space:nowrap}
+tbody td{padding:6px 8px;border-bottom:1px solid var(--bd);vertical-align:middle}
+tbody tr:hover{background:#fafbfc}tbody tr:last-child td{border-bottom:none}
+.stage-dots{display:flex;gap:1.5px}.sdot{width:5px;height:5px;border-radius:50%}.sdot.ok{background:var(--su)}.sdot.issue{background:var(--w)}.sdot.pending{background:#d1d5db}
+
+.ver-item{padding:4px 7px;border:1px solid var(--bd);border-radius:3px;margin-bottom:2px;display:flex;gap:4px;align-items:flex-start;font-size:9.5px}
+.ver-item.current{border-color:var(--p);background:var(--pl)}.ver-item .vn{min-width:14px;font-weight:700;color:var(--p);font-size:8.5px;text-align:center}
+.ver-item .vc{flex:1}.ver-item .vd{font-size:8px;color:var(--t3);white-space:nowrap}
+
+.alert-item{padding:7px 10px;margin-bottom:3px;border-radius:var(--r);display:flex;align-items:flex-start;gap:5px;font-size:10px}
+.alert-item.critical{background:var(--d);color:#fff}.alert-item.warning{background:#fef6ee;border:1px solid #ffeeba}
+
+.dept-card{border:1px solid var(--bd);border-radius:var(--r);padding:10px;background:#fafbfc;margin-bottom:6px;font-size:10.5px}
+.dept-card.inactive{opacity:.6;border-style:dashed}
+
+.empty-st{text-align:center;padding:30px 10px;color:var(--t3);font-size:10.5px}
+.empty-st .eicon{font-size:24px;margin-bottom:6px;opacity:.25}
+
+/* Person-deliverables group */
+.person-group{margin-bottom:10px;border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
+.person-group .pg-head{padding:8px 12px;background:var(--al);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;gap:6px}
+.person-group .pg-head h4{font-size:11px;font-weight:600;color:var(--a)}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:1000;justify-content:center;align-items:flex-start;padding:16px 12px;overflow-y:auto}
+.modal-overlay.show{display:flex}
+.modal{background:var(--s);border-radius:8px;width:100%;max-width:600px;box-shadow:0 4px 20px rgba(0,0,0,.1);animation:si .15s ease}
+@keyframes si{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.modal-head{padding:11px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.modal-head h2{font-size:12.5px;font-weight:600}.modal-close{width:22px;height:22px;border:none;background:none;cursor:pointer;border-radius:var(--r);font-size:13px;color:var(--t3)}
+.modal-close:hover{background:#f0f1f3;color:var(--t)}.modal-body{padding:12px 14px}
+.modal-foot{padding:9px 14px;border-top:1px solid var(--bd);display:flex;justify-content:flex-end;gap:4px}
+.form-g{margin-bottom:9px}.form-g label{display:block;font-size:10.5px;font-weight:600;margin-bottom:2px}
+.form-g .hint{font-size:9px;color:var(--t3)}.form-g .err{font-size:9px;color:var(--d);display:none}
+.form-g.has-err .err{display:block}.form-g.has-err .form-input{border-color:var(--d)}
+.form-input{width:100%;padding:5px 7px;border:1px solid var(--bd);border-radius:var(--r);font-size:10.5px;font-family:var(--f);outline:none;background:var(--s)}
+.form-input:focus{border-color:var(--p);box-shadow:0 0 0 2px rgba(27,94,63,.06)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+textarea.form-input{resize:vertical;min-height:45px}
+.flex-between{display:flex;align-items:center;justify-content:space-between;gap:5px;flex-wrap:wrap}
+
+@media(max-width:1200px){.sgrid{grid-template-columns:repeat(3,1fr)}.ai-panel{width:300px}.main.ai-open{margin-right:300px}}
+@media(max-width:768px){.sgrid{grid-template-columns:1fr 1fr}.prow{grid-template-columns:1fr}
+  .sidebar{width:44px}.sidebar>*:not(nav){display:none}.nav-item span:not(.i){display:none}.nav-item{justify-content:center;padding:8px}
+  .main-wrapper{margin-left:44px}.ai-panel{width:280px;z-index:95}.main.ai-open{margin-right:280px}}
+@media print{.sidebar,.ai-panel,.ai-toggle,.topbar,.btn,.modal-overlay{display:none!important}.main-wrapper{margin-left:0!important}.main{margin-right:0!important}.content{padding:0!important}}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-header"><div class="logo"><span>&#9678;</span> 智能合规系统</div><div class="sub">验收审计 | AI驱动</div></div>
+  <nav class="sidebar-nav">
+    <div class="nav-sec">概览</div>
+    <button class="nav-item active" data-view="dash"><span class="i">&#9681;</span><span>仪表盘</span></button>
+    <div class="nav-sec">数据管理</div>
+    <button class="nav-item" data-view="docs"><span class="i">&#128196;</span><span>数据源中心</span><span class="nav-badge" id="badge-docs">0</span></button>
+    <button class="nav-item" data-view="indicators"><span class="i">&#9638;</span><span>指标闭环</span><span class="nav-badge" id="badge-inds">0</span></button>
+    <button class="nav-item" data-view="materials"><span class="i">&#9745;</span><span>材料清单</span><span class="nav-badge" id="badge-mats">0</span></button>
+    <div class="nav-sec">组织</div>
+    <button class="nav-item" data-view="org"><span class="i">&#128101;</span><span>组织架构</span></button>
+    <div class="nav-sec">审查</div>
+    <button class="nav-item" data-view="review"><span class="i">&#128269;</span><span>审核中心</span><span class="nav-badge" id="badge-review">0</span></button>
+    <button class="nav-item" data-view="gantt"><span class="i">&#9200;</span><span>进度节点</span><span class="nav-badge" id="badge-overdue">0</span></button>
+    <div class="nav-sec">输出</div>
+    <button class="nav-item" data-view="report"><span class="i">&#9998;</span><span>审计报告</span></button>
+    <button class="nav-item" data-view="tpl"><span class="i">&#9881;</span><span>模板</span></button>
+  </nav>
+  <div class="sidebar-footer">v7.0 | AI常驻助手</div>
+</aside>
+
+<div class="main-wrapper">
+  <div class="main" id="mainArea">
+    <div class="topbar">
+      <div class="topbar-left"><span class="topbar-title" id="topbarTitle">仪表盘</span><span class="topbar-proj" id="topbarProj"></span></div>
+      <div class="topbar-actions">
+        <select id="selProj" style="padding:3px 6px;border:1px solid var(--bd);border-radius:var(--r);font-size:10px;font-family:var(--f);background:var(--s);outline:none;max-width:160px" onchange="swProj(this.value)"></select>
+        <button class="btn btn-p btn-xs" onclick="quickAdd()">+ 新增</button>
+        <button class="btn btn-s btn-xs" onclick="exp()">导出</button>
+        <button class="btn btn-s btn-xs" onclick="imp()">导入</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="view active" id="view-dash"><div class="sgrid" id="ds"></div><div class="prow"><div class="panel"><div class="phead"><h3>&#9200; 里程碑</h3></div><div class="pbody gantt" id="dg"></div></div><div class="panel"><div class="phead"><h3>&#9888; 预警</h3></div><div class="pbody" id="da"></div></div></div></div>
+      <div class="view" id="view-docs"><div id="docsContent"></div></div>
+      <div class="view" id="view-indicators"><div id="indContent"></div></div>
+      <div class="view" id="view-materials"><div id="matContent"></div></div>
+      <div class="view" id="view-org"><div id="orgContent"></div></div>
+      <div class="view" id="view-review"><div id="reviewContent"></div></div>
+      <div class="view" id="view-gantt"><div id="ganttContent"></div></div>
+      <div class="view" id="view-report"><div id="reportContent"></div></div>
+      <div class="view" id="view-tpl"><div id="tplContent"></div></div>
+    </div>
+  </div>
+
+  <!-- AI PANEL -->
+  <div class="ai-panel" id="aiPanel">
+    <div class="ai-head">
+      <h3>&#9889; <span id="aiHeadTitle">AI 智能助手</span></h3>
+      <button class="btn btn-xs btn-gh" onclick="toggleAI()" title="收起面板">◀</button>
+    </div>
+    <div class="ai-body" id="aiBody"></div>
+    <div class="ai-chat">
+      <input type="text" id="aiInput" placeholder="输入问题..." onkeydown="if(event.key==='Enter')aiSend()">
+      <button onclick="aiSend()">发送</button>
+    </div>
+  </div>
+  <button class="ai-toggle" id="aiToggle" onclick="toggleAI()" style="display:none">AI 助手</button>
+</div>
+
+<!-- DELIVERABLE MODAL (owner is mandatory) -->
+<div class="modal-overlay" id="docModal"><div class="modal"><div class="modal-head"><h2 id="docMTitle">导入交付物</h2><button class="modal-close" onclick="closeDocM()">&times;</button></div><div class="modal-body">
+  <div class="form-row"><div class="form-g"><label>名称*</label><input class="form-input" id="fdname"></div><div class="form-g"><label>类型*</label><select class="form-input" id="fdtype"><option value="招标文件">招标文件</option><option value="合同">合同</option><option value="技术协议">技术协议</option><option value="交付物">交付物</option><option value="其他">其他</option></select></div></div>
+  <div class="form-row">
+    <div class="form-g has-err"><label>归属责任人*</label><select class="form-input" id="fdowner"><option value="">-- 请选择 --</option></select><div class="err">必须指定责任人</div></div>
+    <div class="form-g"><label>版本号</label><input class="form-input" id="fdver" value="V1.0"></div></div>
+  <div class="form-row"><div class="form-g"><label>文件路径/编号</label><input class="form-input" id="fdfile" placeholder="如：招标文件-环控平台.doc"></div>
+    <div class="form-g"><label>状态</label><select class="form-input" id="fdstatus"><option value="draft">草稿</option><option value="finalized">已定稿</option><option value="obsolete">已作废</option></select></div></div>
+  <div class="form-g"><label>关联指标</label><select class="form-input" id="fdlinked" multiple style="min-height:50px"></select></div>
+  <div class="form-g"><label>说明/变更记录</label><textarea class="form-input" id="fddesc" rows="2"></textarea></div>
+  <input type="hidden" id="fdid">
+</div><div class="modal-foot"><button class="btn btn-s" onclick="closeDocM()">取消</button><button class="btn btn-p" onclick="saveDoc()">保存</button></div></div></div>
+
+<!-- INDICATOR MODAL -->
+<div class="modal-overlay" id="indModal"><div class="modal"><div class="modal-head"><h2 id="indMTitle">编辑指标</h2><button class="modal-close" onclick="closeIndM()">&times;</button></div><div class="modal-body">
+  <div class="form-row"><div class="form-g"><label>名称*</label><input class="form-input" id="finame"></div><div class="form-g"><label>模块</label><select class="form-input" id="fimodule"></select></div></div>
+  <div class="form-row"><div class="form-g"><label>责任部门</label><select class="form-input" id="fidept"><option value="">未指定</option></select></div><div class="form-g"><label>责任人</label><select class="form-input" id="fiowner"><option value="">未指定</option></select></div></div>
+  <div class="form-row"><div class="form-g"><label>目标/要求</label><input class="form-input" id="fitarget"></div><div class="form-g"><label>截止日期</label><input type="date" class="form-input" id="fideadline"></div></div>
+  <div class="form-g"><label>关联交付物</label><select class="form-input" id="fidocs" multiple style="min-height:50px"></select></div>
+  <div class="form-g"><label>关联材料</label><select class="form-input" id="fimats" multiple style="min-height:50px"></select></div>
+  <input type="hidden" id="fiid">
+</div><div class="modal-foot"><button class="btn btn-s" onclick="closeIndM()">取消</button><button class="btn btn-p" onclick="saveInd()">保存</button></div></div></div>
+
+<!-- STAGE MODAL (enhanced with review process) -->
+<div class="modal-overlay" id="stModal"><div class="modal"><div class="modal-head"><h2 id="stMTitle">阶段管理</h2><button class="modal-close" onclick="closeStM()">&times;</button></div><div class="modal-body">
+  <div class="form-g"><label>状态</label><select class="form-input" id="stStatus" onchange="tgStRej()"><option value="pending">未开始</option><option value="draft">草稿</option><option value="submitted">提交审核</option><option value="approved">审核通过</option><option value="rejected">驳回</option></select></div>
+  <div class="form-row"><div class="form-g"><label>操作人</label><select class="form-input" id="stOp"><option value="">当前用户</option></select></div><div class="form-g"><label>审核人</label><select class="form-input" id="stReviewer"><option value="">未指定</option></select></div></div>
+  <div class="form-g"><label>评审意见</label><textarea class="form-input" id="stReviewOpinion" rows="2" placeholder="审核人对该阶段的评审意见..."></textarea></div>
+  <div class="form-g"><label>专家意见（可多条，每条一行）</label><textarea class="form-input" id="stExpertOpinions" rows="3" placeholder="专家姓名：意见内容&#10;专家姓名：意见内容"></textarea></div>
+  <div class="form-row"><div class="form-g"><label>说明</label><textarea class="form-input" id="stDesc" rows="2"></textarea></div><div class="form-g"><label>证据/依据</label><textarea class="form-input" id="stEvid" rows="2"></textarea></div></div>
+  <div class="form-g" id="stRejG" style="display:none"><label style="color:var(--d)">驳回原因*</label><textarea class="form-input" id="stRej" rows="2"></textarea></div>
+  <div class="form-row"><div class="form-g"><label>日期</label><input type="date" class="form-input" id="stDate"></div><div class="form-g"><label>意见闭环</label><select class="form-input" id="stOpinionClosed"><option value="no">未闭环</option><option value="yes">已闭环</option></select></div></div>
+  <div class="form-g"><label>责任人变更</label><select class="form-input" id="stNewOwner"><option value="">不变更</option></select></div>
+</div><div class="modal-foot"><button class="btn btn-s" onclick="closeStM()">取消</button><button class="btn btn-p" onclick="saveSt()">保存</button></div></div></div>
+
+<!-- MATERIAL MODAL -->
+<div class="modal-overlay" id="matModal"><div class="modal"><div class="modal-head"><h2 id="matMTitle">编辑材料</h2><button class="modal-close" onclick="closeMatM()">&times;</button></div><div class="modal-body">
+  <div class="form-row"><div class="form-g"><label>名称*</label><input class="form-input" id="fmname"></div><div class="form-g"><label>类别</label><select class="form-input" id="fmcat"></select></div></div>
+  <div class="form-g"><label>审计规则</label><input class="form-input" id="fmrule"></div>
+  <div class="form-row"><div class="form-g"><label>责任人</label><select class="form-input" id="fmowner"><option value="">未指定</option></select></div><div class="form-g"><label>截止</label><input type="date" class="form-input" id="fmdeadline"></div></div>
+  <div class="form-g"><label>关联交付物</label><select class="form-input" id="fmdocs" multiple style="min-height:50px"></select></div>
+  <div class="form-g"><label>关联指标</label><select class="form-input" id="fminds" multiple style="min-height:50px"></select></div>
+  <input type="hidden" id="fmid">
+</div><div class="modal-foot"><button class="btn btn-s" onclick="closeMatM()">取消</button><button class="btn btn-p" onclick="saveMat()">保存</button></div></div></div>
+
+<!-- MATERIAL WF MODAL (enhanced with meeting records + expert opinions + signature) -->
+<div class="modal-overlay" id="mwfModal"><div class="modal"><div class="modal-head"><h2 id="mwfTitle">更新材料</h2><button class="modal-close" onclick="closeMwfM()">&times;</button></div><div class="modal-body">
+  <div class="form-g"><label>状态</label><select class="form-input" id="mwfStatus" onchange="tgMwRej()"><option value="draft">编制中</option><option value="submitted">提交审核</option><option value="approved">审核通过(定稿)</option><option value="rejected">退回修订</option></select></div>
+  <div class="form-g"><label>说明</label><textarea class="form-input" id="mwfDesc" rows="2"></textarea></div>
+  <div class="form-g" id="mwfRejG" style="display:none"><label style="color:var(--d)">退回原因*</label><textarea class="form-input" id="mwfRej" rows="2"></textarea></div>
+  <div class="form-row"><div class="form-g"><label>操作人</label><select class="form-input" id="mwfOp"><option value="">当前用户</option></select></div><div class="form-g"><label>日期</label><input type="date" class="form-input" id="mwfDate"></div></div>
+  <div class="form-g"><label>会议记录</label><textarea class="form-input" id="mwfMeetings" rows="3" placeholder="会议名称 | 日期 | 主要内容&#10;评审会 | 2026-01-15 | 讨论通过了..."></textarea></div>
+  <div class="form-g"><label>专家意见与签名</label><textarea class="form-input" id="mwfExpertOps" rows="3" placeholder="专家姓名：意见内容 [✓已签名 / ○待签]&#10;王专家：同意该方案 [✓已签名 2026-01-20]&#10;李专家：建议补充XX内容 [○待签]"></textarea></div>
+</div><div class="modal-foot"><button class="btn btn-s" onclick="closeMwfM()">取消</button><button class="btn btn-p" onclick="saveMwf()">保存</button></div></div></div>
+
+<!-- ORG MODAL -->
+<div class="modal-overlay" id="orgModal"><div class="modal"><div class="modal-head"><h2 id="orgMTitle">编辑组织</h2><button class="modal-close" onclick="closeOrgM()">&times;</button></div><div class="modal-body">
+  <div class="form-g"><label>类型</label><select class="form-input" id="orgType" onchange="tgOrgType()"><option value="dept">部门</option><option value="person">人员</option></select></div>
+  <div class="form-g" id="orgDeptG"><label>所属部门</label><select class="form-input" id="orgDept"><option value="">未指定</option></select></div>
+  <div class="form-g"><label>名称*</label><input class="form-input" id="orgName"></div>
+  <div class="form-g" id="orgRoleG" style="display:none"><label>角色</label><input class="form-input" id="orgRole" placeholder="如：项目经理"></div>
+  <div class="form-g"><label>状态</label><select class="form-input" id="orgStatus"><option value="active">在职/正常</option><option value="inactive">离职/撤销</option><option value="renamed">已更名</option></select></div>
+  <div class="form-g"><label>变更说明</label><input class="form-input" id="orgNote"></div>
+  <input type="hidden" id="orgId">
+</div><div class="modal-foot"><button class="btn btn-s" onclick="closeOrgM()">取消</button><button class="btn btn-p" onclick="saveOrg()">保存</button></div></div></div>
+
+<script>
+// ============ TEMPLATES (same as V6) ============
+const TPL={
+  '技改项目':{cats:[{id:'C1',n:'一、立项审批类'},{id:'C2',n:'二、招标采购类'},{id:'C3',n:'三、实施过程类'},{id:'C4',n:'四、设备验收类'},{id:'C5',n:'五、财务审计类'},{id:'C6',n:'六、专项验收类'},{id:'C7',n:'七、综合验收类'}],
+  mods:[{id:'M1',n:'立项与可研'},{id:'M2',n:'初步设计'},{id:'M3',n:'招标与合同'},{id:'M4',n:'土建与安装'},{id:'M5',n:'设备采购与验收'},{id:'M6',n:'专项验收'},{id:'M7',n:'财务决算'},{id:'M8',n:'竣工验收'}],
+  defDocs:[{name:'招标文件-技术要求',type:'招标文件',ver:'V1.0',file:'环控系统技术要求.doc'},{name:'投标技术方案',type:'技术协议',ver:'V2.3',file:'投标方案_V2.3.docx'},{name:'采购合同',type:'合同',ver:'V1.0',file:'采购合同.pdf'}],
+  defMats:[{name:'项目建议书批复',cat:'C1'},{name:'可研报告及批复',cat:'C1'},{name:'初设概算批复',cat:'C1'},{name:'招标方案备案',cat:'C2'},{name:'招标/评标文件',cat:'C2'},{name:'中标通知书',cat:'C2'},{name:'合同文件',cat:'C2'},{name:'施工组织设计',cat:'C3'},{name:'监理报告',cat:'C3'},{name:'变更审批',cat:'C3'},{name:'设备到货清单',cat:'C4'},{name:'试车报告',cat:'C4'},{name:'技术指标验证报告',cat:'C4'},{name:'竣工结算',cat:'C5'},{name:'财务决算',cat:'C5'},{name:'第三方审计',cat:'C5'},{name:'环保验收',cat:'C6'},{name:'消防验收',cat:'C6'},{name:'安全验收',cat:'C6'},{name:'职业卫生',cat:'C6'},{name:'档案验收',cat:'C6'},{name:'验收申请',cat:'C7'},{name:'验收总结',cat:'C7'},{name:'问题整改闭环',cat:'C7'}],
+  defInds:[{name:'微通道换热器设计',mod:'M5',target:'输入输出≥30项'},{name:'翅片管换热器计算',mod:'M5',target:'精度±10%'},{name:'空调系统COP',mod:'M5',target:'≥3.9'},{name:'标定精度',mod:'M5',target:'≥95%'}],
+  milestones:[{n:'立项批复',o:30},{n:'初设批复',o:60},{n:'招标完成',o:100},{n:'主体完工',o:200},{n:'设备联调',o:240},{n:'专项验收',o:280},{n:'决算审计',o:330},{n:'竣工验收',o:360},{n:'批复转固',o:390}]},
+  '科研项目':{cats:[{id:'R1',n:'一、立项论证'},{id:'R2',n:'二、研发过程'},{id:'R3',n:'三、成果鉴定'},{id:'R4',n:'四、结题验收'}],mods:[{id:'M1',n:'任务书'},{id:'M2',n:'方案设计'},{id:'M3',n:'样机研制'},{id:'M4',n:'试验验证'},{id:'M5',n:'成果鉴定'},{id:'M6',n:'结题验收'}],defDocs:[{name:'科研任务书',type:'其他',ver:'V1.0',file:'任务书.pdf'}],defMats:[{name:'任务书批复',cat:'R1'},{name:'方案评审',cat:'R2'},{name:'测试报告',cat:'R3'},{name:'鉴定证书',cat:'R3'},{name:'经费决算',cat:'R4'},{name:'结题报告',cat:'R4'}],defInds:[{name:'性能指标达标',mod:'M3',target:'满足任务书'}],milestones:[{n:'任务书批复',o:15},{n:'方案评审',o:45},{n:'样机完成',o:180},{n:'结题验收',o:330}]},
+  '信息化项目':{cats:[{id:'I1',n:'一、需求设计'},{id:'I2',n:'二、开发测试'},{id:'I3',n:'三、部署交付'},{id:'I4',n:'四、验收'}],mods:[{id:'M1',n:'需求分析'},{id:'M2',n:'系统设计'},{id:'M3',n:'开发测试'},{id:'M4',n:'部署实施'},{id:'M5',n:'试运行'},{id:'M6',n:'验收交付'}],defDocs:[{name:'需求规格说明书',type:'交付物',ver:'V1.0',file:''}],defMats:[{name:'需求说明书',cat:'I1'},{name:'设计文档',cat:'I1'},{name:'测试报告',cat:'I2'},{name:'部署记录',cat:'I3'},{name:'试运行报告',cat:'I3'},{name:'验收报告',cat:'I4'}],defInds:[{name:'功能覆盖率',mod:'M3',target:'100%'}],milestones:[{n:'需求确认',o:30},{n:'设计评审',o:60},{n:'上线',o:200},{n:'验收',o:330}]}
+};
+
+// ============ STORAGE ============
+const SK='audit_v7';let D=null;
+function nw(){return new Date().toISOString().slice(0,10)}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function AP(){return D?D.projects.find(p=>p.id===D.activeProjectId):null}
+
+function defaults(){
+  const bd=new Date('2026-01-01');function ad(n){const d=new Date(bd);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
+  const mkSt=()=>({requirement:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},design:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},implementation:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},verification:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]});
+  return {projects:[{
+    id:'P1',name:'智能制造产线升级改造项目',tpl:'技改项目',sd:ad(0),ed:ad(390),
+    org:{depts:[
+      {id:'D1',name:'计划处',status:'active',hist:[]},
+      {id:'D2',name:'技术部',status:'active',hist:[]},
+      {id:'D3',name:'质量部',status:'active',hist:[]},
+      {id:'D4',name:'财务部',status:'active',hist:[]},
+      {id:'D5',name:'原设备管理科',status:'inactive',hist:[{note:'2025年合并入技术部',date:'2025-06-01'}],note:'已合并至技术部'}
+    ],
+    persons:[
+      {id:'P1',name:'张处长',dept:'D1',role:'项目主管',status:'active',hist:[]},
+      {id:'P2',name:'李工',dept:'D2',role:'技术负责人',status:'active',hist:[]},
+      {id:'P3',name:'王工',dept:'D2',role:'工艺工程师',status:'active',hist:[]},
+      {id:'P4',name:'赵工',dept:'D3',role:'检验工程师',status:'active',hist:[]},
+      {id:'P5',name:'钱工',dept:'D5',role:'设备管理员',status:'inactive',hist:[{note:'部门合并调动',date:'2025-06-01'}],note:'已调至技术部'}
+    ]},
+    deliverables:[
+      {id:'DL01',name:'招标文件-技术规格书',type:'招标文件',ver:'V1.0',file:'智能制造产线技术规格书.doc',owner:'P1',status:'finalized',desc:'',linked:[],hist:[{ver:'V1.0',date:ad(5),op:'P1',note:'初始版本'}]},
+      {id:'DL02',name:'投标技术方案',type:'技术协议',ver:'V2.3',file:'产线升级投标方案_V2.3.docx',owner:'P2',status:'finalized',desc:'',linked:[],hist:[{ver:'V1.0',date:ad(10),op:'P2',note:'初版'},{ver:'V2.0',date:ad(60),op:'P2',note:'增强稿'},{ver:'V2.3',date:ad(90),op:'P2',note:'定稿排版版'}]},
+      {id:'DL03',name:'设备采购合同',type:'合同',ver:'V1.0',file:'产线设备采购合同.pdf',owner:'P1',status:'finalized',desc:'',linked:[],hist:[{ver:'V1.0',date:ad(100),op:'P1',note:'签订'}]},
+      {id:'DL04',name:'设备到货验收单',type:'交付物',ver:'V1.0',file:'',owner:'P4',status:'draft',desc:'',linked:[],hist:[]},
+      {id:'DL05',name:'技术指标验证报告',type:'交付物',ver:'V1.0',file:'',owner:'P4',status:'draft',desc:'',linked:[],hist:[]}
+    ],
+    indicators:[
+      {id:'I01',name:'生产线节拍达标率',mod:'M5',target:'节拍≤45秒/件',owner:'P3',deadline:ad(180),priority:'critical',dept:'D2',linkedDocs:['DL01','DL02'],linkedMats:[],stages:mkSt()},
+      {id:'I02',name:'设备综合效率(OEE)',mod:'M5',target:'OEE≥85%',owner:'P3',deadline:ad(180),priority:'high',dept:'D2',linkedDocs:['DL01','DL02'],linkedMats:[],stages:mkSt()},
+      {id:'I03',name:'产品一次合格率',mod:'M5',target:'≥98.5%',owner:'P2',deadline:ad(220),priority:'critical',dept:'D3',linkedDocs:['DL01','DL02'],linkedMats:[],stages:mkSt()},
+      {id:'I04',name:'单位能耗指标',mod:'M5',target:'≤0.35kWh/件',owner:'P4',deadline:ad(240),priority:'critical',dept:'D2',linkedDocs:['DL01'],linkedMats:[],stages:mkSt()}
+    ],
+    materials:[
+      {id:'M01',name:'项目建议书批复',cat:'C1',rule:'固定资产投资管理办法',owner:'P1',deadline:ad(30),wf:'approved',op:'P1',date:ad(25),ver:1,hist:[{s:'approved',desc:'已批复',date:ad(25),op:'P1',ver:1}],linkedInds:[],linkedDocs:[]},
+      {id:'M02',name:'可研报告及批复',cat:'C1',rule:'固定资产投资管理办法',owner:'P1',deadline:ad(40),wf:'approved',op:'P1',date:ad(35),ver:1,hist:[{s:'approved',desc:'已批复',date:ad(35),op:'P1',ver:1}],linkedInds:[],linkedDocs:[]},
+      {id:'M03',name:'初设概算批复',cat:'C1',rule:'固定资产投资管理办法',owner:'P2',deadline:ad(60),wf:'rejected',op:'P1',date:ad(70),ver:2,rjReason:'安全设施专项费用遗漏',hist:[{s:'submitted',desc:'提交',date:ad(65),op:'P2',ver:1},{s:'rejected',desc:'退回',date:ad(70),op:'P1',ver:2}],linkedInds:[],linkedDocs:[]},
+      {id:'M04',name:'招标方案备案',cat:'C2',owner:'P1',deadline:ad(80),wf:'approved',ver:1,hist:[],linkedInds:[],linkedDocs:[]},
+      {id:'M05',name:'设备到货清单',cat:'C4',owner:'P4',deadline:ad(200),wf:'draft',ver:1,hist:[],linkedInds:[],linkedDocs:['DL04']},
+      {id:'M06',name:'技术指标验证报告',cat:'C4',rule:'项目验收管理办法',owner:'P4',deadline:ad(240),wf:'draft',ver:1,hist:[],linkedInds:['I01','I02','I03','I04'],linkedDocs:['DL05']}
+    ],
+    milestones:[{id:'MS1',n:'立项批复',pd:ad(30),ad:ad(25)},{id:'MS2',n:'初设批复',pd:ad(60),ad:''},{id:'MS3',n:'招标完成',pd:ad(100),ad:''},{id:'MS4',n:'设备安装完成',pd:ad(200),ad:''},{id:'MS5',n:'产线联调完成',pd:ad(240),ad:''},{id:'MS6',n:'专项验收完成',pd:ad(280),ad:''},{id:'MS7',n:'决算审计',pd:ad(330),ad:''},{id:'MS8',n:'竣工验收',pd:ad(360),ad:''},{id:'MS9',n:'批复转固',pd:ad(390),ad:''}]
+  }],activeProjectId:'P1'};
+}
+function load(){try{const r=localStorage.getItem(SK);if(r){const d=JSON.parse(r);if(d&&d.projects)return d}}catch(e){}return defaults()}
+function save(){localStorage.setItem(SK,JSON.stringify(D))}
+D=load();
+
+// ============ NAVIGATION ============
+let cv='dash';
+document.querySelectorAll('.nav-item').forEach(item=>{item.addEventListener('click',function(){
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));this.classList.add('active');showV(this.dataset.view);
+})});
+function showV(v){cv=v;document.querySelectorAll('.view').forEach(vv=>vv.classList.remove('active'));
+  const el=document.getElementById('view-'+v);if(el)el.classList.add('active');
+  document.getElementById('topbarTitle').textContent={dash:'仪表盘',docs:'数据源中心',indicators:'指标闭环',materials:'材料清单',org:'组织架构',review:'审核中心',gantt:'进度节点',report:'审计报告',tpl:'模板'}[v]||v;
+  const p=AP();
+  document.getElementById('topbarProj').textContent=p?(p.name+'-'+p.tpl):'';
+  document.getElementById('selProj').innerHTML=D.projects.map(pj=>`<option value="${pj.id}"${pj.id===D.activeProjectId?' selected':''}>${pj.name}</option>`).join('');
+  refresh();
+}
+function swProj(id){D.activeProjectId=id;save();showV(cv)}
+
+function refresh(){updateB();if(cv==='dash')rd();if(cv==='docs')rdocs();if(cv==='indicators')rinds();if(cv==='materials')rmats();if(cv==='org')rorg();if(cv==='review')rrev();if(cv==='gantt')rg();if(cv==='report')rrpt();if(cv==='tpl')rt();updateAI()}
+function updateB(){const p=AP();if(!p)return;const td=nw();
+  document.getElementById('badge-docs').textContent=(p.deliverables||[]).filter(d=>d.status!=='finalized').length;
+  document.getElementById('badge-inds').textContent=(p.indicators||[]).length;
+  document.getElementById('badge-mats').textContent=(p.materials||[]).filter(m=>m.wf!=='approved').length;
+  document.getElementById('badge-review').textContent=(p.materials||[]).filter(m=>m.wf==='submitted'||m.wf==='rejected').length;
+  const ov=(p.milestones||[]).filter(m=>!m.ad&&m.pd<td).length;const el=document.getElementById('badge-overdue');el.textContent=ov;el.className=ov>0?'nav-badge':'nav-badge good';
+}
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
+function pn(p,id){const per=(p.org&&p.org.persons||[]).find(pp=>pp.id===id);return per?per.name:id}
+function dn(p,id){const d=(p.org&&p.org.depts||[]).find(dd=>dd.id===id);return d?d.name:id}
+function cn(p,id){const t=TPL[p.tpl];if(!t)return id;const c=t.cats.find(cc=>cc.id===id);return c?c.n:id}
+function mn(p,id){const t=TPL[p.tpl];if(!t)return id;const m=t.mods.find(mm=>mm.id===id);return m?m.n:id}
+function quickAdd(){if(cv==='docs')openDocM();else if(cv==='indicators')openIndM();else if(cv==='materials')openMatM();else if(cv==='org')openOrgM();}
+
+// ============ DASHBOARD ============
+function rd(){
+  const p=AP();if(!p){document.getElementById('ds').innerHTML='<div class="empty-st"><p>请先创建项目</p></div>';return}
+  const inds=p.indicators||[],mats=p.materials||[],docs=p.deliverables||[],td=nw();
+  const indApp=inds.reduce((s,i)=>s+Object.values(i.stages||{}).filter(st=>st.wf==='approved').length,0);
+  const matApp=mats.filter(m=>m.wf==='approved').length,docDone=docs.filter(d=>d.status==='finalized').length;
+  const ov=mats.filter(m=>m.deadline&&m.deadline<td&&m.wf!=='approved').length;
+  document.getElementById('ds').innerHTML=`
+    <div class="scard"><div class="sl">交付物</div><div class="sv">${docs.length}</div><div class="ss">${docDone}定稿</div></div>
+    <div class="scard good"><div class="sl">指标完成率</div><div class="sv">${inds.length*5>0?Math.round(indApp/(inds.length*5)*100):0}%</div></div>
+    <div class="scard"><div class="sl">材料定稿</div><div class="sv">${matApp}/${mats.length}</div><div class="ss">${mats.length>0?Math.round(matApp/mats.length*100):0}%</div></div>
+    <div class="scard warn"><div class="sl">待审核</div><div class="sv">${mats.filter(m=>m.wf==='submitted').length}</div></div>
+    <div class="scard ${ov>0?'bad':''}"><div class="sl">逾期</div><div class="sv">${ov}</div></div>`;
+  const ms=p.milestones||[];if(ms.length){const ds=ms.map(m=>m.pd).concat(ms.map(m=>m.ad).filter(Boolean));ds.sort();const st=ds[0],en=ds[ds.length-1],tot=Math.max(1,Math.ceil((new Date(en)-new Date(st))/86400000));
+    document.getElementById('dg').innerHTML=ms.map(m=>{const l=Math.round((new Date(m.pd)-new Date(st))/86400000/tot*100),w=m.ad?Math.round((new Date(m.ad)-new Date(m.pd))/86400000/tot*100+3):5,cls=m.ad?'done':m.pd<td?'late':m.pd<=new Date(Date.now()+30*86400000).toISOString().slice(0,10)?'ongoing':'future';return`<div class="gantt-row"><div class="gantt-label">${esc(m.n)}</div><div class="gantt-bar-area"><div class="gantt-bar ${cls}" style="left:${l}%;width:${Math.max(w,3)}%">${m.pd.slice(5)}</div></div></div>`}).join('')}
+  let al='';const rej=mats.filter(m=>m.wf==='rejected');if(rej.length)al+=rej.slice(0,3).map(m=>`<div class="alert-item critical"><span>&#10060;</span><div>${esc(m.name)} · ${esc(m.rjReason||'')}</div></div>`).join('');
+  if(!al)al='<div class="empty-st" style="padding:12px"><p>无预警</p></div>';document.getElementById('da').innerHTML=al;
+}
+
+// ============ DATA SOURCES (with person grouping) ============
+function rdocs(){
+  const p=AP();if(!p)return;const docs=p.deliverables||[],persons=p.org?.persons||[];
+  const dc={招标文件:'🏷️',合同:'📜',技术协议:'📋',交付物:'📦',其他:'📄'};
+  const sb={finalized:'badge-ok',draft:'badge-warn',obsolete:'badge-pending'};
+  const sl={finalized:'已定稿',draft:'草稿',obsolete:'已作废'};
+
+  // Group by person
+  const grouped={};
+  docs.forEach(d=>{const oid=d.owner||'unassigned';if(!grouped[oid])grouped[oid]=[];grouped[oid].push(d)});
+
+  let html=`<div style="display:flex;gap:6px;margin-bottom:10px;align-items:center">
+    <span style="font-size:11px;font-weight:600">交付物列表</span>
+    <button class="btn btn-xs btn-out" id="docGroupBtn" onclick="toggleDocGroup()">按责任人分组</button>
+    <div class="spacer"></div>
+    <button class="btn btn-p btn-xs" onclick="openDocM()">+ 导入交付物</button>
+  </div><div id="docGroupView"></div>`;
+
+  document.getElementById('docsContent').innerHTML=html;
+  renderDocGroup();
+}
+function renderDocGroup(grouped_){
+  const p=AP();if(!p)return;const docs=p.deliverables||[],persons=p.org?.persons||[];
+  const grouped=grouped_||{};const dc={招标文件:'🏷️',合同:'📜',技术协议:'📋',交付物:'📦',其他:'📄'};
+  const sb={finalized:'badge-ok',draft:'badge-warn',obsolete:'badge-pending'};
+  const sl={finalized:'已定稿',draft:'草稿',obsolete:'已作废'};
+
+  if(!grouped_){grouped_={};docs.forEach(d=>{const oid=d.owner||'unassigned';if(!grouped_[oid])grouped_[oid]=[];grouped_[oid].push(d)});}
+
+  let html='';
+  Object.entries(grouped_).forEach(([oid,items])=>{
+    const person=persons.find(pp=>pp.id===oid);
+    const label=person?`${person.name} (${dn(p,person.dept)})`:'未指定责任人';
+    html+=`<div class="person-group">
+      <div class="pg-head"><h4>👤 ${esc(label)} <span style="font-size:9px;color:var(--t3)">${items.length}项交付物</span></h4>
+      <span style="font-size:9px;color:var(--t3)">定稿${items.filter(d=>d.status==='finalized').length}/${items.length}</span></div>
+      <div>${items.map(d=>{
+        const linkedInds=(d.linked||[]).map(iid=>{const ind=p.indicators.find(i=>i.id===iid);return ind?ind.name:''}).filter(Boolean);
+        return`<div class="row" onclick="openDocM('${d.id}')">
+          <span style="font-size:14px">${dc[d.type]||'📄'}</span>
+          <span style="flex:1;font-weight:500">${esc(d.name)}</span>
+          <span style="font-size:9px;color:var(--t3)">${esc(d.ver)} · ${esc(d.file||'无文件')}</span>
+          <span class="badge ${sb[d.status]}">${sl[d.status]}</span>
+          ${linkedInds.length?`<span style="font-size:8px;color:var(--a)">${linkedInds.length}指标</span>`:''}
+        </div>`;
+      }).join('')}</div>
+    </div>`;
+  });
+  if(!html)html='<div class="empty-st"><p>暂无交付物，点击"导入交付物"开始</p></div>';
+  html+=`<details style="margin-top:12px"><summary style="font-size:10.5px;color:var(--a);cursor:pointer">版本/变更历史</summary><div style="margin-top:6px">${docs.filter(d=>(d.hist||[]).length>0).map(d=>`<div style="border:1px solid var(--bd);border-radius:4px;padding:8px;margin-bottom:6px"><strong>${esc(d.name)}</strong> · ${esc(d.ver)} · <span class="badge ${sb[d.status]}">${sl[d.status]}</span><div>${(d.hist||[]).map((h,i)=>`<div class="ver-item ${i===d.hist.length-1?'current':''}"><div class="vn">${h.ver}</div><div class="vc">${esc(h.note||'')}</div><div class="vd">${h.date.slice(0,10)}<br>${pn(p,h.op)}</div></div>`).join('')}</div></div>`).join('')||'<span style="font-size:10px;color:var(--t3)">无变更记录</span>'}</div></details>`;
+  document.getElementById('docGroupView').innerHTML=html;
+}
+
+// ============ INDICATORS ============
+function rinds(){
+  const p=AP();if(!p)return;const inds=p.indicators||[],keys=['requirement','design','implementation','verification','closure'];
+  function gl(ind){const vs=keys.map(k=>{const s=ind.stages[k];return s&&s.wf==='approved'?1:s&&s.wf==='rejected'?.5:0});const d=vs.filter(v=>v===1).length,i=vs.filter(v=>v===.5).length;return d===5?'closed':i>0?'broken':d>0?'partial':'none'}
+  const ll={closed:'已闭环',partial:'进行中',broken:'断点',none:'未开始'},lc={closed:'badge-ok',partial:'badge-info',broken:'badge-err',none:'badge-pending'};
+  document.getElementById('indContent').innerHTML=`
+    <div class="tbl-wrap"><div class="tbl-bar">
+      <input type="text" id="indSearch" placeholder="搜索..." oninput="rinds()">
+      <select id="indModF" onchange="rinds()"><option value="all">全部模块</option>${(TPL[p.tpl]?.mods||[]).map(m=>`<option value="${m.id}">${m.n}</option>`).join('')}</select>
+      <select id="indLoopF" onchange="rinds()"><option value="all">全部</option><option value="closed">已闭环</option><option value="broken">断点</option></select>
+      <div class="spacer"></div><button class="btn btn-p btn-xs" onclick="openIndM()">+ 新增</button>
+    </div><table><thead><tr><th>指标</th><th>五阶段</th><th>闭环</th><th>部门</th><th>责任人</th><th>交付物</th><th>操作</th></tr></thead>
+    <tbody>${inds.map(ind=>{const l=gl(ind),dots=keys.map(k=>{const s=ind.stages[k];return`<span class="sdot ${s&&s.wf==='approved'?'ok':s&&s.wf==='rejected'?'issue':'pending'}"></span>`}).join('');const docs=(ind.linkedDocs||[]).map(did=>{const d=p.deliverables.find(dd=>dd.id===did);return d?d.name:''}).filter(Boolean);
+    return`<tr onclick="aiAnalyzeIndicator2('${ind.id}')" style="cursor:pointer"><td style="font-weight:500">${esc(ind.name)}</td><td><span class="stage-dots">${dots}</span></td><td><span class="badge ${lc[l]}">${ll[l]}</span></td><td>${dn(p,ind.dept)}</td><td>${pn(p,ind.owner)}</td><td style="font-size:9px">${docs.join(', ')||'-'}</td><td style="display:flex;gap:2px"><button class="btn btn-xs btn-s" onclick="event.stopPropagation();openIndM('${ind.id}')">编辑</button><button class="btn btn-xs btn-s" onclick="event.stopPropagation();openStM('${ind.id}')">阶段</button><button class="btn btn-xs" style="background:var(--ai);color:#fff" onclick="event.stopPropagation();aiAnalyzeIndicator2('${ind.id}')">AI</button></td></tr>`}).join('')}</tbody></table></div>`;
+}
+
+// ============ MATERIALS ============
+function rmats(){
+  const p=AP();if(!p)return;const mats=p.materials||[],t=TPL[p.tpl],lb={approved:'已定稿',submitted:'审核中',draft:'编制中',rejected:'退回修订',pending:'待启动'},cb={approved:'badge-ok',submitted:'badge-info',draft:'badge-warn',rejected:'badge-err',pending:'badge-pending'};
+  document.getElementById('matContent').innerHTML=(t?t.cats:[]).map(c=>{
+    const cm=mats.filter(m=>m.cat===c.id);
+    return`<div class="cat-card"><div class="cat-head"><h3><span class="cat-num">${c.id.slice(1)}</span>${c.n}</h3><span style="font-size:9.5px;color:var(--t3)">${cm.length}项 · ${cm.filter(m=>m.wf==='approved').length}定稿</span></div><div class="cat-body">${cm.map(m=>`<div class="row" onclick="aiAnalyzeMaterial('${m.id}')"><span style="flex:2;font-weight:500;font-size:10.5px">${esc(m.name)}</span><span style="flex:1;font-size:9px;color:var(--a)">${esc(m.rule||'')}</span><span style="width:60px;text-align:center"><span class="badge ${cb[m.wf]}">${lb[m.wf]}</span></span><span style="width:50px;text-align:center;font-size:9px">${pn(p,m.owner)}</span><span style="width:35px;text-align:right"><button class="btn btn-xs btn-s" onclick="event.stopPropagation();openMwfM('${m.id}')">更新</button></span></div>`).join('')}</div></div>`}).join('')+`<button class="btn btn-out btn-xs" style="margin-top:6px" onclick="openMatM()">+ 新增材料</button>`;
+}
+
+// ============ ORGANIZATION ============
+function rorg(){
+  const p=AP();if(!p)return;const depts=p.org?.depts||[],persons=p.org?.persons||[];
+  document.getElementById('orgContent').innerHTML=`<div class="prow">
+    <div class="panel"><div class="phead"><h3>🏢 部门</h3><button class="btn btn-p btn-xs" onclick="openOrgM('dept')">+ 新增</button></div><div class="pbody">${depts.map(d=>{
+      const pc=persons.filter(pp=>pp.dept===d.id);
+      return`<div class="dept-card ${d.status==='inactive'?'inactive':''}"><h4>${esc(d.name)} ${d.status==='inactive'?'<span class="badge badge-err">已撤销</span>':d.status==='renamed'?'<span class="badge badge-warn">已更名</span>':'<span class="badge badge-ok">正常</span>'}</h4>${d.note?`<div style="font-size:9px;color:var(--w)">${esc(d.note)}</div>`:''}<div style="font-size:9.5px;margin-top:4px">成员：${pc.map(pp=>`<span style="${pp.status==='inactive'?'text-decoration:line-through;color:var(--d)':''}">${esc(pp.name)}</span>`).join(' · ')||'无'}</div><button class="btn btn-xs btn-gh" onclick="openOrgM('dept','${d.id}')">编辑</button></div>`}).join('')}</div></div>
+    <div class="panel"><div class="phead"><h3>👤 人员</h3><button class="btn btn-p btn-xs" onclick="openOrgM('person')">+ 新增</button></div><div class="pbody">${persons.map(pp=>`<div class="dept-card ${pp.status==='inactive'?'inactive':''}"><h4>${esc(pp.name)} ${pp.status==='inactive'?'<span class="badge badge-err">离职</span>':'<span class="badge badge-ok">在职</span>'}</h4><div style="font-size:9.5px">${dn(p,pp.dept)} · ${esc(pp.role||'未指定')}</div>${pp.note?`<div style="font-size:8.5px;color:var(--w)">${esc(pp.note)}</div>`:''}<button class="btn btn-xs btn-gh" onclick="openOrgM('person','${pp.id}')">编辑</button></div>`).join('')}</div></div>
+  </div>`;
+}
+
+// ============ REVIEW ============
+function rrev(){
+  const p=AP();if(!p)return;const mats=p.materials||[];
+  const items=mats.filter(m=>m.wf==='submitted'||m.wf==='rejected');
+  if(items.length===0){document.getElementById('reviewContent').innerHTML='<div class="empty-st"><div class="eicon">✓</div><h3>无待审核项</h3></div>';return}
+  document.getElementById('reviewContent').innerHTML=`<div class="tbl-wrap"><div class="tbl-bar"><strong>待审核（${items.length}项）</strong></div><table><thead><tr><th>材料</th><th>类别</th><th>状态</th><th>操作</th></tr></thead><tbody>${items.map(m=>`<tr><td>${esc(m.name)}${m.rjReason?`<br><span style="font-size:8.5px;color:var(--d)">${esc(m.rjReason)}</span>`:''}</td><td>${cn(p,m.cat)}</td><td><span class="badge ${m.wf==='submitted'?'badge-info':'badge-err'}">${m.wf==='submitted'?'待审核':'需重做'}</span></td><td><button class="btn btn-xs btn-p" onclick="qrMat('${m.id}','approved')">通过</button> <button class="btn btn-xs btn-gh" style="color:var(--d)" onclick="qrMat('${m.id}','rejected')">退回</button></td></tr>`).join('')}</tbody></table></div>`;
+}
+function qrMat(mid,s){const p=AP();const m=p.materials.find(mm=>mm.id===mid);if(!m)return;if(s==='rejected'){const r=prompt('退回原因：');if(!r)return;m.rjReason=r}m.wf=s;m.op='审核员';m.date=nw();m.ver=(m.ver||1)+1;m.hist.push({s,desc:s==='approved'?'通过':'退回',date:nw(),op:'审核员',ver:m.ver});save();refresh()}
+
+// ============ GANTT ============
+function rg(){
+  const p=AP();if(!p)return;const ms=p.milestones||[],td=nw();
+  if(!ms.length){document.getElementById('ganttContent').innerHTML='<div class="empty-st"><p>暂无节点</p></div>';return}
+  const ds=ms.map(m=>m.pd).concat(ms.map(m=>m.ad).filter(Boolean));ds.sort();const st=ds[0],en=ds[ds.length-1],tot=Math.max(1,Math.ceil((new Date(en)-new Date(st))/86400000)),tL=Math.round((new Date(td)-new Date(st))/86400000/tot*100);
+  document.getElementById('ganttContent').innerHTML=`<div class="panel"><div class="phead"><h3>里程碑</h3><button class="btn btn-p btn-xs" onclick="addMs()">+ 新增</button></div><div class="pbody gantt">${ms.map(m=>{const l=Math.round((new Date(m.pd)-new Date(st))/86400000/tot*100),w=m.ad?Math.round((new Date(m.ad)-new Date(m.pd))/86400000/tot*100+3):5,cls=m.ad?'done':m.pd<td?'late':m.pd<=new Date(Date.now()+30*86400000).toISOString().slice(0,10)?'ongoing':'future';return`<div class="gantt-row"><div class="gantt-label">${esc(m.n)}</div><div class="gantt-bar-area">${tL>=0&&tL<=100?`<div class="gantt-today" style="left:${tL}%"></div>`:''}<div class="gantt-bar ${cls}" style="left:${l}%;width:${Math.max(w,3)}%">${m.pd.slice(5)}</div></div></div>`}).join('')}</div></div>`;
+}
+function addMs(){const n=prompt('名称：');if(!n)return;const d=prompt('计划日期(YYYY-MM-DD)：');if(!d)return;AP().milestones.push({id:uid(),n,pd:d,ad:''});save();rg()}
+
+// ============ REPORT ============
+function rrpt(){
+  const p=AP();if(!p)return;const inds=p.indicators||[],mats=p.materials||[],docs=p.deliverables||[];
+  const indApp=inds.reduce((s,i)=>s+Object.values(i.stages||{}).filter(st=>st.wf==='approved').length,0);
+  const matApp=mats.filter(m=>m.wf==='approved').length,docDone=docs.filter(d=>d.status==='finalized').length;
+  document.getElementById('reportContent').innerHTML=`<div style="background:var(--s);border:1px solid var(--bd);border-radius:var(--r);padding:20px"><div style="text-align:center;padding-bottom:10px;margin-bottom:12px;border-bottom:2px solid var(--bd)"><h2 style="font-size:16px">${esc(p.name)}<br>审计综合报告</h2></div>
+    <h3 style="font-size:11px;margin:8px 0">交付物：${docs.length}项 (${docDone}定稿)</h3>
+    <h3 style="font-size:11px;margin:8px 0">指标：${inds.length*5>0?Math.round(indApp/(inds.length*5)*100):0}%阶段通过</h3>
+    <h3 style="font-size:11px;margin:8px 0">材料：${mats.length>0?Math.round(matApp/mats.length*100):0}%定稿率</h3></div>`;
+}
+
+// ============ TEMPLATES ============
+function rt(){document.getElementById('tplContent').innerHTML=Object.entries(TPL).map(([n,t])=>`<div class="panel" style="margin-bottom:8px"><div class="phead"><h3>${n}</h3><button class="btn btn-p btn-xs" onclick="mkPrj('${n}')">创建项目</button></div><div class="pbody" style="font-size:10px">📂${t.cats.length}类材料 · 🔧${t.mods.length}指标模块 · 📦${t.defDocs.length}交付物 · ⏰${t.milestones.length}节点</div></div>`).join('')}
+function mkPrj(n){const t=TPL[n];if(!t)return;const nm=prompt('项目名称：',n+'项目');if(!nm)return;const bd=new Date();function ad(n){const d=new Date(bd);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
+  const p={id:uid(),name:nm,tpl:n,sd:ad(0),ed:ad(Math.max(...t.milestones.map(m=>m.o))),org:{depts:[],persons:[]},
+    deliverables:(t.defDocs||[]).map(d=>({id:uid(),name:d.name,type:d.type,ver:d.ver||'V1.0',file:d.file||'',owner:'',status:'draft',desc:'',linked:[],hist:[]})),
+    indicators:(t.defInds||[]).map(i=>({id:uid(),name:i.name,mod:i.mod,target:i.target,owner:'',deadline:ad(180),priority:'normal',linkedDocs:[],linkedMats:[],stages:{requirement:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},design:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},implementation:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},verification:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]}})),
+    materials:(t.defMats||[]).map(m=>({id:uid(),name:m.name,cat:m.cat,rule:'',owner:'',deadline:ad(90),wf:'pending',ver:1,hist:[],linkedInds:[],linkedDocs:[]})),
+    milestones:(t.milestones||[]).map(m=>({id:uid(),n:m.n,pd:ad(m.o),ad:''}))};
+  D.projects.push(p);D.activeProjectId=p.id;save();showV('dash');}
+
+// ============ DELIVERABLE CRUD (owner mandatory) ============
+let edid=null;
+function openDocM(id){edid=id||null;const p=AP();if(!p)return;
+  document.getElementById('docMTitle').textContent=id?'编辑交付物':'导入交付物';
+  document.getElementById('fdowner').innerHTML='<option value="">-- 请选择责任人 --</option>'+(p.org?.persons||[]).filter(pp=>pp.status==='active').map(pp=>`<option value="${pp.id}">${pp.name} (${dn(p,pp.dept)})</option>`).join('');
+  document.getElementById('fdlinked').innerHTML=(p.indicators||[]).map(i=>`<option value="${i.id}">${i.name}</option>`).join('');
+  if(id){const d=p.deliverables.find(dd=>dd.id===id);if(!d)return;
+    document.getElementById('fdid').value=d.id;document.getElementById('fdname').value=d.name;
+    document.getElementById('fdtype').value=d.type;document.getElementById('fdver').value=d.ver||'V1.0';
+    document.getElementById('fdfile').value=d.file||'';document.getElementById('fdowner').value=d.owner||'';
+    document.getElementById('fdstatus').value=d.status||'draft';document.getElementById('fddesc').value=d.desc||'';
+    Array.from(document.getElementById('fdlinked').options).forEach(o=>o.selected=(d.linked||[]).includes(o.value));
+    document.getElementById('fdowner').parentElement.classList.remove('has-err');
+  }else{
+    document.getElementById('fdid').value='';document.getElementById('fdname').value='';document.getElementById('fdtype').value='招标文件';
+    document.getElementById('fdver').value='V1.0';document.getElementById('fdfile').value='';document.getElementById('fdowner').value='';
+    document.getElementById('fdstatus').value='draft';document.getElementById('fddesc').value='';
+    Array.from(document.getElementById('fdlinked').options).forEach(o=>o.selected=false);
+    document.getElementById('fdowner').parentElement.classList.add('has-err');
+  }
+  document.getElementById('docModal').classList.add('show');
+}
+function closeDocM(){document.getElementById('docModal').classList.remove('show');edid=null}
+function saveDoc(){
+  const p=AP();if(!p)return;const name=document.getElementById('fdname').value.trim();
+  const owner=document.getElementById('fdowner').value;
+  if(!name){alert('请输入名称');return}
+  if(!owner){document.getElementById('fdowner').parentElement.classList.add('has-err');return}
+  document.getElementById('fdowner').parentElement.classList.remove('has-err');
+  const si=Array.from(document.getElementById('fdlinked').selectedOptions).map(o=>o.value);
+  const obj={id:edid||uid(),name,type:document.getElementById('fdtype').value,ver:document.getElementById('fdver').value.trim(),
+    file:document.getElementById('fdfile').value.trim(),owner,status:document.getElementById('fdstatus').value,
+    desc:document.getElementById('fddesc').value.trim(),linked:si};
+  if(edid){const idx=p.deliverables.findIndex(d=>d.id===edid);if(idx>=0){const old=p.deliverables[idx];obj.hist=old.hist||[];if(obj.ver!==old.ver)obj.hist.push({ver:obj.ver,date:nw(),op:'系统',note:'版本更新：'+old.ver+'→'+obj.ver});obj.aiContent=old.aiContent;p.deliverables[idx]=obj}}
+  else{obj.hist=[{ver:obj.ver,date:nw(),op:owner,note:'初始导入'}];p.deliverables.push(obj)}
+  (p.indicators||[]).forEach(i=>{if(!i.linkedDocs)i.linkedDocs=[];i.linkedDocs=i.linkedDocs.filter(did=>did!==(edid||obj.id))});
+  si.forEach(iid=>{const ind=p.indicators.find(ii=>ii.id===iid);if(ind&&!ind.linkedDocs.includes(obj.id))ind.linkedDocs.push(obj.id)});
+  save();closeDocM();refresh();
+}
+
+// ============ INDICATOR CRUD ============
+let eiid=null;
+function openIndM(id){eiid=id||null;const p=AP();if(!p)return;
+  document.getElementById('indMTitle').textContent=id?'编辑指标':'新增指标';
+  document.getElementById('fimodule').innerHTML=(TPL[p.tpl]?.mods||[]).map(m=>`<option value="${m.id}">${m.n}</option>`).join('');
+  document.getElementById('fiowner').innerHTML='<option value="">未指定</option>'+(p.org?.persons||[]).map(pp=>`<option value="${pp.id}">${pp.name} (${dn(p,pp.dept)})</option>`).join('');
+  document.getElementById('fidept').innerHTML='<option value="">未指定</option>'+(p.org?.depts||[]).map(d=>`<option value="${d.id}">${d.name}</option>`).join('');
+  document.getElementById('fidocs').innerHTML=(p.deliverables||[]).map(d=>`<option value="${d.id}">${d.name} (${d.type})</option>`).join('');
+  document.getElementById('fimats').innerHTML=(p.materials||[]).map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+  if(id){const ind=p.indicators.find(i=>i.id===id);if(!ind)return;
+    document.getElementById('fiid').value=ind.id;document.getElementById('finame').value=ind.name;
+    document.getElementById('fimodule').value=ind.mod;document.getElementById('fidept').value=ind.dept||'';
+    document.getElementById('fitarget').value=ind.target||'';
+    document.getElementById('fiowner').value=ind.owner||'';document.getElementById('fideadline').value=ind.deadline||'';
+    document.getElementById('fipriority').value=ind.priority||'normal';
+    Array.from(document.getElementById('fidocs').options).forEach(o=>o.selected=(ind.linkedDocs||[]).includes(o.value));
+    Array.from(document.getElementById('fimats').options).forEach(o=>o.selected=(ind.linkedMats||[]).includes(o.value));
+  }else{
+    document.getElementById('fiid').value='';document.getElementById('finame').value='';document.getElementById('fidept').value='';
+    document.getElementById('fitarget').value='';
+    document.getElementById('fiowner').value='';document.getElementById('fideadline').value='';document.getElementById('fipriority').value='normal';
+    Array.from(document.getElementById('fidocs').options).forEach(o=>o.selected=false);
+    Array.from(document.getElementById('fimats').options).forEach(o=>o.selected=false);
+  }
+  document.getElementById('indModal').classList.add('show');
+}
+function closeIndM(){document.getElementById('indModal').classList.remove('show');eiid=null}
+function saveInd(){
+  const p=AP();if(!p)return;const name=document.getElementById('finame').value.trim();if(!name)return;
+  const sd=Array.from(document.getElementById('fidocs').selectedOptions).map(o=>o.value),sm=Array.from(document.getElementById('fimats').selectedOptions).map(o=>o.value);
+  const obj={id:eiid||uid(),name,mod:document.getElementById('fimodule').value,dept:document.getElementById('fidept').value,target:document.getElementById('fitarget').value.trim(),owner:document.getElementById('fiowner').value,deadline:document.getElementById('fideadline').value,priority:document.getElementById('fipriority').value,linkedDocs:sd,linkedMats:sm};
+  if(eiid){const idx=p.indicators.findIndex(i=>i.id===eiid);if(idx>=0){obj.stages=p.indicators[idx].stages;obj.oHistory=p.indicators[idx].oHistory||[];p.indicators[idx]=obj}}
+  else{obj.stages={requirement:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},design:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},implementation:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},verification:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]};p.indicators.push(obj)}
+  (p.deliverables||[]).forEach(d=>{if(!d.linked)d.linked=[];d.linked=d.linked.filter(iid=>iid!==(eiid||obj.id))});sd.forEach(did=>{const d=p.deliverables.find(dd=>dd.id===did);if(d&&!d.linked.includes(obj.id))d.linked.push(obj.id)});
+  (p.materials||[]).forEach(m=>{if(!m.linkedInds)m.linkedInds=[];m.linkedInds=m.linkedInds.filter(iid=>iid!==(eiid||obj.id))});sm.forEach(mid=>{const m=p.materials.find(mm=>mm.id===mid);if(m&&!m.linkedInds.includes(obj.id))m.linkedInds.push(obj.id)});
+  save();closeIndM();refresh();
+}
+
+// ============ STAGE ============
+let sti=null,stk=null;
+function openStM(iid,k){sti=iid;stk=k;const p=AP();if(!p)return;const ind=p.indicators.find(i=>i.id===iid);if(!ind)return;
+  if(!stk){const keys=['requirement','design','implementation','verification','closure'];stk=keys.find(kk=>{const s=ind.stages[kk];return !s||s.wf==='pending'||s.wf==='draft'})||keys[0]}
+  const sl={requirement:'需求定义',design:'方案设计',implementation:'实施执行',verification:'验收验证',closure:'闭环确认'};
+  document.getElementById('stMTitle').textContent=sl[stk]+' — '+ind.name;
+  const s=ind.stages[stk]||{wf:'pending',desc:'',evid:'',date:''};
+  document.getElementById('stStatus').value=s.wf||'pending';document.getElementById('stDesc').value=s.desc||'';
+  document.getElementById('stEvid').value=s.evid||'';document.getElementById('stDate').value=s.date||nw();document.getElementById('stRej').value='';tgStRej();
+  document.getElementById('stOp').innerHTML='<option value="">当前用户</option>'+(p.org?.persons||[]).map(pp=>`<option value="${pp.id}">${pp.name}</option>`).join('');
+  document.getElementById('stReviewer').innerHTML='<option value="">未指定</option>'+(p.org?.persons||[]).map(pp=>`<option value="${pp.id}">${pp.name}</option>`).join('');
+  document.getElementById('stReviewer').value=s.reviewer||'';
+  document.getElementById('stReviewOpinion').value=s.reviewOpinion||'';
+  document.getElementById('stExpertOpinions').value=(s.expertOpinions||[]).join('\n');
+  document.getElementById('stOpinionClosed').value=s.opinionClosed||'no';
+  document.getElementById('stNewOwner').innerHTML='<option value="">不变更</option>'+(p.org?.persons||[]).map(pp=>`<option value="${pp.id}">${pp.name}</option>`).join('');
+  document.getElementById('stModal').classList.add('show');
+}
+function closeStM(){document.getElementById('stModal').classList.remove('show');sti=null;stk=null}
+function tgStRej(){document.getElementById('stRejG').style.display=document.getElementById('stStatus').value==='rejected'?'block':'none'}
+function saveSt(){if(!sti||!stk)return;const p=AP();const ind=p.indicators.find(i=>i.id===sti);if(!ind)return;
+  const wf=document.getElementById('stStatus').value,desc=document.getElementById('stDesc').value.trim(),evid=document.getElementById('stEvid').value.trim(),date=document.getElementById('stDate').value||nw(),op=document.getElementById('stOp').value||'系统',no=document.getElementById('stNewOwner').value;
+  const reviewer=document.getElementById('stReviewer').value,reviewOpinion=document.getElementById('stReviewOpinion').value.trim();
+  const expertOpinions=document.getElementById('stExpertOpinions').value.split('\n').filter(function(l){return l.trim()!==''});
+  const opinionClosed=document.getElementById('stOpinionClosed').value;
+  if(wf==='rejected'){const r=document.getElementById('stRej').value.trim();if(!r){alert('驳回须填写原因');return}}
+  const old=ind.stages[stk]||{wf:'pending',desc:'',evid:'',date:'',op:'',ver:0,hist:[]};
+  ind.stages[stk]={wf,desc:desc||old.desc,evid:evid||old.evid,date,op,reviewer,reviewOpinion,expertOpinions,opinionClosed,ver:old.ver+1,hist:[...(old.hist||[]),{s:wf,desc:desc||old.desc,date,op,ver:old.ver+1,rjReason:wf==='rejected'?document.getElementById('stRej').value.trim():undefined,reviewer,reviewOpinion}]};
+  if(no&&no!==ind.owner){if(!ind.oHistory)ind.oHistory=[];ind.oHistory.push({name:no,from:date,prev:ind.owner});ind.owner=no}save();closeStM();refresh();}
+
+// ============ MATERIAL CRUD ============
+let emid=null;
+function openMatM(id){emid=id||null;const p=AP();if(!p)return;
+  document.getElementById('matMTitle').textContent=id?'编辑材料':'新增材料';
+  document.getElementById('fmcat').innerHTML=(TPL[p.tpl]?.cats||[]).map(c=>`<option value="${c.id}">${c.n}</option>`).join('');
+  document.getElementById('fmowner').innerHTML='<option value="">未指定</option>'+(p.org?.persons||[]).map(pp=>`<option value="${pp.id}">${pp.name}</option>`).join('');
+  document.getElementById('fmdocs').innerHTML=(p.deliverables||[]).map(d=>`<option value="${d.id}">${d.name}</option>`).join('');
+  document.getElementById('fminds').innerHTML=(p.indicators||[]).map(i=>`<option value="${i.id}">${i.name}</option>`).join('');
+  if(id){const m=p.materials.find(mm=>mm.id===id);if(!m)return;
+    document.getElementById('fmid').value=m.id;document.getElementById('fmname').value=m.name;document.getElementById('fmcat').value=m.cat;
+    document.getElementById('fmrule').value=m.rule||'';document.getElementById('fmowner').value=m.owner||'';document.getElementById('fmdeadline').value=m.deadline||'';
+    Array.from(document.getElementById('fmdocs').options).forEach(o=>o.selected=(m.linkedDocs||[]).includes(o.value));
+    Array.from(document.getElementById('fminds').options).forEach(o=>o.selected=(m.linkedInds||[]).includes(o.value));
+  }else{
+    document.getElementById('fmid').value='';document.getElementById('fmname').value='';document.getElementById('fmrule').value='';
+    document.getElementById('fmowner').value='';document.getElementById('fmdeadline').value='';
+    Array.from(document.getElementById('fmdocs').options).forEach(o=>o.selected=false);Array.from(document.getElementById('fminds').options).forEach(o=>o.selected=false);
+  }
+  document.getElementById('matModal').classList.add('show');
+}
+function closeMatM(){document.getElementById('matModal').classList.remove('show');emid=null}
+function saveMat(){
+  const p=AP();if(!p)return;const name=document.getElementById('fmname').value.trim();if(!name)return;
+  const sd=Array.from(document.getElementById('fmdocs').selectedOptions).map(o=>o.value),si=Array.from(document.getElementById('fminds').selectedOptions).map(o=>o.value);
+  const obj={id:emid||uid(),name,cat:document.getElementById('fmcat').value,rule:document.getElementById('fmrule').value.trim(),owner:document.getElementById('fmowner').value,deadline:document.getElementById('fmdeadline').value,linkedDocs:sd,linkedInds:si};
+  if(emid){const idx=p.materials.findIndex(m=>m.id===emid);if(idx>=0){const o=p.materials[idx];obj.wf=o.wf;obj.op=o.op;obj.date=o.date;obj.ver=o.ver;obj.hist=o.hist||[];obj.rjReason=o.rjReason;p.materials[idx]=obj}}
+  else{obj.wf='pending';obj.ver=1;obj.hist=[];p.materials.push(obj)}save();closeMatM();refresh();}
+
+// ============ MATERIAL WF ============
+let mwid=null;
+function openMwfM(id){mwid=id;const p=AP();const m=p.materials.find(mm=>mm.id===id);if(!m)return;
+  document.getElementById('mwfTitle').textContent='更新：'+m.name;document.getElementById('mwfStatus').value=m.wf||'pending';
+  document.getElementById('mwfDesc').value='';document.getElementById('mwfDate').value=nw();document.getElementById('mwfRej').value='';tgMwRej();
+  document.getElementById('mwfOp').innerHTML='<option value="">当前用户</option>'+(p.org?.persons||[]).map(pp=>`<option value="${pp.id}">${pp.name}</option>`).join('');
+  document.getElementById('mwfMeetings').value=(m.meetingRecords||[]).join('\n');
+  document.getElementById('mwfExpertOps').value=(m.expertOpinions||[]).join('\n');
+  document.getElementById('mwfModal').classList.add('show');
+}
+function closeMwfM(){document.getElementById('mwfModal').classList.remove('show');mwid=null}
+function tgMwRej(){document.getElementById('mwfRejG').style.display=document.getElementById('mwfStatus').value==='rejected'?'block':'none'}
+function saveMwf(){
+  if(!mwid)return;const p=AP();const m=p.materials.find(mm=>mm.id===mwid);if(!m)return;
+  const wf=document.getElementById('mwfStatus').value,desc=document.getElementById('mwfDesc').value.trim(),op=document.getElementById('mwfOp').value||'系统',date=document.getElementById('mwfDate').value||nw();
+  if(wf==='rejected'){const r=document.getElementById('mwfRej').value.trim();if(!r){alert('退回须填写原因');return};m.rjReason=r}
+  m.wf=wf;m.op=op;m.date=date;m.ver=(m.ver||1)+1;
+  m.meetingRecords=document.getElementById('mwfMeetings').value.split('\n').filter(function(l){return l.trim()!==''});
+  m.expertOpinions=document.getElementById('mwfExpertOps').value.split('\n').filter(function(l){return l.trim()!==''});
+  m.hist.push({s:wf,desc,date,op,ver:m.ver,rjReason:wf==='rejected'?m.rjReason:undefined});save();closeMwfM();refresh();}
+
+// ============ ORGANIZATION CRUD ============
+let eoid=null,eotype='dept';
+function openOrgM(type,id){eoid=id||null;eotype=type||'dept';const p=AP();if(!p)return;
+  document.getElementById('orgMTitle').textContent=(id?'编辑':'新增')+(type==='dept'?'部门':'人员');document.getElementById('orgType').value=type;tgOrgType();
+  document.getElementById('orgDept').innerHTML='<option value="">未指定</option>'+(p.org?.depts||[]).filter(d=>d.status!=='inactive').map(d=>`<option value="${d.id}">${d.name}</option>`).join('');
+  if(id){if(type==='dept'){const d=(p.org?.depts||[]).find(dd=>dd.id===id);if(!d)return;document.getElementById('orgId').value=d.id;document.getElementById('orgName').value=d.name;document.getElementById('orgStatus').value=d.status;document.getElementById('orgNote').value=d.note||''}
+  else{const pp=(p.org?.persons||[]).find(ppp=>ppp.id===id);if(!pp)return;document.getElementById('orgId').value=pp.id;document.getElementById('orgName').value=pp.name;document.getElementById('orgDept').value=pp.dept||'';document.getElementById('orgRole').value=pp.role||'';document.getElementById('orgStatus').value=pp.status;document.getElementById('orgNote').value=pp.note||''}}
+  else{document.getElementById('orgId').value='';document.getElementById('orgName').value='';document.getElementById('orgDept').value='';document.getElementById('orgRole').value='';document.getElementById('orgStatus').value='active';document.getElementById('orgNote').value=''}
+  document.getElementById('orgModal').classList.add('show');
+}
+function closeOrgM(){document.getElementById('orgModal').classList.remove('show');eoid=null}
+function tgOrgType(){const t=document.getElementById('orgType').value;document.getElementById('orgDeptG').style.display=t==='person'?'block':'none';document.getElementById('orgRoleG').style.display=t==='person'?'block':'none'}
+function saveOrg(){
+  const p=AP();const type=document.getElementById('orgType').value,name=document.getElementById('orgName').value.trim();if(!name)return;
+  const obj={id:eoid||uid(),name,status:document.getElementById('orgStatus').value};
+  if(type==='person'){obj.dept=document.getElementById('orgDept').value;obj.role=document.getElementById('orgRole').value.trim();obj.note=document.getElementById('orgNote').value.trim();obj.hist=[]}
+  else{obj.note=document.getElementById('orgNote').value.trim();obj.hist=[]}
+  if(eoid){if(type==='dept'){const idx=(p.org.depts||[]).findIndex(d=>d.id===eoid);if(idx>=0){obj.hist=p.org.depts[idx].hist||[];if(obj.status!==p.org.depts[idx].status)obj.hist.push({note:'状态变更',date:nw()});p.org.depts[idx]=obj}}
+  else{const idx=(p.org.persons||[]).findIndex(pp=>pp.id===eoid);if(idx>=0){obj.hist=p.org.persons[idx].hist||[];if(obj.dept!==p.org.persons[idx].dept)obj.hist.push({note:'部门变更',date:nw()});p.org.persons[idx]=obj}}}
+  else{if(type==='dept'){if(!p.org.depts)p.org.depts=[];p.org.depts.push(obj)}else{if(!p.org.persons)p.org.persons=[];p.org.persons.push(obj)}}save();closeOrgM();refresh();}
+
+// ============ AI PANEL (page-context-aware v8) ============
+function toggleAI(){const panel=document.getElementById('aiPanel'),main=document.getElementById('mainArea'),toggle=document.getElementById('aiToggle');
+  panel.classList.toggle('collapsed');main.classList.toggle('ai-open',!panel.classList.contains('collapsed'));
+  toggle.style.display=panel.classList.contains('collapsed')?'flex':'none';
+}
+function updateAI(){
+  const p=AP();if(!p)return;
+  const titles={dash:'仪表盘分析',docs:'文档解析器',indicators:'指标智能助手',materials:'材料合规检查',org:'组织分析',review:'审核辅助',gantt:'进度分析',report:'报告预览',tpl:'模板对比'};
+  document.getElementById('aiHeadTitle').textContent=titles[cv]||'AI 助手';
+  const body=document.getElementById('aiBody'),inds=p.indicators||[],mats=p.materials||[],docs=p.deliverables||[];
+  if(!p){body.innerHTML='<div class="empty-st"><p>请选择项目</p></div>';return}
+  function sec(t,c,o){return'<div class="ai-section"><div class="ai-shead ai-tgl">'+t+'</div><div class="ai-sbody"'+(o===false?' style="display:none"':'')+'>'+c+'</div></div>'}
+  const td=nw();
+  if(cv==='docs'){
+    body.innerHTML=sec('文档解析器','<select id="aiDocSel" style="width:100%;padding:4px;font-size:9.5px;margin-bottom:6px"><option value="">-- 选择交付物 --</option>'+docs.map(d=>'<option value="'+d.id+'">'+esc(d.name)+'</option>').join('')+'</select><button class="btn btn-xs" style="width:100%;background:var(--ai);color:#fff;margin-bottom:4px" onclick="aiParseDoc()">解析文档</button><button class="btn btn-xs btn-s" style="width:100%" onclick="aiBatchParse()">全量扫描</button><div id="aiParseResult" style="font-size:9.5px;margin-top:6px;color:var(--t3)">选择交付物后点击解析，AI提取技术指标和合规要点。</div>');
+  }
+  else if(cv==='indicators'){
+    body.innerHTML=sec('智能检查','<select id="aiIndSel" style="width:100%;padding:4px;font-size:9.5px;margin-bottom:4px"><option value="">-- 选择指标 --</option>'+inds.map(i=>'<option value="'+i.id+'">'+esc(i.name)+'</option>').join('')+'</select><button class="btn btn-xs" style="width:100%;background:var(--ai);color:#fff;margin-bottom:3px" onclick="aiCheckInd()">检查指标状态</button><button class="btn btn-xs btn-s" style="width:100%;margin-bottom:3px" onclick="aiCheckAll()">批量扫描</button><div id="aiIndResult" style="font-size:9.5px;margin-top:4px;color:var(--t3)">选择指标后点击检查，AI评估当前阶段并给出闭环建议。</div>')+
+      sec('依据文件决策','<select id="aiDocForInd" style="width:100%;padding:4px;font-size:9.5px;margin-bottom:4px"><option value="">-- 选择参考文件 --</option>'+docs.map(d=>'<option value="'+d.id+'">'+esc(d.name)+'</option>').join('')+'</select><button class="btn btn-xs btn-s" style="width:100%" onclick="aiDocDecide()">依据此文件决策参数状态</button><div id="aiDocDecideResult" style="font-size:9px;color:var(--t3);margin-top:3px">选择文件后AI基于文档内容建议对应指标验证状态。</div>',false);
+  }
+  else if(cv==='materials'){
+    const ap=mats.filter(m=>m.wf==='approved').length,rej=mats.filter(m=>m.wf==='rejected').length;
+    body.innerHTML=sec('合规检查','<table style="width:100%;font-size:9.5px"><tr><td>定稿率</td><td style="color:'+(ap/mats.length>.5?'var(--su)':'var(--w)')+'">'+Math.round(ap/mats.length*100)+'%</td></tr><tr><td>退回</td><td style="color:'+(rej>0?'var(--d)':'var(--su)')+'">'+rej+'项</td></tr></table>')+
+      sec('建议','<button class="btn btn-xs btn-s" style="width:100%" onclick="addAIMsg('+"'审计进场需材料定稿率≥80%，当前"+Math.round(ap/mats.length*100)+"%，需补充"+(Math.ceil(mats.length*.8)-ap)+"项。'"+')">定稿率目标分析</button>',false);
+  }
+  else if(cv==='review'){
+    const sub=mats.filter(m=>m.wf==='submitted'),rej=mats.filter(m=>m.wf==='rejected');
+    body.innerHTML=sec('审核队列','待审核：'+sub.length+'项 · 需重做：'+rej.length+'项'+(rej.length?'<br><span style="color:var(--d)">'+rej.map(m=>m.name).join('、')+'</span>':''));
+  }
+  else if(cv==='gantt'){
+    const ms=p.milestones||[],done=ms.filter(m=>m.ad).length,ov=ms.filter(m=>!m.ad&&m.pd<td),next=ms.filter(m=>!m.ad&&m.pd>=td).sort((a,b)=>a.pd.localeCompare(b.pd))[0];
+    body.innerHTML=sec('进度',done+'/'+ms.length+'完成'+(ov.length?'<br><span style="color:var(--d)">逾期：'+ov.map(m=>m.n).join('、')+'</span>':'')+(next?'<br>下一节点：'+next.n+'('+next.pd+')':''));
+  }
+  else if(cv==='org'){
+    const act=(p.org?.persons||[]).filter(pp=>pp.status==='active'),orph=docs.filter(d=>{const per=(p.org?.persons||[]).find(pp=>pp.id===d.owner);return per&&per.status==='inactive'});
+    body.innerHTML=sec('人员','在职：'+act.length+'人'+(orph.length?'<br><span style="color:var(--d)">⚠ '+orph.length+'份交付物归属离职人员</span>':''));
+  }
+  else{
+    const indApp=inds.reduce((s,i)=>s+Object.values(i.stages||{}).filter(st=>st.wf==='approved').length,0),matAp=mats.filter(m=>m.wf==='approved').length;
+    body.innerHTML=sec('健康度','指标：'+(inds.length*5?Math.round(indApp/(inds.length*5)*100):0)+'% · 材料：'+(mats.length?Math.round(matAp/mats.length*100):0)+'%<br>交付物：'+docs.filter(d=>d.status==='finalized').length+'/'+docs.length+'定稿');
+  }
+}
+
+function aiParseDoc(){const p=AP();const did=document.getElementById('aiDocSel')?.value;if(!did){addAIMsg('请选择交付物');return}
+  const doc=p.deliverables.find(d=>d.id===did);if(!doc)return;
+  const linked=(doc.linked||[]).map(iid=>p.indicators.find(i=>i.id===iid)).filter(Boolean);
+  const unlinked=p.indicators.filter(i=>!(doc.linked||[]).includes(i.id));
+  let h='<strong>'+esc(doc.name)+'</strong> ('+doc.type+' · '+doc.ver+')<br><br>已关联指标：'+linked.length+'项<br>'+linked.map(i=>'· '+esc(i.name)+' <span style="font-size:8px;color:var(--t3)">['+esc(i.target)+']</span>').join('<br>')+'<br><br>建议补充关联：'+unlinked.slice(0,3).map(i=>'· '+esc(i.name)).join('<br>');
+  document.getElementById('aiParseResult').innerHTML=h;addAIMsg('已解析「'+esc(doc.name)+'」：'+linked.length+'项关联指标');
+}
+function aiBatchParse(){const p=AP();const docs=p.deliverables||[],wl=docs.filter(d=>(d.linked||[]).length>0).length;addAIMsg('全量扫描：'+docs.length+'份交付物，'+wl+'份已关联指标('+Math.round(wl/docs.length*100)+'%)');}
+
+function aiCheckInd(){const p=AP();const iid=document.getElementById('aiIndSel')?.value;if(!iid){addAIMsg('请选择指标');return}
+  const i=p.indicators.find(ii=>ii.id===iid);if(!i)return;
+  const keys=['requirement','design','implementation','verification','closure'],labels=['需求','方案','实施','验证','闭环'];
+  const st=keys.map((k,j)=>{const s=i.stages[k];return{wf:s?s.wf:'pending',l:labels[j]}});
+  const done=st.filter(s=>s.wf==='approved').length,broken=st.filter(s=>s.wf==='rejected');
+  let h='<strong>'+esc(i.name)+'</strong> ['+done+'/5]<br>'+st.map(s=>'<span style="font-size:9px;color:'+(s.wf==='approved'?'var(--su)':s.wf==='rejected'?'var(--d)':'var(--t3)')+'">'+s.l+' '+(s.wf==='approved'?'✓':s.wf==='rejected'?'X':'·')+'</span>').join(' | ');
+  if(broken.length)h+='<br><span style="color:var(--d)">断点：'+broken.map(s=>s.l).join('、')+'</span>';
+  if(done<5)h+='<br><span style="color:var(--w)">建议：推进「'+st.find(s=>s.wf==='pending'||s.wf==='draft')?.l+'」阶段</span>';
+  document.getElementById('aiIndResult').innerHTML=h;addAIMsg('「'+esc(i.name)+'」：'+done+'/5阶段完成');
+}
+function aiCheckAll(){const p=AP(),inds=p.indicators||[],keys=['requirement','design','implementation','verification','closure'];
+  const r=inds.map(i=>{const vs=keys.map(k=>{const s=i.stages[k];return s&&s.wf==='approved'?1:s&&s.wf==='rejected'?.5:0});const d=vs.filter(v=>v===1).length;return d===5?'O':vs.filter(v=>v===.5).length>0?'X':'='});
+  addAIMsg('批量扫描：'+r.filter(v=>v==='O').length+'闭环 · '+r.filter(v=>v==='X').length+'断点 · '+r.filter(v=>v==='=').length+'进行中');
+}
+function aiDocDecide(){const p=AP();const did=document.getElementById('aiDocForInd')?.value;if(!did){addAIMsg('请选择文件');return}
+  const doc=p.deliverables.find(d=>d.id===did);if(!doc)return;
+  const linked=(doc.linked||[]).map(iid=>p.indicators.find(i=>i.id===iid)).filter(Boolean);
+  if(!linked.length){document.getElementById('aiDocDecideResult').innerHTML='该文件暂无关联指标';return}
+  const keys=['requirement','design','implementation','verification','closure'];
+  let h='<strong>依据'+esc(doc.name)+'('+doc.status+')决策：</strong><br>'+linked.map(i=>{const vs=keys.map(k=>{const s=i.stages[k];return s&&s.wf==='approved'?1:0});const done=vs.filter(v=>v===1).length;const sug=doc.status==='finalized'&&done<4?'->建议标记验证阶段通过':'';return'· '+esc(i.name)+' ['+done+'/5] '+sug}).join('<br>');
+  document.getElementById('aiDocDecideResult').innerHTML=h;addAIMsg('已分析'+linked.length+'项关联指标');
+}
+
+function aiSend(){const input=document.getElementById('aiInput'),q=input.value.trim();if(!q)return;input.value='';addAIMsg(q,'user');
+  setTimeout(function(){const p=AP();if(!p)return;const td=nw(),mats=p.materials||[],inds=p.indicators||[];
+    if(cv==='docs'&&(q.indexOf('解析')>=0||q.indexOf('扫描')>=0)){aiBatchParse();return}
+    if(cv==='indicators'&&(q.indexOf('检查')>=0||q.indexOf('扫描')>=0)){aiCheckAll();return}
+    var ans={'指标':function(){return inds.length+'项'},'材料':function(){return mats.filter(function(m){return m.wf==='approved'}).length+'/'+mats.length+'定稿'},'逾期':function(){var o=mats.filter(function(m){return m.deadline&&m.deadline<td&&m.wf!=='approved'});return o.length?'逾期'+o.length+'项':'无逾期'},'进度':function(){return (p.milestones||[]).filter(function(m){return m.ad}).length+'/'+(p.milestones||[]).length+'完成'}};
+    var f=false;Object.keys(ans).forEach(function(k){if(q.indexOf(k)>=0){addAIMsg(ans[k]());f=true}});
+    if(!f)addAIMsg('请切换到相关页面使用专属AI功能');
+  },200);
+}
+function addAIMsg(t,type){var b=document.getElementById('aiBody');var c=b.querySelector('.ai-chat-msgs');if(!c){c=document.createElement('div');c.className='ai-chat-msgs';c.style.cssText='flex:1;overflow-y:auto;max-height:140px;padding:0 4px;margin-top:4px';b.appendChild(c)}
+  c.innerHTML+='<div class="ai-msg '+(type||'bot')+'">'+t+'<div class="meta">'+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})+'</div></div>';c.scrollTop=c.scrollHeight;
+}
+
+// ===== INTERACTIVE ANALYSIS (click indicator/material -> AI panel) =====
+function aiAnalyzeIndicator2(id){
+  var p=AP();if(!p)return;
+  var ind=p.indicators.find(function(i){return i.id===id});if(!ind)return;
+  var keys=['requirement','design','implementation','verification','closure'];
+  var labels=['需求定义','方案设计','实施执行','验收验证','闭环确认'];
+  var stages=keys.map(function(k,i){
+    var s=ind.stages[k]||{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1};
+    return {key:k,label:labels[i],wf:s.wf,desc:s.desc,evid:s.evid,date:s.date,ver:s.ver};
+  });
+  var done=stages.filter(function(s){return s.wf==='approved'}).length;
+  var broken=stages.filter(function(s){return s.wf==='rejected'});
+  var pending=stages.filter(function(s){return s.wf==='pending'||s.wf==='draft'});
+  var linkedDocs=(ind.linkedDocs||[]).map(function(did){return p.deliverables.find(function(d){return d.id===did})}).filter(Boolean);
+  var linkedMats=(ind.linkedMats||[]).map(function(mid){return p.materials.find(function(m){return m.id===mid})}).filter(Boolean);
+
+  // Build analysis HTML for AI panel
+  var h='';
+  // Title bar
+  h+='<div style="background:var(--ai-bg);border:1px solid #c4b5fd;border-radius:4px;padding:8px 10px;margin-bottom:8px">';
+  h+='<strong style="color:var(--ai);font-size:11px">正在分析：'+esc(ind.name)+'</strong>';
+  h+='<div style="font-size:9px;color:var(--t3);margin-top:2px">目标：「'+esc(ind.target||'未设置')+'」 · 责任人：'+pn(p,ind.owner)+'</div>';
+  h+='</div>';
+
+  // Stage status
+  h+='<div style="font-size:10.5px;margin-bottom:8px"><strong>五阶段状态分析</strong></div>';
+  h+='<table style="width:100%;font-size:9.5px;margin-bottom:8px">';
+  stages.forEach(function(s,i){
+    var cl=s.wf==='approved'?'var(--su)':s.wf==='rejected'?'var(--d)':s.wf==='draft'||s.wf==='submitted'?'var(--w)':'var(--t3)';
+    var st=s.wf==='approved'?'✓ 完成':s.wf==='rejected'?'✗ 驳回':s.wf==='draft'?'⚙ 草稿':s.wf==='submitted'?'→ 审核中':'· 未开始';
+    h+='<tr><td style="padding:3px 4px">'+(i+1)+'. '+s.label+'</td><td style="color:'+cl+'">'+st+'</td></tr>';
+    if(s.wf==='rejected'&&s.evid)h+='<tr><td></td><td style="font-size:8px;color:var(--d)">原因：'+esc(s.evid)+'</td></tr>';
+  });
+  h+='</table>';
+  h+='<div style="font-size:10px;margin-bottom:6px">完成进度：<strong>'+done+'/5</strong> 阶段</div>';
+
+  // Suggestions
+  h+='<div style="font-size:10.5px;margin-bottom:6px"><strong>闭环建议</strong></div>';
+  if(done===5){
+    h+='<div style="color:var(--su);font-size:10px">✅ 该指标已形成完整闭环，无需进一步操作。</div>';
+  }else if(broken.length>0){
+    h+='<div style="color:var(--d);font-size:10px">⚠ 存在驳回项：'+broken.map(function(s){return s.label}).join('、')+'。<br>建议：重新修订被驳回阶段的材料，修正后重新提交审核。</div>';
+  }else if(pending.length>0){
+    var next=pending[0];
+    h+='<div style="color:var(--w);font-size:10px">下一步建议：启动「<strong>'+next.label+'</strong>」阶段的编制工作。<br>';
+    if(linkedDocs.length>0){
+      h+='可参考的交付物：'+linkedDocs.map(function(d){return d.name+'('+d.status+')'}).join('、')+'<br>';
+      var finalized=linkedDocs.filter(function(d){return d.status==='finalized'});
+      if(finalized.length>0)h+='<span style="color:var(--su)">✓ '+finalized.length+'份已定稿交付物可为该阶段提供证据支撑</span>';
+    }
+    h+='</div>';
+  }
+
+  // Linked deliverables
+  if(linkedDocs.length>0){
+    h+='<div style="font-size:10px;margin-top:8px"><strong>关联交付物 ('+linkedDocs.length+'份)</strong></div>';
+    linkedDocs.forEach(function(d){
+      var st=d.status==='finalized'?'已定稿':d.status==='draft'?'草稿':'已作废';
+      h+='<div style="font-size:9px;padding:2px 0">· '+esc(d.name)+' <span style="color:'+(d.status==='finalized'?'var(--su)':'var(--t3)')+'">['+st+']</span></div>';
+    });
+  }
+
+  // Push notification button
+  h+='<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--bd)">';
+  h+='<button class="btn btn-xs" style="background:var(--ai);color:#fff;width:100%;margin-bottom:3px" onclick="aiPushNotify(\''+ind.id+'\')">📨 推送状态给责任人</button>';
+  h+='<div style="font-size:8px;color:var(--t3)">深化应用：将当前指标分析报告推送给 '+pn(p,ind.owner)+'，通知其进行下一步操作。</div>';
+  h+='</div>';
+
+  // Render to AI panel
+  var body=document.getElementById('aiBody');
+  body.innerHTML='<div style="padding:4px;font-size:10px">'+h+'</div>';
+  // Also add message
+  setTimeout(function(){addAIMsg('已分析「'+esc(ind.name)+'」：'+done+'/5阶段完成'+(broken.length?'，'+broken.length+'处驳回':'')+(pending.length?'，建议下一步：'+pending[0].label:'')+'。');},100);
+}
+
+function aiAnalyzeMaterial(id){
+  var p=AP();if(!p)return;
+  var m=p.materials.find(function(mm){return mm.id===id});if(!m)return;
+  var wfLabels={approved:'已定稿',submitted:'审核中',draft:'编制中',rejected:'退回修订',pending:'待启动'};
+  var linkedInds=(m.linkedInds||[]).map(function(iid){return p.indicators.find(function(i){return i.id===iid})}).filter(Boolean);
+  var linkedDocs=(m.linkedDocs||[]).map(function(did){return p.deliverables.find(function(d){return d.id===did})}).filter(Boolean);
+
+  var h='';
+  h+='<div style="background:var(--ai-bg);border:1px solid #c4b5fd;border-radius:4px;padding:8px 10px;margin-bottom:8px">';
+  h+='<strong style="color:var(--ai);font-size:11px">正在分析：'+esc(m.name)+'</strong>';
+  h+='<div style="font-size:9px;color:var(--t3);margin-top:2px">类别：'+cn(p,m.cat)+' · 状态：'+wfLabels[m.wf]+' · v'+m.ver+'</div>';
+  h+='</div>';
+
+  if(m.wf==='rejected'){
+    h+='<div style="color:var(--d);font-size:10px;margin-bottom:8px">⚠ 该材料已被退回修订<br>原因：'+esc(m.rjReason||'未说明')+'<br>建议：修正后重新提交审核。</div>';
+  }else if(m.wf==='approved'){
+    h+='<div style="color:var(--su);font-size:10px;margin-bottom:8px">✅ 该材料已定稿，合规状态良好。</div>';
+  }else if(m.wf==='pending'){
+    h+='<div style="color:var(--w);font-size:10px;margin-bottom:8px">⚠ 该材料尚未启动编制。<br>建议：尽快启动编制，审计依据：'+esc(m.rule||'无')+'</div>';
+  }else{
+    h+='<div style="color:var(--w);font-size:10px;margin-bottom:8px">⚙ 该材料正在'+wfLabels[m.wf]+'。</div>';
+  }
+
+  if(linkedInds.length>0){
+    h+='<div style="font-size:10px;margin-bottom:6px"><strong>关联指标 ('+linkedInds.length+'项)</strong></div>';
+    linkedInds.forEach(function(i){
+      var keys=['requirement','design','implementation','verification','closure'];
+      var done=keys.filter(function(k){var s=i.stages[k];return s&&s.wf==='approved'}).length;
+      h+='<div style="font-size:9px;padding:2px 0">· '+esc(i.name)+' ['+done+'/5]</div>';
+    });
+  }
+
+  h+='<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--bd)">';
+  h+='<button class="btn btn-xs" style="background:var(--ai);color:#fff;width:100%" onclick="aiPushNotify2(\''+m.id+'\')">📨 推送状态给责任人 '+pn(p,m.owner)+'</button>';
+  h+='</div>';
+
+  var body=document.getElementById('aiBody');
+  body.innerHTML='<div style="padding:4px;font-size:10px">'+h+'</div>';
+  setTimeout(function(){addAIMsg('已分析材料「'+esc(m.name)+'」：'+wfLabels[m.wf]+(linkedInds.length?'，关联'+linkedInds.length+'项指标':''));},100);
+}
+
+function aiPushNotify(id){
+  var p=AP();var ind=p.indicators.find(function(i){return i.id===id});if(!ind)return;
+  var owner=pn(p,ind.owner);
+  var keys=['requirement','design','implementation','verification','closure'];
+  var done=keys.filter(function(k){var s=ind.stages[k];return s&&s.wf==='approved'}).length;
+  var broken=keys.filter(function(k){var s=ind.stages[k];return s&&s.wf==='rejected'}).length;
+  var pendingStage=keys.find(function(k){var s=ind.stages[k];return !s||s.wf==='pending'||s.wf==='draft'});
+  var labels={requirement:'需求定义',design:'方案设计',implementation:'实施执行',verification:'验收验证',closure:'闭环确认'};
+  var msg='📨 已向 '+owner+' 推送指标状态通知：\n';
+  msg+='「'+ind.name+'」当前状态：'+done+'/5阶段完成';
+  if(broken>0)msg+='，'+broken+'处驳回需处理';
+  if(pendingStage)msg+='，下一步：'+labels[pendingStage];
+  if(ind.deadline)msg+='，截止日期：'+ind.deadline;
+  alert(msg);
+  addAIMsg(msg.replace(/\n/g,'<br>'));
+}
+
+function aiPushNotify2(id){
+  var p=AP();var m=p.materials.find(function(mm){return mm.id===id});if(!m)return;
+  var owner=pn(p,m.owner);
+  var wfLabels={approved:'已定稿',submitted:'审核中',draft:'编制中',rejected:'退回修订',pending:'待启动'};
+  var msg='📨 已向 '+owner+' 推送材料状态通知：\n';
+  msg+='「'+m.name+'」当前状态：'+wfLabels[m.wf];
+  if(m.deadline)msg+='，截止日期：'+m.deadline;
+  if(m.wf==='rejected')msg+='，退回原因：'+esc(m.rjReason||'未说明');
+  alert(msg);
+  addAIMsg(msg.replace(/\n/g,'<br>'));
+}
+
+// ============ IMPORT/EXPORT ============
+function exp(){const j=JSON.stringify(D,null,2);const b=new Blob([j],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`验收数据_${nw()}.json`;a.click()}
+function imp(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=function(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=function(ev){try{const d=JSON.parse(ev.target.result);if(!d||!d.projects)throw new Error();if(!confirm(`导入${d.projects.length}个项目？`))return;D=d;save();showV('dash')}catch(err){alert('导入失败')}};r.readAsText(f)};i.click()}
+
+// Modal close
+['docModal','indModal','stModal','matModal','mwfModal','orgModal'].forEach(id=>{document.getElementById(id).addEventListener('click',function(e){if(e.target===this){if(id==='docModal')closeDocM();else if(id==='indModal')closeIndM();else if(id==='stModal')closeStM();else if(id==='matModal')closeMatM();else if(id==='mwfModal')closeMwfM();else closeOrgM()}})});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeDocM();closeIndM();closeStM();closeMatM();closeMwfM();closeOrgM()}});
+
+// Init
+// Global toggle for AI sections (class ai-tgl)
+document.addEventListener('click',function(e){var el=e.target;while(el&&el.className.indexOf('ai-tgl')<0)el=el.parentElement;if(el){var b=el.nextElementSibling;if(b)b.style.display=b.style.display?'':'none'}});
+showV('dash');
+</script>
+</body>
+</html>
