@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<!-- 项目验收审计智能合规管理系统 v1.1 | MIT License -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>技改项目验收审计 — 智能合规管理系统（开源版）</title>
+<style>
+  /* ===== CSS变量定义 ===== */
+  :root{--bg:#f4f5f7;--s:#fff;--bd:#dfe2e7;--t:#1d2129;--t2:#5a6170;--t3:#8f95a3;--p:#1b5e3f;--pl:#e8f5ee;--a:#2a6496;--al:#eef5fb;--su:#1f7d3a;--w:#b3540e;--d:#c22d3a;--ai:#7c3aed;--ai-bg:#faf5ff;--r:6px;--f:-apple-system,"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+  /* ===== 基础样式 ===== */
+  body{font-family:var(--f);background:var(--bg);color:var(--t);display:flex;min-height:100vh;line-height:1.55;overflow-x:hidden}
+  /* ================================================================
+     LEFT SIDEBAR — 左侧导航栏（200px宽，可折叠至44px）
+     ================================================================ */
+
+.sidebar{width:200px;background:#14181f;color:#8a8f9a;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;flex-shrink:0;overflow-y:auto}
+.sidebar-header{padding:14px 12px 11px;border-bottom:1px solid rgba(255,255,255,.06)}
+.sidebar-header .logo{font-size:12px;font-weight:700;color:#fff}.sidebar-header .logo span{color:#4aad6e}
+.sidebar-header .sub{font-size:8.5px;opacity:.5;margin-top:1px}
+.nav-sec{padding:8px 12px 2px;font-size:8px;text-transform:uppercase;letter-spacing:.1em;opacity:.35;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:7px;padding:7px 12px;margin:1px 5px;border-radius:var(--r);cursor:pointer;font-size:11px;color:#8a8f9a;transition:.15s;border:none;background:none;width:calc(100% - 10px);text-align:left}
+.nav-item:hover{background:#1e232c;color:#c8cdd5}
+.nav-item.active{background:var(--p);color:#fff}.nav-item .i{font-size:12px;width:16px;text-align:center;flex-shrink:0}
+.nav-badge{margin-left:auto;background:var(--w);color:#fff;font-size:8px;padding:1px 5px;border-radius:7px;font-weight:600;min-width:15px;text-align:center}
+.nav-badge.good{background:var(--su)}
+.sidebar-footer{padding:10px 12px;border-top:1px solid rgba(255,255,255,.04);font-size:8px;opacity:.35}
+
+  /* ================================================================
+     MAIN WRAPPER — 主内容区（含顶栏+内容区+AI面板）
+     ================================================================ */
+
+.main-wrapper{display:flex;flex:1;margin-left:200px;min-height:100vh;position:relative}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;transition:margin-right .3s}
+.main.ai-open{margin-right:340px}
+
+  /* ================================================================
+     AI PANEL — 右侧智能助手面板（340px，可折叠）
+     ================================================================ */
+
+.ai-panel{position:fixed;top:0;right:0;bottom:0;width:340px;background:var(--s);border-left:1px solid var(--bd);z-index:90;display:flex;flex-direction:column;transform:translateX(0);transition:transform .3s}
+.ai-panel.collapsed{transform:translateX(300px)}
+.ai-toggle{position:fixed;right:0;top:50%;transform:translateY(-50%);width:28px;height:60px;background:var(--ai);color:#fff;border:none;border-radius:8px 0 0 8px;cursor:pointer;z-index:91;font-size:12px;display:flex;align-items:center;justify-content:center;writing-mode:vertical-lr;letter-spacing:2px;font-family:var(--f)}
+.ai-panel:not(.collapsed)+.ai-toggle{right:340px;background:var(--bd);color:var(--t2)}
+.ai-head{padding:11px 14px;border-bottom:1px solid var(--bd);background:linear-gradient(135deg,#faf5ff,#f3e8ff);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ai-head h3{font-size:12.5px;color:var(--ai);display:flex;align-items:center;gap:6px}
+.ai-body{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+.ai-section{border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
+.ai-section .ai-shead{padding:8px 10px;background:#fafbfc;border-bottom:1px solid var(--bd);font-size:10.5px;font-weight:600;cursor:pointer;display:flex;justify-content:space-between}
+.ai-section .ai-sbody{padding:8px 10px;font-size:10.5px;max-height:180px;overflow-y:auto}
+.ai-chat{border-top:1px solid var(--bd);padding:8px 10px;display:flex;gap:6px}
+.ai-chat input{flex:1;padding:6px 8px;border:1px solid var(--bd);border-radius:var(--r);font-size:10.5px;font-family:var(--f);outline:none}
+.ai-chat input:focus{border-color:var(--ai)}
+.ai-chat button{padding:6px 10px;background:var(--ai);color:#fff;border:none;border-radius:var(--r);cursor:pointer;font-size:10.5px;white-space:nowrap}
+.ai-msg{padding:6px 8px;border-radius:4px;margin-bottom:6px;font-size:10px;line-height:1.5}
+.ai-msg.user{background:var(--ai-bg);color:var(--ai);text-align:right}
+.ai-msg.bot{background:#f4f5f7;color:var(--t2)}
+.ai-msg .meta{font-size:8px;color:var(--t3);margin-top:2px}
+
+  /* ================================================================
+     TOPBAR — 顶部状态栏（项目选择+快速操作+徽章计数）
+     ================================================================ */
+
+.topbar{background:var(--s);border-bottom:1px solid var(--bd);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;gap:8px}
+.topbar-left{display:flex;align-items:center;gap:8px;min-width:0}.topbar-title{font-size:13px;font-weight:600;white-space:nowrap}
+.topbar-proj{font-size:9.5px;color:var(--t3);padding:2px 7px;background:#f0f1f3;border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+.topbar-actions{display:flex;gap:4px;flex-shrink:0}
+.content{padding:12px 16px;flex:1}.view{display:none}.view.active{display:block}
+
+.btn{display:inline-flex;align-items:center;gap:3px;padding:5px 10px;border-radius:var(--r);font-size:10.5px;font-weight:500;font-family:var(--f);cursor:pointer;border:1px solid transparent;transition:.15s;white-space:nowrap}
+.btn-p{background:var(--p);color:#fff}.btn-p:hover{background:#124a30}
+.btn-s{background:var(--s);color:var(--t2);border-color:var(--bd)}.btn-s:hover{background:#f0f1f3}
+.btn-xs{padding:3px 6px;font-size:9px;border-radius:3px}
+.btn-gh{background:transparent;border-color:transparent;color:var(--t2)}.btn-gh:hover{background:rgba(0,0,0,.03)}
+.btn-out{background:transparent;border-color:var(--p);color:var(--p)}.btn-out:hover{background:var(--pl)}
+
+  /* ===== 仪表盘统计卡片网格 ===== */
+  .sgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px}
+.scard{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);padding:12px}
+.scard .sl{font-size:9.5px;color:var(--t3);margin-bottom:2px}.scard .sv{font-size:18px;font-weight:700}
+.scard .ss{font-size:9px;color:var(--t3)}.scard.good .sv{color:var(--su)}.scard.warn .sv{color:var(--w)}.scard.bad .sv{color:var(--d)}
+
+.prow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.panel{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
+.phead{padding:9px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;background:#fafbfc;gap:6px}
+.phead h3{font-size:11.5px;font-weight:600;white-space:nowrap}.pbody{padding:10px 12px}
+
+  /* ===== 材料分类卡片 ===== */
+  .cat-card{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:8px;overflow:hidden}
+.cat-head{padding:8px 12px;background:#fafbfc;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;gap:6px}
+.cat-head h3{font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:5px}
+.cat-num{background:var(--p);color:#fff;min-width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700}
+.row{display:flex;align-items:center;padding:6px 12px;border-bottom:1px solid #f0f1f3;gap:6px;font-size:10.5px;cursor:pointer;transition:.1s}
+.row:hover{background:#fafbfc}.row:last-child{border-bottom:none}
+
+.badge{display:inline-flex;align-items:center;gap:2px;padding:2px 6px;border-radius:6px;font-size:8.5px;font-weight:600}
+.badge-ok{background:var(--pl);color:var(--su)}.badge-warn{background:#fef6ee;color:var(--w)}
+.badge-err{background:#fef0f1;color:var(--d)}.badge-info{background:var(--al);color:var(--a)}
+.badge-pending{background:#f0f1f3;color:var(--t3)}.badge-ai{background:#f3e8ff;color:var(--ai)}
+
+  /* ===== 甘特图样式 ===== */
+  .gantt{overflow-x:auto;font-size:9.5px}.gantt-row{display:flex;align-items:center;border-bottom:1px solid #f0f1f3;padding:2px 0}
+.gantt-label{width:110px;flex-shrink:0;font-weight:500;font-size:9px;padding-right:4px}
+.gantt-bar-area{flex:1;position:relative;height:16px;background:#f4f5f7;border-radius:3px;min-width:140px}
+.gantt-bar{position:absolute;top:2px;height:12px;border-radius:3px;display:flex;align-items:center;padding:0 3px;font-size:7.5px;color:#fff}
+.gantt-bar.done{background:var(--su)}.gantt-bar.ongoing{background:var(--a)}.gantt-bar.late{background:var(--d)}.gantt-bar.future{background:#c8ccd2}
+.gantt-today{position:absolute;top:0;bottom:0;width:1.5px;background:var(--d);z-index:2}
+
+.tbl-wrap{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
+.tbl-bar{padding:7px 10px;border-bottom:1px solid var(--bd);display:flex;gap:5px;align-items:center;flex-wrap:wrap;font-size:10px}
+.tbl-bar input[type=text],.tbl-bar select{padding:4px 7px;border:1px solid var(--bd);border-radius:var(--r);font-size:10.5px;font-family:var(--f);outline:none;background:var(--s)}
+.tbl-bar input[type=text]:focus,.tbl-bar select:focus{border-color:var(--p)}
+.tbl-bar input[type=text]{width:130px}.spacer{flex:1}
+table{width:100%;border-collapse:collapse;font-size:10.5px}
+thead th{text-align:left;padding:6px 8px;font-weight:600;font-size:9.5px;color:var(--t3);background:#fafbfc;border-bottom:1px solid var(--bd);white-space:nowrap}
+tbody td{padding:6px 8px;border-bottom:1px solid var(--bd);vertical-align:middle}
+tbody tr:hover{background:#fafbfc}tbody tr:last-child td{border-bottom:none}
+.stage-dots{display:flex;gap:1.5px}.sdot{width:5px;height:5px;border-radius:50%}.sdot.ok{background:var(--su)}.sdot.issue{background:var(--w)}.sdot.pending{background:#d1d5db}
+
+.ver-item{padding:4px 7px;border:1px solid var(--bd);border-radius:3px;margin-bottom:2px;display:flex;gap:4px;align-items:flex-start;font-size:9.5px}
+.ver-item.current{border-color:var(--p);background:var(--pl)}.ver-item .vn{min-width:14px;font-weight:700;color:var(--p);font-size:8.5px;text-align:center}
+.ver-item .vc{flex:1}.ver-item .vd{font-size:8px;color:var(--t3);white-space:nowrap}
+
+.alert-item{padding:7px 10px;margin-bottom:3px;border-radius:var(--r);display:flex;align-items:flex-start;gap:5px;font-size:10px}
+.alert-item.critical{background:var(--d);color:#fff}.alert-item.warning{background:#fef6ee;border:1px solid #ffeeba}
+
+  /* ===== 组织架构人员/部门卡片 ===== */
+  .dept-card{border:1px solid var(--bd);border-radius:var(--r);padding:10px;background:#fafbfc;margin-bottom:6px;font-size:10.5px}
+.dept-card.inactive{opacity:.6;border-style:dashed}
+
+.empty-st{text-align:center;padding:30px 10px;color:var(--t3);font-size:10.5px}
+.empty-st .eicon{font-size:24px;margin-bottom:6px;opacity:.25}
+
+  /* ===== 交付物人员分组 ===== */
+  .person-group{margin-bottom:10px;border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
+.person-group .pg-head{padding:8px 12px;background:var(--al);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;gap:6px}
+.person-group .pg-head h4{font-size:11px;font-weight:600;color:var(--a)}
+
+  /* ================================================================
+     MODAL — 弹窗通用样式
+     ================================================================ */
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:1000;justify-content:center;align-items:flex-start;padding:16px 12px;overflow-y:auto}
+.modal-overlay.show{display:flex}
+.modal{background:var(--s);border-radius:8px;width:100%;max-width:600px;box-shadow:0 4px 20px rgba(0,0,0,.1);animation:si .15s ease}
+@keyframes si{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.modal-head{padding:11px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.modal-head h2{font-size:12.5px;font-weight:600}.modal-close{width:22px;height:22px;border:none;background:none;cursor:pointer;border-radius:var(--r);font-size:13px;color:var(--t3)}
+.modal-close:hover{background:#f0f1f3;color:var(--t)}.modal-body{padding:12px 14px}
+.modal-foot{padding:9px 14px;border-top:1px solid var(--bd);display:flex;justify-content:flex-end;gap:4px}
+.form-g{margin-bottom:9px}.form-g label{display:block;font-size:10.5px;font-weight:600;margin-bottom:2px}
+.form-g .hint{font-size:9px;color:var(--t3)}.form-g .err{font-size:9px;color:var(--d);display:none}
+.form-g.has-err .err{display:block}.form-g.has-err .form-input{border-color:var(--d)}
+.form-input{width:100%;padding:5px 7px;border:1px solid var(--bd);border-radius:var(--r);font-size:10.5px;font-family:var(--f);outline:none;background:var(--s)}
+.form-input:focus{border-color:var(--p);box-shadow:0 0 0 2px rgba(27,94,63,.06)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+textarea.form-input{resize:vertical;min-height:45px}
+.flex-between{display:flex;align-items:center;justify-content:space-between;gap:5px;flex-wrap:wrap}
+
+@media(max-width:1200px){.sgrid{grid-template-columns:repeat(3,1fr)}.ai-panel{width:300px}.main.ai-open{margin-right:300px}}
+@media(max-width:768px){.sgrid{grid-template-columns:1fr 1fr}.prow{grid-template-columns:1fr}
+  .sidebar{width:44px}.sidebar>*:not(nav){display:none}.nav-item span:not(.i){display:none}.nav-item{justify-content:center;padding:8px}
+  .main-wrapper{margin-left:44px}.ai-panel{width:280px;z-index:95}.main.ai-open{margin-right:280px}}
+@media print{.sidebar,.ai-panel,.ai-toggle,.topbar,.btn,.modal-overlay{display:none!important}.main-wrapper{margin-left:0!important}.main{margin-right:0!important}.content{padding:0!important}}
+
+  /* ================================================================
+     WIZARD — 项目创建向导样式（步骤条/模块行/复选框网格）
+     ================================================================ */
+
+.wiz-steps{display:flex;gap:0;border-bottom:1px solid var(--bd);padding:6px 10px;background:#fafbfc;font-size:9.5px}
+.wiz-step-item{flex:1;text-align:center;padding:5px 3px;font-size:9px;color:var(--t3);border-bottom:2px solid transparent;cursor:default}
+.wiz-step-item.active{color:var(--p);border-bottom-color:var(--p);font-weight:600}
+.wiz-step-item.done{color:var(--su);border-bottom-color:var(--su)}
+.wiz-chk-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;font-size:10px}
+.wiz-chk-grid label{display:flex;align-items:center;gap:4px;cursor:pointer}
+.wiz-mod-row{border:1px solid var(--bd);border-radius:4px;padding:8px;margin-bottom:6px;background:#fafbfc}
+.wiz-mod-row.active{border-color:var(--p);background:var(--pl)}
+.wiz-ind-row{display:flex;gap:4px;margin-top:3px;font-size:10px}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-header"><div class="logo"><span>&#9678;</span> 智能合规系统</div><div class="sub">验收审计 | AI驱动</div></div>
+  <nav class="sidebar-nav">
+    <div class="nav-sec">概览</div>
+    <button class="nav-item active" data-view="dash"><span class="i">&#9681;</span><span>仪表盘</span></button>
+    <div class="nav-sec">数据管理</div>
+    <button class="nav-item" data-view="docs"><span class="i">&#128196;</span><span>数据源中心</span><span class="nav-badge" id="badge-docs">0</span></button>
+    <button class="nav-item" data-view="indicators"><span class="i">&#9638;</span><span>指标闭环</span><span class="nav-badge" id="badge-inds">0</span></button>
+    <button class="nav-item" data-view="materials"><span class="i">&#9745;</span><span>材料清单</span><span class="nav-badge" id="badge-mats">0</span></button>
+    <div class="nav-sec">组织</div>
+    <button class="nav-item" data-view="org"><span class="i">&#128101;</span><span>组织架构</span></button>
+    <div class="nav-sec">审查</div>
+    <button class="nav-item" data-view="review"><span class="i">&#128269;</span><span>审核中心</span><span class="nav-badge" id="badge-review">0</span></button>
+    <button class="nav-item" data-view="gantt"><span class="i">&#9200;</span><span>进度节点</span><span class="nav-badge" id="badge-overdue">0</span></button>
+    <div class="nav-sec">输出</div>
+    <button class="nav-item" data-view="report"><span class="i">&#9998;</span><span>审计报告</span></button>
+    <button class="nav-item" data-view="tpl"><span class="i">&#9881;</span><span>模板</span></button>
+  </nav>
+  <div class="sidebar-footer">v7.0 | AI常驻助手</div>
+</aside>
+
+<div class="main-wrapper">
+  <div class="main ai-open" id="mainArea">
+    <div class="topbar">
+      <div class="topbar-left"><span class="topbar-title" id="topbarTitle">仪表盘</span><span class="topbar-proj" id="topbarProj"></span></div>
+      <div class="topbar-actions">
+        <select id="selProj" style="padding:3px 6px;border:1px solid var(--bd);border-radius:var(--r);font-size:10px;font-family:var(--f);background:var(--s);outline:none;max-width:160px" onchange="swProj(this.value)"></select>
+        <button class="btn btn-p btn-xs" onclick="quickAdd()">+ 新增</button>
+        <button class="btn btn-s btn-xs" onclick="exp()">导出</button>
+        <button class="btn btn-s btn-xs" onclick="imp()">导入</button>
+      </div>
+    </div>
+    <div class="content">
+              <!-- ===== 仪表盘视图 ===== -->
+        <div class="view active" id="view-dash"><div class="sgrid" id="ds"></div><div class="prow"><div class="panel"><div class="phead"><h3>&#9200; 里程碑</h3></div><div class="pbody gantt" id="dg"></div></div><div class="panel"><div class="phead"><h3>&#9888; 预警</h3></div><div class="pbody" id="da"></div></div></div></div>
+              <!-- ===== 数据源中心视图 ===== -->
+        <div class="view" id="view-docs"><div id="docsContent"></div></div>
+              <!-- ===== 指标闭环验证视图 ===== -->
+        <div class="view" id="view-indicators"><div id="indContent"></div></div>
+              <!-- ===== 材料清单视图 ===== -->
+        <div class="view" id="view-materials"><div id="matContent"></div></div>
+              <!-- ===== 组织架构视图 ===== -->
+        <div class="view" id="view-org"><div id="orgContent"></div></div>
+              <!-- ===== 审核中心视图 ===== -->
+        <div class="view" id="view-review"><div id="reviewContent"></div></div>
+              <!-- ===== 进度节点视图（甘特图） ===== -->
+        <div class="view" id="view-gantt"><div id="ganttContent"></div></div>
+              <!-- ===== 审计报告视图 ===== -->
+        <div class="view" id="view-report"><div id="reportContent"></div></div>
+              <!-- ===== 模板管理视图 ===== -->
+        <div class="view" id="view-tpl"><div id="tplContent"></div></div>
+    </div>
+  </div>
+
+  <!-- AI PANEL -->
+      <!-- ===== 右侧AI智能助手面板 ===== -->
+    <div class="ai-panel" id="aiPanel">
+    <div class="ai-head">
+      <h3>&#9889; <span id="aiHeadTitle">AI 智能助手</span></h3>
+      <button class="btn btn-xs btn-gh" onclick="toggleAI()" title="收起面板">◀</button>
+    </div>
+    <div class="ai-body" id="aiBody"></div>
+    <div class="ai-chat">
+      <input type="text" id="aiInput" placeholder="输入问题..." onkeydown="if(event.key==='Enter')aiSend()">
+      <button onclick="aiSend()">发送</button>
+    </div>
+  </div>
+  <button class="ai-toggle" id="aiToggle" onclick="toggleAI()" style="display:none">AI 助手</button>
+</div>
+
+<!-- DELIVERABLE MODAL (owner is mandatory) -->
+<div class="modal-overlay" id="docModal"><div class="modal"><div class="modal-head"><h2 id="docMTitle">导入交付物</h2><button class="modal-close" onclick="closeDocM()">&times;</button></div><div class="modal-body">
+  <div class="form-row"><div class="form-g"><label>名称*</label><input class="form-input" id="fdname"></div><div class="form-g"><label>类型*</label><select class="form-input" id="fdtype"><option value="招标文件">招标文件</option><option value="合同">合同</option><option value="技术协议">技术协议</option><option value="交付物">交付物</option><option value="其他">其他</option></select></div></div>
+  <div class="form-row">
+    <div class="form-g has-err"><label>归属责任人*</label><select class="form-input" id="fdowner"><option value="">-- 请选择 --</option></select><div class="err">必须指定责任人</div></div>
+    <div class="form-g"><label>版本号</label><input class="form-input" id="fdver" value="V1.0"></div></div>
+  <div class="form-row"><div class="form-g"><label>文件路径/编号</label><input class="form-input" id="fdfile" placeholder="如：招标文件-环控平台.doc"></div>
+    <div class="form-g"><label>状态</label><select class="form-input" id="fdstatus"><option value="draft">草稿</option><option value="finalized">已定稿</option><option value="obsolete">已作废</option></select></div></div>
+  <div class="form-g"><label>关联指标</label><select class="form-input" id="fdlinked" multiple style="min-height:50px"></select></div>
+  <div class="form-g"><label>说明/变更记录</label><textarea class="form-input" id="fddesc" rows="2"></textarea></div>
+  <input type="hidden" id="fdid">
+</div><div class="modal-foot"><button class="btn btn-s" onclick="closeDocM()">取消</button><button class="btn btn-p" onclick="saveDoc()">保存</button></div></div></div>
+
+<!-- INDICATOR MODAL -->
+<div class="modal-overlay" id="indModal"><div class="modal"><div class="modal-head"><h2 id="indMTitle">编辑指标</h2><button class="modal-close" onclick="closeIndM()">&times;</button></div><div class="modal-body">
+  <div class="form-row"><div class="form-g"><label>名称*</label><input class="form-input" id="finame"></div><div class="form-g"><label>模块</label><select class="form-input" id="fimodule"></select></div></div>
+  <div class="form-row"><div class="form-g"><label>责任部门</label><select class="form-input" id="fidept"><option value="">未指定</option></select></div><div class="form-g"><label>责任人</label><select class="form-input" id="fiowner"><option value="">未指定</option></select></div></div>
+  <div class="form-row"><div class="form-g"><label>目标/要求</label><input class="form-input" id="fitarget"></div><div class="form-g"><label>截止日期</label><input type="date" class="form-input" id="fideadline"></div></div>
+  <div class="form-g"><label>关联交付物</label><select class="form-input" id="fidocs" multiple style="min-height:50px"></select></div>
+  <div class="form-g"><label>关联材料</label><select class="form-input" id="fimats" multiple style="min-height:50px"></select></div>
+  <input type="hidden" id="fiid">
+</div><div class="modal-foot"><button class="btn btn-s" onclick="closeIndM()">取消</button><button class="btn btn-p" onclick="saveInd()">保存</button></div></div></div>
+
+<!-- STAGE MODAL (enhanced with review process) -->
+<div class="modal-overlay" id="stModal"><div class="modal"><div class="modal-head"><h2 id="stMTitle">阶段管理</h2><button class="modal-close" onclick="closeStM()">&times;</button></div><div class="modal-body">
+  <div class="form-g"><label>状态</label><select class="form-input" id="stStatus" onchange="tgStRej()"><option value="pending">未开始</option><option value="draft">草稿</option><option value="submitted">提交审核</option><option value="approved">审核通过</option><option value="rejected">驳回</option></select></div>
+  <div class="form-row"><div class="form-g"><label>操作人</label><select class="form-input" id="stOp"><option value="">当前用户</option></select></div><div class="form-g"><label>审核人</label><select class="form-input" id="stReviewer"><option value="">未指定</option></select></div></div>
+  <div class="form-g"><label>评审意见</label><textarea class="form-input" id="stReviewOpinion" rows="2" placeholder="审核人对该阶段的评审意见..."></textarea></div>
+  <div class="form-g"><label>专家意见（可多条，每条一行）</label><textarea class="form-input" id="stExpertOpinions" rows="3" placeholder="专家姓名：意见内容&#10;专家姓名：意见内容"></textarea></div>
+  <div class="form-row"><div class="form-g"><label>说明</label><textarea class="form-input" id="stDesc" rows="2"></textarea></div><div class="form-g"><label>证据/依据</label><textarea class="form-input" id="stEvid" rows="2"></textarea></div></div>
+  <div class="form-g" id="stRejG" style="display:none"><label style="color:var(--d)">驳回原因*</label><textarea class="form-input" id="stRej" rows="2"></textarea></div>
+  <div class="form-row"><div class="form-g"><label>日期</label><input type="date" class="form-input" id="stDate"></div><div class="form-g"><label>意见闭环</label><select class="form-input" id="stOpinionClosed"><option value="no">未闭环</option><option value="yes">已闭环</option></select></div></div>
+  <div class="form-g"><label>责任人变更</label><select class="form-input" id="stNewOwner"><option value="">不变更</option></select></div>
+</div><div class="modal-foot"><button class="btn btn-s" onclick="closeStM()">取消</button><button class="btn btn-p" onclick="saveSt()">保存</button></div></div></div>
+
+<!-- MATERIAL MODAL -->
+<div class="modal-overlay" id="matModal"><div class="modal"><div class="modal-head"><h2 id="matMTitle">编辑材料</h2><button class="modal-close" onclick="closeMatM()">&times;</button></div><div class="modal-body">
+  <div class="form-row"><div class="form-g"><label>名称*</label><input class="form-input" id="fmname"></div><div class="form-g"><label>类别</label><select class="form-input" id="fmcat"></select></div></div>
+  <div class="form-g"><label>审计规则</label><input class="form-input" id="fmrule"></div>
+  <div class="form-row"><div class="form-g"><label>责任人</label><select class="form-input" id="fmowner"><option value="">未指定</option></select></div><div class="form-g"><label>截止</label><input type="date" class="form-input" id="fmdeadline"></div></div>
+  <div class="form-g"><label>关联交付物</label><select class="form-input" id="fmdocs" multiple style="min-height:50px"></select></div>
+  <div class="form-g"><label>关联指标</label><select class="form-input" id="fminds" multiple style="min-height:50px"></select></div>
+  <input type="hidden" id="fmid">
+</div><div class="modal-foot"><button class="btn btn-s" onclick="closeMatM()">取消</button><button class="btn btn-p" onclick="saveMat()">保存</button></div></div></div>
+
+<!-- MATERIAL WF MODAL (enhanced with meeting records + expert opinions + signature) -->
+<div class="modal-overlay" id="mwfModal"><div class="modal"><div class="modal-head"><h2 id="mwfTitle">更新材料</h2><button class="modal-close" onclick="closeMwfM()">&times;</button></div><div class="modal-body">
+  <div class="form-g"><label>状态</label><select class="form-input" id="mwfStatus" onchange="tgMwRej()"><option value="draft">编制中</option><option value="submitted">提交审核</option><option value="approved">审核通过(定稿)</option><option value="rejected">退回修订</option></select></div>
+  <div class="form-g"><label>说明</label><textarea class="form-input" id="mwfDesc" rows="2"></textarea></div>
+  <div class="form-g" id="mwfRejG" style="display:none"><label style="color:var(--d)">退回原因*</label><textarea class="form-input" id="mwfRej" rows="2"></textarea></div>
+  <div class="form-row"><div class="form-g"><label>操作人</label><select class="form-input" id="mwfOp"><option value="">当前用户</option></select></div><div class="form-g"><label>日期</label><input type="date" class="form-input" id="mwfDate"></div></div>
+  <div class="form-g"><label>会议记录</label><textarea class="form-input" id="mwfMeetings" rows="3" placeholder="会议名称 | 日期 | 主要内容&#10;评审会 | 2026-01-15 | 讨论通过了..."></textarea></div>
+  <div class="form-g"><label>专家意见与签名</label><textarea class="form-input" id="mwfExpertOps" rows="3" placeholder="专家姓名：意见内容 [✓已签名 / ○待签]&#10;王专家：同意该方案 [✓已签名 2026-01-20]&#10;李专家：建议补充XX内容 [○待签]"></textarea></div>
+</div><div class="modal-foot"><button class="btn btn-s" onclick="closeMwfM()">取消</button><button class="btn btn-p" onclick="saveMwf()">保存</button></div></div></div>
+
+  <!-- ================================================================
+       MODALS — 所有弹窗定义（交付物/指标/阶段/材料/组织/审核/向导）
+       ================================================================ -->
+
+  <!-- ===== 组织架构编辑弹窗 ===== -->
+<div class="modal-overlay" id="orgModal"><div class="modal"><div class="modal-head"><h2 id="orgMTitle">编辑组织</h2><button class="modal-close" onclick="closeOrgM()">&times;</button></div><div class="modal-body">
+  <div class="form-g"><label>类型</label><select class="form-input" id="orgType" onchange="tgOrgType()"><option value="dept">部门</option><option value="person">人员</option></select></div>
+  <div class="form-g" id="orgDeptG"><label>所属部门</label><select class="form-input" id="orgDept"><option value="">未指定</option></select></div>
+  <div class="form-g"><label>名称*</label><input class="form-input" id="orgName"></div>
+  <div class="form-g" id="orgRoleG" style="display:none"><label>角色</label><input class="form-input" id="orgRole" placeholder="如：项目经理"></div>
+  <div class="form-g"><label>状态</label><select class="form-input" id="orgStatus"><option value="active">在职/正常</option><option value="inactive">离职/撤销</option><option value="renamed">已更名</option></select></div>
+  <div class="form-g"><label>变更说明</label><input class="form-input" id="orgNote"></div>
+  <input type="hidden" id="orgId">
+</div><div class="modal-foot"><button class="btn btn-s" onclick="closeOrgM()">取消</button><button class="btn btn-p" onclick="saveOrg()">保存</button></div></div></div>
+
+<script>
+// ================================================================
+// TEMPLATES — 项目模板定义
+// 每种模板包含：材料分类 | 指标模块 | 默认交付物 | 默认材料 | 默认指标 | 里程碑
+// 用于项目创建向导的初始配置推荐
+// ================================================================
+const TPL={
+  '技改项目':{cats:[{id:'C1',n:'一、立项审批类'},{id:'C2',n:'二、招标采购类'},{id:'C3',n:'三、实施过程类'},{id:'C4',n:'四、设备验收类'},{id:'C5',n:'五、财务审计类'},{id:'C6',n:'六、专项验收类'},{id:'C7',n:'七、综合验收类'}],
+  mods:[{id:'M1',n:'立项与可研'},{id:'M2',n:'初步设计'},{id:'M3',n:'招标与合同'},{id:'M4',n:'土建与安装'},{id:'M5',n:'设备采购与验收'},{id:'M6',n:'专项验收'},{id:'M7',n:'财务决算'},{id:'M8',n:'竣工验收'}],
+  defDocs:[{name:'招标文件-技术要求',type:'招标文件',ver:'V1.0',file:'环控系统技术要求.doc'},{name:'投标技术方案',type:'技术协议',ver:'V2.3',file:'投标方案_V2.3.docx'},{name:'采购合同',type:'合同',ver:'V1.0',file:'采购合同.pdf'}],
+  defMats:[{name:'项目建议书批复',cat:'C1'},{name:'可研报告及批复',cat:'C1'},{name:'初设概算批复',cat:'C1'},{name:'招标方案备案',cat:'C2'},{name:'招标/评标文件',cat:'C2'},{name:'中标通知书',cat:'C2'},{name:'合同文件',cat:'C2'},{name:'施工组织设计',cat:'C3'},{name:'监理报告',cat:'C3'},{name:'变更审批',cat:'C3'},{name:'设备到货清单',cat:'C4'},{name:'试车报告',cat:'C4'},{name:'技术指标验证报告',cat:'C4'},{name:'竣工结算',cat:'C5'},{name:'财务决算',cat:'C5'},{name:'第三方审计',cat:'C5'},{name:'环保验收',cat:'C6'},{name:'消防验收',cat:'C6'},{name:'安全验收',cat:'C6'},{name:'职业卫生',cat:'C6'},{name:'档案验收',cat:'C6'},{name:'验收申请',cat:'C7'},{name:'验收总结',cat:'C7'},{name:'问题整改闭环',cat:'C7'}],
+  defInds:[{name:'微通道换热器设计',mod:'M5',target:'输入输出≥30项'},{name:'翅片管换热器计算',mod:'M5',target:'精度±10%'},{name:'空调系统COP',mod:'M5',target:'≥3.9'},{name:'标定精度',mod:'M5',target:'≥95%'}],
+  milestones:[{n:'立项批复',o:30},{n:'初设批复',o:60},{n:'招标完成',o:100},{n:'主体完工',o:200},{n:'设备联调',o:240},{n:'专项验收',o:280},{n:'决算审计',o:330},{n:'竣工验收',o:360},{n:'批复转固',o:390}]},
+  '科研项目':{cats:[{id:'R1',n:'一、立项论证'},{id:'R2',n:'二、研发过程'},{id:'R3',n:'三、成果鉴定'},{id:'R4',n:'四、结题验收'}],mods:[{id:'M1',n:'任务书'},{id:'M2',n:'方案设计'},{id:'M3',n:'样机研制'},{id:'M4',n:'试验验证'},{id:'M5',n:'成果鉴定'},{id:'M6',n:'结题验收'}],defDocs:[{name:'科研任务书',type:'其他',ver:'V1.0',file:'任务书.pdf'}],defMats:[{name:'任务书批复',cat:'R1'},{name:'方案评审',cat:'R2'},{name:'测试报告',cat:'R3'},{name:'鉴定证书',cat:'R3'},{name:'经费决算',cat:'R4'},{name:'结题报告',cat:'R4'}],defInds:[{name:'性能指标达标',mod:'M3',target:'满足任务书'}],milestones:[{n:'任务书批复',o:15},{n:'方案评审',o:45},{n:'样机完成',o:180},{n:'结题验收',o:330}]},
+  '信息化项目':{cats:[{id:'I1',n:'一、需求设计'},{id:'I2',n:'二、开发测试'},{id:'I3',n:'三、部署交付'},{id:'I4',n:'四、验收'}],mods:[{id:'M1',n:'需求分析'},{id:'M2',n:'系统设计'},{id:'M3',n:'开发测试'},{id:'M4',n:'部署实施'},{id:'M5',n:'试运行'},{id:'M6',n:'验收交付'}],defDocs:[{name:'需求规格说明书',type:'交付物',ver:'V1.0',file:''}],defMats:[{name:'需求说明书',cat:'I1'},{name:'设计文档',cat:'I1'},{name:'测试报告',cat:'I2'},{name:'部署记录',cat:'I3'},{name:'试运行报告',cat:'I3'},{name:'验收报告',cat:'I4'}],defInds:[{name:'功能覆盖率',mod:'M3',target:'100%'}],milestones:[{n:'需求确认',o:30},{n:'设计评审',o:60},{n:'上线',o:200},{n:'验收',o:330}]}
+};
+
+// ================================================================
+// STORAGE — 数据持久化（localStorage + 内存变量D）
+// SK: storage key, D: 全局数据对象（projects数组 + activeProjectId）
+// ================================================================
+const SK='audit_v9';let D=null;
+function nw(){return new Date().toISOString().slice(0,10)}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function AP(){return D?D.projects.find(p=>p.id===D.activeProjectId):null}
+
+function defaults(){
+  const bd=new Date('2026-01-01');function ad(n){const d=new Date(bd);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
+  const mkSt=()=>({requirement:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},design:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},implementation:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},verification:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]});
+  return {projects:[{
+    id:'P1',name:'XX军工集团数控车间智能化改造项目',tpl:'技改项目',sd:ad(0),ed:ad(390),
+    org:{depts:[
+      {id:'D1',name:'计划处（固投办公室）',status:'active',hist:[]},
+      {id:'D2',name:'技术研发部',status:'active',hist:[]},
+      {id:'D3',name:'质量检验部',status:'active',hist:[]},
+      {id:'D4',name:'财务处',status:'active',hist:[]},
+      {id:'D5',name:'数控加工车间',status:'active',hist:[]},
+      {id:'D6',name:'原基建管理科',status:'inactive',hist:[{note:'2025年3月因机构改革并入技术研发部',date:'2025-03-15'}],note:'已并入技术研发部'}
+    ],
+    persons:[
+      {id:'P1',name:'周明',dept:'D1',role:'项目主管/处长',status:'active',hist:[]},
+      {id:'P2',name:'陈国栋',dept:'D2',role:'技术负责人/部长',status:'active',hist:[]},
+      {id:'P3',name:'刘海',dept:'D3',role:'质量检验工程师',status:'active',hist:[]},
+      {id:'P4',name:'吴芳',dept:'D4',role:'财务主管',status:'active',hist:[]},
+      {id:'P5',name:'赵刚',dept:'D5',role:'车间主任',status:'active',hist:[]},
+      {id:'P6',name:'孙建国',dept:'D6',role:'基建管理员',status:'inactive',hist:[{note:'2025年3月退休',date:'2025-03-31'}],note:'已退休'}
+    ]},
+    deliverables:[
+      {id:'DL01',name:'招标文件-数控车间技术改造要求',type:'招标文件',ver:'V1.0',file:'数控车间改造招标技术要求.pdf',owner:'P1',status:'finalized',desc:'含38项技术指标',linked:['I01','I02','I03','I04','I05','I06','I07','I08'],hist:[{ver:'V1.0',date:ad(5),op:'P1',note:'初始版本'}]},
+      {id:'DL02',name:'投标技术方案-数控车间改造',type:'技术协议',ver:'V3.1',file:'投标方案_V3.1.docx',owner:'P2',status:'finalized',desc:'逐项响应38项指标',linked:['I01','I02','I03','I04','I05','I06','I07','I08'],hist:[{ver:'V1.0',date:ad(8),op:'P2',note:'初版'},{ver:'V2.0',date:ad(45),op:'P2',note:'专家修订'},{ver:'V3.0',date:ad(75),op:'P2',note:'增加分析'},{ver:'V3.1',date:ad(88),op:'P2',note:'定稿'}]},
+      {id:'DL03',name:'数控设备采购合同',type:'合同',ver:'V1.0',file:'采购合同.pdf',owner:'P1',status:'finalized',desc:'总价1180万元',linked:[],hist:[{ver:'V1.0',date:ad(105),op:'P1',note:'签章生效'}]},
+      {id:'DL04',name:'五轴加工中心安装调试记录',type:'交付物',ver:'V1.0',file:'',owner:'P5',status:'draft',desc:'2026年5月到货安装',linked:['I01','I02','I03','I04'],hist:[]},
+      {id:'DL05',name:'技术指标验证测试报告',type:'交付物',ver:'V1.0',file:'',owner:'P3',status:'draft',desc:'待编制',linked:['I01','I02','I03','I04'],hist:[]},
+      {id:'DL06',name:'旧设备资产处置清单',type:'交付物',ver:'V1.0',file:'',owner:'P6',status:'draft',desc:'需移交',linked:[],hist:[]}
+    ],
+    indicators:[
+      // M5: 设备采购与验收 - I01 已闭环
+      {id:'I01',name:'机床定位精度（X/Y/Z轴）',mod:'M5',target:'重复定位精度<=0.005mm',owner:'P2',deadline:ad(180),priority:'critical',dept:'D2',linkedDocs:['DL01','DL02'],linkedMats:['M11'],
+        stages:{requirement:{wf:'approved',desc:'招标文件3.2.1条款明确',evid:'招标文件P23',date:ad(15),op:'P2',ver:1,hist:[{s:'approved',desc:'招标文件3.2.1条款明确',date:ad(15),op:'P2',ver:1}]},design:{wf:'approved',desc:'海德汉光栅尺+全闭环控制方案',evid:'投标方案V3.1第3.2节',date:ad(45),op:'P2',ver:1,hist:[{s:'approved',desc:'海德汉光栅尺+全闭环控制方案',date:ad(45),op:'P2',ver:1}]},implementation:{wf:'approved',desc:'设备到厂安装完成，光栅尺已校准',evid:'安装调试记录DL04',date:ad(145),op:'P5',ver:1,hist:[{s:'approved',desc:'光栅尺已校准',date:ad(145),op:'P5',ver:1}]},verification:{wf:'approved',desc:'激光干涉仪实测 X0.003 Y0.004 Z0.002mm 满足',evid:'检测报告JC-2026-047',date:ad(178),op:'P3',ver:1,hist:[{s:'approved',desc:'实测精度满足',date:ad(178),op:'P3',ver:1}]},closure:{wf:'approved',desc:'三级评审通过，纳入设备档案',evid:'闭环评审记录表',date:ad(182),op:'P2',ver:1,hist:[{s:'approved',desc:'三级评审通过',date:ad(182),op:'P2',ver:1}]},oHistory:[]}},
+      // I02 进行中-验证通过待闭环
+      {id:'I02',name:'主轴转速范围与温升',mod:'M5',target:'50-8000rpm 连续2h温升<=25度',owner:'P2',deadline:ad(180),priority:'critical',dept:'D2',linkedDocs:['DL01','DL02'],linkedMats:['M11'],
+        stages:{requirement:{wf:'approved',desc:'招标文件3.2.3条款',evid:'招标文件P25',date:ad(15),op:'P2',ver:1,hist:[{s:'approved',desc:'招标文件3.2.3条款',date:ad(15),op:'P2',ver:1}]},design:{wf:'approved',desc:'电主轴直驱方案 30kW',evid:'投标方案V3.1第3.3节',date:ad(48),op:'P2',ver:1,hist:[{s:'approved',desc:'电主轴直驱方案',date:ad(48),op:'P2',ver:1}]},implementation:{wf:'approved',desc:'电主轴已安装 冷却系统管路接通',evid:'安装调试记录DL04',date:ad(148),op:'P5',ver:1,hist:[{s:'approved',desc:'电主轴已安装',date:ad(148),op:'P5',ver:1}]},verification:{wf:'approved',desc:'8000rpm连续2h 实测温升22.3度 满足',evid:'检测报告JC-2026-051',date:ad(180),op:'P3',ver:1,hist:[{s:'approved',desc:'温升22.3度满足',date:ad(180),op:'P3',ver:1}]},closure:{wf:'draft',desc:'闭环报告编制中',evid:'',date:ad(185),op:'P2',ver:1,hist:[]},oHistory:[]}},
+      // I03 验证未达标
+      {id:'I03',name:'自动换刀时间',mod:'M5',target:'刀对刀换刀时间<=2.5秒',owner:'P5',deadline:ad(185),priority:'high',dept:'D5',linkedDocs:['DL01','DL02'],linkedMats:['M11'],
+        stages:{requirement:{wf:'approved',desc:'招标文件3.4.1条款',evid:'招标文件P27',date:ad(15),op:'P2',ver:1,hist:[{s:'approved',desc:'招标文件3.4.1条款',date:ad(15),op:'P2',ver:1}]},design:{wf:'approved',desc:'双臂式ATC刀库 理论换刀2.0秒',evid:'投标方案第3.5节',date:ad(50),op:'P2',ver:1,hist:[{s:'approved',desc:'双臂式ATC刀库',date:ad(50),op:'P2',ver:1}]},implementation:{wf:'approved',desc:'刀库安装到位 PLC程序已写入',evid:'赵刚',date:ad(152),op:'P5',ver:1,hist:[{s:'approved',desc:'刀库安装到位',date:ad(152),op:'P5',ver:1}]},verification:{wf:'draft',desc:'初次测试2.8秒未达标 需优化PLC时序',evid:'',date:ad(188),op:'P5',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]}},
+      // I04 实施被驳回
+      {id:'I04',name:'加工件表面粗糙度',mod:'M5',target:'Ra<=1.6um 45钢端铣',owner:'P2',deadline:ad(190),priority:'high',dept:'D2',linkedDocs:['DL01','DL02'],linkedMats:['M11'],
+        stages:{requirement:{wf:'approved',desc:'招标文件3.5.2条款',evid:'招标文件P29',date:ad(15),op:'P2',ver:1,hist:[{s:'approved',desc:'招标文件3.5.2条款',date:ad(15),op:'P2',ver:1}]},design:{wf:'approved',desc:'CBN刀具+切削参数优化',evid:'投标方案第3.6节',date:ad(52),op:'P2',ver:1,hist:[{s:'approved',desc:'CBN刀具方案',date:ad(52),op:'P2',ver:1}]},implementation:{wf:'rejected',desc:'切削试验参数记录不全 未附粗糙度仪校准证书',evid:'',date:ad(165),op:'P1',ver:2,hist:[{s:'submitted',desc:'初次提交',date:ad(160),op:'P2',ver:1},{s:'rejected',desc:'校准证书缺失',date:ad(165),op:'P1',ver:2}]},verification:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]}},
+      // M7: 财务决算
+      {id:'I05',name:'项目总投资控制',mod:'M7',target:'不超过批复概算1200万元',owner:'P4',deadline:ad(300),priority:'critical',dept:'D4',linkedDocs:['DL03'],linkedMats:['M12','M13'],
+        stages:{requirement:{wf:'approved',desc:'可研批复明确<=1200万',evid:'可研批复文件',date:ad(20),op:'P4',ver:1,hist:[{s:'approved',desc:'可研批复明确',date:ad(20),op:'P4',ver:1}]},design:{wf:'approved',desc:'分项预算:设备980万 安装120万 其他100万',evid:'概算明细表',date:ad(55),op:'P4',ver:1,hist:[{s:'approved',desc:'分项预算编制',date:ad(55),op:'P4',ver:1}]},implementation:{wf:'approved',desc:'已支出1050万 剩余150万',evid:'财务支出台账',date:ad(160),op:'P4',ver:1,hist:[{s:'approved',desc:'已支出1050万',date:ad(160),op:'P4',ver:1}]},verification:{wf:'draft',desc:'待全部支出完成后编制竣工结算',evid:'',date:ad(290),op:'P4',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]}},
+      // M8: 竣工验收
+      {id:'I06',name:'产能提升指标',mod:'M8',target:'年产能>=12000件 提升>=33%',owner:'P5',deadline:ad(350),priority:'critical',dept:'D5',linkedDocs:['DL01','DL02'],linkedMats:['M18'],
+        stages:{requirement:{wf:'approved',desc:'招标文件1.2条款 产能提升>=30%',evid:'招标文件P5',date:ad(18),op:'P2',ver:1,hist:[{s:'approved',desc:'招标文件1.2条款',date:ad(18),op:'P2',ver:1}]},design:{wf:'approved',desc:'双工位+自动上下料方案',evid:'投标方案第4.1节',date:ad(55),op:'P2',ver:1,hist:[{s:'approved',desc:'双工位方案',date:ad(55),op:'P2',ver:1}]},implementation:{wf:'draft',desc:'设备安装完成 待联调联试',evid:'',date:ad(190),op:'P5',ver:1,hist:[]},verification:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]}},
+      {id:'I07',name:'加工废品率',mod:'M8',target:'综合废品率<=0.5%',owner:'P3',deadline:ad(350),priority:'high',dept:'D3',linkedDocs:['DL01'],linkedMats:['M18'],
+        stages:{requirement:{wf:'approved',desc:'招标文件1.3条款',evid:'招标文件P6',date:ad(18),op:'P2',ver:1,hist:[{s:'approved',desc:'招标文件1.3条款',date:ad(18),op:'P2',ver:1}]},design:{wf:'approved',desc:'在线检测+SPC过程控制',evid:'投标方案第4.3节',date:ad(58),op:'P2',ver:1,hist:[{s:'approved',desc:'在线检测+SPC方案',date:ad(58),op:'P2',ver:1}]},implementation:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},verification:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]}},
+      {id:'I08',name:'综合能耗降低',mod:'M8',target:'单件能耗降低>=15%',owner:'P5',deadline:ad(350),priority:'normal',dept:'D5',linkedDocs:['DL01'],linkedMats:[],
+        stages:{requirement:{wf:'approved',desc:'招标文件1.4条款',evid:'招标文件P7',date:ad(20),op:'P2',ver:1,hist:[{s:'approved',desc:'招标文件1.4条款',date:ad(20),op:'P2',ver:1}]},design:{wf:'draft',desc:'初步方案:变频驱动+余热回收',evid:'',date:ad(80),op:'P2',ver:1,hist:[]},implementation:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},verification:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]}}
+    ],
+    materials:[
+      // C1: 立项审批类
+      {id:'M01',name:'项目建议书批复',cat:'C1',rule:'固投管理办法第十三条',owner:'P1',deadline:ad(30),wf:'approved',op:'P1',date:ad(18),ver:1,hist:[{s:'approved',desc:'集团已批复 JT-2026-0031',date:ad(18),op:'P1',ver:1}],linkedInds:[],linkedDocs:[]},
+      {id:'M02',name:'可行性研究报告及批复',cat:'C1',rule:'固投管理办法第十五条',owner:'P1',deadline:ad(50),wf:'approved',op:'P1',date:ad(35),ver:1,hist:[{s:'approved',desc:'同意投资1200万元',date:ad(35),op:'P1',ver:1}],linkedInds:[],linkedDocs:[]},
+      {id:'M03',name:'初步设计及概算批复',cat:'C1',rule:'固投管理办法第十七条',owner:'P2',deadline:ad(70),wf:'rejected',op:'P1',date:ad(72),ver:2,rjReason:'环评专篇深度不足，需补充噪声及废液处理方案',hist:[{s:'submitted',desc:'初设及概算提交',date:ad(65),op:'P2',ver:1},{s:'rejected',desc:'环评专篇深度不足',date:ad(72),op:'P1',ver:2}],linkedInds:[],linkedDocs:[]},
+      // C2: 招标采购类
+      {id:'M04',name:'招标方案备案表',cat:'C2',rule:'招标投标法第十二条',owner:'P1',deadline:ad(80),wf:'approved',op:'P1',date:ad(75),ver:1,hist:[{s:'approved',desc:'备案通过',date:ad(75),op:'P1',ver:1}],linkedInds:[],linkedDocs:['DL01']},
+      {id:'M05',name:'评标报告及中标通知书',cat:'C2',rule:'招标投标法第四十条',owner:'P1',deadline:ad(100),wf:'approved',op:'P1',date:ad(98),ver:1,hist:[{s:'approved',desc:'中标:XX精密机械有限公司',date:ad(98),op:'P1',ver:1}],linkedInds:[],linkedDocs:[]},
+      {id:'M06',name:'合同备案表',cat:'C2',rule:'合同管理办法',owner:'P1',deadline:ad(110),wf:'approved',op:'P4',date:ad(108),ver:1,hist:[{s:'approved',desc:'已备案',date:ad(108),op:'P4',ver:1}],linkedInds:[],linkedDocs:['DL03']},
+      // C3: 实施过程类
+      {id:'M07',name:'施工组织设计',cat:'C3',owner:'P5',deadline:ad(120),wf:'approved',op:'P2',date:ad(115),ver:1,hist:[{s:'approved',desc:'方案合理同意实施',date:ad(115),op:'P2',ver:1}],linkedInds:[],linkedDocs:[]},
+      {id:'M08',name:'设备安装调试验收记录',cat:'C3',owner:'P5',deadline:ad(170),wf:'submitted',op:'P5',date:ad(168),ver:1,hist:[{s:'submitted',desc:'8台设备安装完成，提交审核',date:ad(168),op:'P5',ver:1}],linkedInds:['I01','I02'],linkedDocs:['DL04']},
+      {id:'M09',name:'隐蔽工程验收记录',cat:'C3',owner:'P5',deadline:ad(130),wf:'approved',op:'P2',date:ad(128),ver:1,hist:[{s:'approved',desc:'地基及电缆沟验收合格',date:ad(128),op:'P2',ver:1}],linkedInds:[],linkedDocs:[]},
+      // C4: 设备验收类
+      {id:'M10',name:'设备到货开箱验收单',cat:'C4',owner:'P3',deadline:ad(155),wf:'approved',op:'P3',date:ad(153),ver:1,hist:[{s:'approved',desc:'8台/套设备全部到货无误',date:ad(153),op:'P3',ver:1}],linkedInds:[],linkedDocs:[]},
+      {id:'M11',name:'技术指标验证报告',cat:'C4',rule:'项目验收管理办法第八条',owner:'P3',deadline:ad(200),wf:'draft',op:'P3',date:ad(190),ver:1,hist:[],linkedInds:['I01','I02','I03','I04'],linkedDocs:['DL05']
+      },
+      // C5: 财务审计类
+      {id:'M12',name:'竣工结算书',cat:'C5',rule:'基本建设财务规则',owner:'P4',deadline:ad(300),wf:'draft',ver:1,hist:[],linkedInds:['I05'],linkedDocs:[]},
+      {id:'M13',name:'第三方审计报告',cat:'C5',rule:'国防科技工业项目审计管理办法',owner:'P4',deadline:ad(330),wf:'draft',ver:1,hist:[],linkedInds:[],linkedDocs:[]},
+      // C6: 专项验收类
+      {id:'M14',name:'消防验收意见书',cat:'C6',owner:'P1',deadline:ad(250),wf:'approved',op:'P1',date:ad(245),ver:1,hist:[{s:'approved',desc:'消防验收合格',date:ad(245),op:'P1',ver:1}],linkedInds:[],linkedDocs:[]},
+      {id:'M15',name:'安全设施竣工验收',cat:'C6',rule:'安全设施三同时管理办法',owner:'P2',deadline:ad(260),wf:'draft',ver:1,hist:[],linkedInds:[],linkedDocs:[]},
+      {id:'M16',name:'职业卫生验收',cat:'C6',owner:'P2',deadline:ad(260),wf:'draft',ver:1,hist:[],linkedInds:[],linkedDocs:[]},
+      {id:'M17',name:'档案验收报告',cat:'C6',owner:'P1',deadline:ad(280),wf:'draft',ver:1,hist:[],linkedInds:[],linkedDocs:[]},
+      // C7: 综合验收类
+      {id:'M18',name:'竣工验收申请报告',cat:'C7',owner:'P1',deadline:ad(350),wf:'draft',ver:1,hist:[],linkedInds:['I06','I07','I08'],linkedDocs:[]},
+      {id:'M19',name:'问题整改闭环确认表',cat:'C7',owner:'P2',deadline:ad(370),wf:'draft',ver:1,hist:[],linkedInds:[],linkedDocs:[]}
+    ],
+    milestones:[
+      {id:'MS1',n:'项目建议书批复',pd:ad(30),ad:ad(18)},
+      {id:'MS2',n:'可研报告批复',pd:ad(50),ad:ad(35)},
+      {id:'MS3',n:'初步设计批复',pd:ad(70),ad:''},
+      {id:'MS4',n:'招标及合同签订',pd:ad(110),ad:ad(108)},
+      {id:'MS5',n:'设备到厂安装',pd:ad(160),ad:ad(155)},
+      {id:'MS6',n:'安装调试完成',pd:ad(185),ad:''},
+      {id:'MS7',n:'联调联试及指标验证',pd:ad(220),ad:''},
+      {id:'MS8',n:'专项验收完成',pd:ad(280),ad:''},
+      {id:'MS9',n:'财务决算审计',pd:ad(330),ad:''},
+      {id:'MS10',n:'竣工验收及批复转固',pd:ad(390),ad:''}
+    ]
+  }],activeProjectId:'P1'};
+}
+
+function load(){try{const r=localStorage.getItem(SK);if(r){const d=JSON.parse(r);if(d&&d.projects)return d}}catch(e){}return defaults()}
+function save(){localStorage.setItem(SK,JSON.stringify(D))}
+D=load();
+
+// ================================================================
+// NAVIGATION — 页面导航系统
+// cv: current view (当前激活视图标识)
+// showV(): 切换视图并刷新
+// refresh(): 根据当前视图调用对应的渲染函数
+// updateB(): 更新顶部状态栏徽章计数
+// ================================================================
+let cv='dash';
+document.querySelectorAll('.nav-item').forEach(item=>{item.addEventListener('click',function(){
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));this.classList.add('active');showV(this.dataset.view);
+})});
+function showV(v){cv=v;document.querySelectorAll('.view').forEach(vv=>vv.classList.remove('active'));
+  const el=document.getElementById('view-'+v);if(el)el.classList.add('active');
+  document.getElementById('topbarTitle').textContent={dash:'仪表盘',docs:'数据源中心',indicators:'指标闭环',materials:'材料清单',org:'组织架构',review:'审核中心',gantt:'进度节点',report:'审计报告',tpl:'模板'}[v]||v;
+  const p=AP();
+  document.getElementById('topbarProj').textContent=p?(p.name+'-'+p.tpl):'';
+  document.getElementById('selProj').innerHTML=D.projects.map(pj=>`<option value="${pj.id}"${pj.id===D.activeProjectId?' selected':''}>${pj.name}</option>`).join('');
+  refresh();
+}
+function swProj(id){D.activeProjectId=id;save();showV(cv)}
+
+function refresh(){updateB();if(cv==='dash')rd();if(cv==='docs')rdocs();if(cv==='indicators')rinds();if(cv==='materials')rmats();if(cv==='org')rorg();if(cv==='review')rrev();if(cv==='gantt')rg();if(cv==='report')rrpt();if(cv==='tpl')rt();updateAI()}
+function updateB(){const p=AP();if(!p)return;const td=nw();
+  document.getElementById('badge-docs').textContent=(p.deliverables||[]).filter(d=>d.status!=='finalized').length;
+  document.getElementById('badge-inds').textContent=(p.indicators||[]).length;
+  document.getElementById('badge-mats').textContent=(p.materials||[]).filter(m=>m.wf!=='approved').length;
+  document.getElementById('badge-review').textContent=(p.materials||[]).filter(m=>m.wf==='submitted'||m.wf==='rejected').length;
+  const ov=(p.milestones||[]).filter(m=>!m.ad&&m.pd<td).length;const el=document.getElementById('badge-overdue');el.textContent=ov;el.className=ov>0?'nav-badge':'nav-badge good';
+}
+// ===== 工具函数 =====
+// esc(): HTML转义 | pn(): 人员ID->姓名 | dn(): 部门ID->名称
+// cn(): 分类ID->名称 | mn(): 模块ID->名称
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
+function pn(p,id){const per=(p.org&&p.org.persons||[]).find(pp=>pp.id===id);return per?per.name:id}
+function dn(p,id){const d=(p.org&&p.org.depts||[]).find(dd=>dd.id===id);return d?d.name:id}
+function cn(p,id){const t=TPL[p.tpl];if(!t)return id;const c=t.cats.find(cc=>cc.id===id);return c?c.n:id}
+function mn(p,id){const t=TPL[p.tpl];if(!t)return id;const m=t.mods.find(mm=>mm.id===id);return m?m.n:id}
+function quickAdd(){if(cv==='docs')openDocM();else if(cv==='indicators')openIndM();else if(cv==='materials')openMatM();else if(cv==='org')openOrgM();}
+
+// ================================================================
+// DASHBOARD — 仪表盘渲染
+// 展示：交付物统计 | 指标完成率 | 材料定稿率 | 待审核数 | 逾期数
+//       里程碑甘特图 | 预警信息
+// ================================================================
+function rd(){
+  const p=AP();if(!p){document.getElementById('ds').innerHTML='<div class="empty-st"><p>请先创建项目</p></div>';return}
+  const inds=p.indicators||[],mats=p.materials||[],docs=p.deliverables||[],td=nw();
+  const indApp=inds.reduce((s,i)=>s+Object.values(i.stages||{}).filter(st=>st.wf==='approved').length,0);
+  const matApp=mats.filter(m=>m.wf==='approved').length,docDone=docs.filter(d=>d.status==='finalized').length;
+  const ov=mats.filter(m=>m.deadline&&m.deadline<td&&m.wf!=='approved').length;
+  document.getElementById('ds').innerHTML=`
+    <div class="scard"><div class="sl">交付物</div><div class="sv">${docs.length}</div><div class="ss">${docDone}定稿</div></div>
+    <div class="scard good"><div class="sl">指标完成率</div><div class="sv">${inds.length*5>0?Math.round(indApp/(inds.length*5)*100):0}%</div></div>
+    <div class="scard"><div class="sl">材料定稿</div><div class="sv">${matApp}/${mats.length}</div><div class="ss">${mats.length>0?Math.round(matApp/mats.length*100):0}%</div></div>
+    <div class="scard warn"><div class="sl">待审核</div><div class="sv">${mats.filter(m=>m.wf==='submitted').length}</div></div>
+    <div class="scard ${ov>0?'bad':''}"><div class="sl">逾期</div><div class="sv">${ov}</div></div>`;
+  const ms=p.milestones||[];if(ms.length){const ds=ms.map(m=>m.pd).concat(ms.map(m=>m.ad).filter(Boolean));ds.sort();const st=ds[0],en=ds[ds.length-1],tot=Math.max(1,Math.ceil((new Date(en)-new Date(st))/86400000));
+    document.getElementById('dg').innerHTML=ms.map(m=>{const l=Math.round((new Date(m.pd)-new Date(st))/86400000/tot*100),w=m.ad?Math.round((new Date(m.ad)-new Date(m.pd))/86400000/tot*100+3):5,cls=m.ad?'done':m.pd<td?'late':m.pd<=new Date(Date.now()+30*86400000).toISOString().slice(0,10)?'ongoing':'future';return`<div class="gantt-row"><div class="gantt-label">${esc(m.n)}</div><div class="gantt-bar-area"><div class="gantt-bar ${cls}" style="left:${l}%;width:${Math.max(w,3)}%">${m.pd.slice(5)}</div></div></div>`}).join('')}
+  let al='';const rej=mats.filter(m=>m.wf==='rejected');if(rej.length)al+=rej.slice(0,3).map(m=>`<div class="alert-item critical"><span>&#10060;</span><div>${esc(m.name)} · ${esc(m.rjReason||'')}</div></div>`).join('');
+  if(!al)al='<div class="empty-st" style="padding:12px"><p>无预警</p></div>';document.getElementById('da').innerHTML=al;
+}
+
+// ================================================================
+// DATA SOURCES — 数据源中心（交付物管理）
+// rdocs(): 按责任人分组展示交付物列表
+// renderDocGroup(): 渲染分组视图 + 版本历史折叠面板
+// ================================================================
+function rdocs(){
+  const p=AP();if(!p)return;const docs=p.deliverables||[],persons=p.org?.persons||[];
+  const dc={招标文件:'🏷️',合同:'📜',技术协议:'📋',交付物:'📦',其他:'📄'};
+  const sb={finalized:'badge-ok',draft:'badge-warn',obsolete:'badge-pending'};
+  const sl={finalized:'已定稿',draft:'草稿',obsolete:'已作废'};
+
+  // Group by person
+  const grouped={};
+  docs.forEach(d=>{const oid=d.owner||'unassigned';if(!grouped[oid])grouped[oid]=[];grouped[oid].push(d)});
+
+  let html=`<div style="display:flex;gap:6px;margin-bottom:10px;align-items:center">
+    <span style="font-size:11px;font-weight:600">交付物列表</span>
+    <button class="btn btn-xs btn-out" id="docGroupBtn" onclick="toggleDocGroup()">按责任人分组</button>
+    <div class="spacer"></div>
+    <button class="btn btn-p btn-xs" onclick="openDocM()">+ 导入交付物</button>
+  </div><div id="docGroupView"></div>`;
+
+  document.getElementById('docsContent').innerHTML=html;
+  renderDocGroup();
+}
+function renderDocGroup(grouped_){
+  const p=AP();if(!p)return;const docs=p.deliverables||[],persons=p.org?.persons||[];
+  const grouped=grouped_||{};const dc={招标文件:'🏷️',合同:'📜',技术协议:'📋',交付物:'📦',其他:'📄'};
+  const sb={finalized:'badge-ok',draft:'badge-warn',obsolete:'badge-pending'};
+  const sl={finalized:'已定稿',draft:'草稿',obsolete:'已作废'};
+
+  if(!grouped_){grouped_={};docs.forEach(d=>{const oid=d.owner||'unassigned';if(!grouped_[oid])grouped_[oid]=[];grouped_[oid].push(d)});}
+
+  let html='';
+  Object.entries(grouped_).forEach(([oid,items])=>{
+    const person=persons.find(pp=>pp.id===oid);
+    const label=person?`${person.name} (${dn(p,person.dept)})`:'未指定责任人';
+    html+=`<div class="person-group">
+      <div class="pg-head"><h4>👤 ${esc(label)} <span style="font-size:9px;color:var(--t3)">${items.length}项交付物</span></h4>
+      <span style="font-size:9px;color:var(--t3)">定稿${items.filter(d=>d.status==='finalized').length}/${items.length}</span></div>
+      <div>${items.map(d=>{
+        const linkedInds=(d.linked||[]).map(iid=>{const ind=p.indicators.find(i=>i.id===iid);return ind?ind.name:''}).filter(Boolean);
+        return`<div class="row" onclick="aiAnalyzeDoc('${d.id}')" style="cursor:pointer">
+          <span style="font-size:14px">${dc[d.type]||'📄'}</span>
+          <span style="flex:1;font-weight:500">${esc(d.name)}</span>
+          <span style="font-size:9px;color:var(--t3)">${esc(d.ver)} · ${esc(d.file||'无文件')}</span>
+          <span class="badge ${sb[d.status]}">${sl[d.status]}</span>
+          ${linkedInds.length?`<span style="font-size:8px;color:var(--a)">${linkedInds.length}指标</span>`:''}
+        </div>`;
+      }).join('')}</div>
+    </div>`;
+  });
+  if(!html)html='<div class="empty-st"><p>暂无交付物，点击"导入交付物"开始</p></div>';
+  html+=`<details style="margin-top:12px"><summary style="font-size:10.5px;color:var(--a);cursor:pointer">版本/变更历史</summary><div style="margin-top:6px">${docs.filter(d=>(d.hist||[]).length>0).map(d=>`<div style="border:1px solid var(--bd);border-radius:4px;padding:8px;margin-bottom:6px"><strong>${esc(d.name)}</strong> · ${esc(d.ver)} · <span class="badge ${sb[d.status]}">${sl[d.status]}</span><div>${(d.hist||[]).map((h,i)=>`<div class="ver-item ${i===d.hist.length-1?'current':''}"><div class="vn">${h.ver}</div><div class="vc">${esc(h.note||'')}</div><div class="vd">${h.date.slice(0,10)}<br>${pn(p,h.op)}</div></div>`).join('')}</div></div>`).join('')||'<span style="font-size:10px;color:var(--t3)">无变更记录</span>'}</div></details>`;
+  document.getElementById('docGroupView').innerHTML=html;
+}
+
+// ================================================================
+// INDICATORS — 指标闭环验证
+// gl(): 判断指标闭环状态（closed/partial/broken/none）
+// rinds(): 搜索/筛选/表格列表渲染，点击行触发AI分析
+// ================================================================
+function rinds(){
+  const p=AP();if(!p)return;const inds=p.indicators||[],keys=['requirement','design','implementation','verification','closure'];
+    // gl(): 根据五阶段审批状态判定指标闭环状态
+  function gl(ind){const vs=keys.map(k=>{const s=ind.stages[k];return s&&s.wf==='approved'?1:s&&s.wf==='rejected'?.5:0});const d=vs.filter(v=>v===1).length,i=vs.filter(v=>v===.5).length;return d===5?'closed':i>0?'broken':d>0?'partial':'none'}
+  const ll={closed:'已闭环',partial:'进行中',broken:'断点',none:'未开始'},lc={closed:'badge-ok',partial:'badge-info',broken:'badge-err',none:'badge-pending'};
+  document.getElementById('indContent').innerHTML=`
+    <div class="tbl-wrap"><div class="tbl-bar">
+      <input type="text" id="indSearch" placeholder="搜索..." oninput="rinds()">
+      <select id="indModF" onchange="rinds()"><option value="all">全部模块</option>${(TPL[p.tpl]?.mods||[]).map(m=>`<option value="${m.id}">${m.n}</option>`).join('')}</select>
+      <select id="indLoopF" onchange="rinds()"><option value="all">全部</option><option value="closed">已闭环</option><option value="broken">断点</option></select>
+      <div class="spacer"></div><button class="btn btn-p btn-xs" onclick="openIndM()">+ 新增</button>
+    </div><table><thead><tr><th>指标</th><th>五阶段</th><th>闭环</th><th>部门</th><th>责任人</th><th>交付物</th><th>操作</th></tr></thead>
+    <tbody>${inds.map(ind=>{const l=gl(ind),dots=keys.map(k=>{const s=ind.stages[k];return`<span class="sdot ${s&&s.wf==='approved'?'ok':s&&s.wf==='rejected'?'issue':'pending'}"></span>`}).join('');const docs=(ind.linkedDocs||[]).map(did=>{const d=p.deliverables.find(dd=>dd.id===did);return d?d.name:''}).filter(Boolean);
+    return`<tr onclick="aiAnalyzeIndicator2('${ind.id}')" style="cursor:pointer"><td style="font-weight:500">${esc(ind.name)}</td><td><span class="stage-dots">${dots}</span></td><td><span class="badge ${lc[l]}">${ll[l]}</span></td><td>${dn(p,ind.dept)}</td><td>${pn(p,ind.owner)}</td><td style="font-size:9px">${docs.join(', ')||'-'}</td><td style="display:flex;gap:2px"><button class="btn btn-xs btn-s" onclick="event.stopPropagation();openIndM('${ind.id}')">编辑</button><button class="btn btn-xs btn-s" onclick="event.stopPropagation();openStM('${ind.id}')">阶段</button><button class="btn btn-xs" style="background:var(--ai);color:#fff" onclick="event.stopPropagation();aiAnalyzeIndicator2('${ind.id}')">AI</button></td></tr>`}).join('')}</tbody></table></div>`;
+}
+
+// ================================================================
+// MATERIALS — 审计材料清单
+// rmats(): 按7大分类分组渲染，每行可点击触发AI分析
+// ================================================================
+function rmats(){
+  const p=AP();if(!p)return;const mats=p.materials||[],t=TPL[p.tpl],lb={approved:'已定稿',submitted:'审核中',draft:'编制中',rejected:'退回修订',pending:'待启动'},cb={approved:'badge-ok',submitted:'badge-info',draft:'badge-warn',rejected:'badge-err',pending:'badge-pending'};
+  document.getElementById('matContent').innerHTML=(t?t.cats:[]).map(c=>{
+    const cm=mats.filter(m=>m.cat===c.id);
+    return`<div class="cat-card"><div class="cat-head"><h3><span class="cat-num">${c.id.slice(1)}</span>${c.n}</h3><span style="font-size:9.5px;color:var(--t3)">${cm.length}项 · ${cm.filter(m=>m.wf==='approved').length}定稿</span></div><div class="cat-body">${cm.map(m=>`<div class="row" onclick="aiAnalyzeMaterial('${m.id}')"><span style="flex:2;font-weight:500;font-size:10.5px">${esc(m.name)}</span><span style="flex:1;font-size:9px;color:var(--a)">${esc(m.rule||'')}</span><span style="width:60px;text-align:center"><span class="badge ${cb[m.wf]}">${lb[m.wf]}</span></span><span style="width:50px;text-align:center;font-size:9px">${pn(p,m.owner)}</span><span style="width:35px;text-align:right"><button class="btn btn-xs btn-s" onclick="event.stopPropagation();openMwfM('${m.id}')">更新</button></span></div>`).join('')}</div></div>`}).join('')+`<button class="btn btn-out btn-xs" style="margin-top:6px" onclick="openMatM()">+ 新增材料</button>`;
+}
+
+// ================================================================
+// ORGANIZATION — 组织架构管理
+// rorg(): 部门卡片 + 人员卡片，支持点击触发AI分析
+// ================================================================
+function rorg(){
+  const p=AP();if(!p)return;const depts=p.org?.depts||[],persons=p.org?.persons||[];
+  document.getElementById('orgContent').innerHTML=`<div class="prow">
+    <div class="panel"><div class="phead"><h3>🏢 部门</h3><button class="btn btn-p btn-xs" onclick="openOrgM('dept')">+ 新增</button></div><div class="pbody">${depts.map(d=>{
+      const pc=persons.filter(pp=>pp.dept===d.id);
+      return`<div class="dept-card ${d.status==='inactive'?'inactive':''}" style="cursor:pointer" onclick="aiAnalyzeDept('${d.id}')"><h4>${esc(d.name)} ${d.status==='inactive'?'<span class="badge badge-err">已撤销</span>':d.status==='renamed'?'<span class="badge badge-warn">已更名</span>':'<span class="badge badge-ok">正常</span>'}</h4>${d.note?`<div style="font-size:9px;color:var(--w)">${esc(d.note)}</div>`:''}<div style="font-size:9.5px;margin-top:4px">成员：${pc.map(pp=>`<span style="${pp.status==='inactive'?'text-decoration:line-through;color:var(--d)':''}">${esc(pp.name)}</span>`).join(' · ')||'无'}</div><button class="btn btn-xs btn-gh" onclick="openOrgM('dept','${d.id}')">编辑</button></div>`}).join('')}</div></div>
+    <div class="panel"><div class="phead"><h3>👤 人员</h3><button class="btn btn-p btn-xs" onclick="openOrgM('person')">+ 新增</button></div><div class="pbody">${persons.map(pp=>`<div class="dept-card ${pp.status==='inactive'?'inactive':''}"><h4>${esc(pp.name)} ${pp.status==='inactive'?'<span class="badge badge-err">离职</span>':'<span class="badge badge-ok">在职</span>'}</h4><div style="font-size:9.5px">${dn(p,pp.dept)} · ${esc(pp.role||'未指定')}</div>${pp.note?`<div style="font-size:8.5px;color:var(--w)">${esc(pp.note)}</div>`:''}<button class="btn btn-xs btn-gh" onclick="openOrgM('person','${pp.id}')">编辑</button></div>`).join('')}</div></div>
+  </div>`;
+}
+
+// ================================================================
+// REVIEW — 审核中心
+// rrev(): 列出所有待审核/需重做的材料，点击行触发AI深度分析
+// qrMat(): 快速审核（通过/退回）
+// ================================================================
+function rrev(){
+  const p=AP();if(!p)return;const mats=p.materials||[];
+  const items=mats.filter(function(m){return m.wf==='submitted'||m.wf==='rejected'});
+  if(items.length===0){document.getElementById('reviewContent').innerHTML='<div class="empty-st"><div class="eicon">OK</div><h3>无待审核项</h3></div>';return}
+  var html='<div class="tbl-wrap"><div class="tbl-bar"><strong>待审核（'+items.length+'项）</strong></div>';
+  html+='<table><thead><tr><th>材料</th><th>类别</th><th>责任人</th><th>状态</th><th>操作</th></tr></thead><tbody>';
+  items.forEach(function(m){
+    var lb={submitted:'待审核',rejected:'需重做'},cb={submitted:'badge-info',rejected:'badge-err'};
+    html+='<tr onclick="aiAnalyzeReview(\x27'+m.id+'\x27)" style="cursor:pointer">';
+    html+='<td><strong>'+esc(m.name)+'</strong>';
+    if(m.rjReason)html+='<br><span style="font-size:8.5px;color:var(--d)">驳回：'+esc(m.rjReason)+'</span>';
+    html+='</td><td>'+cn(p,m.cat)+'</td><td>'+pn(p,m.owner)+'</td>';
+    html+='<td><span class="badge '+cb[m.wf]+'">'+lb[m.wf]+'</span></td>';
+    html+='<td style="display:flex;gap:2px">';
+    html+='<button class="btn btn-xs btn-p" onclick="event.stopPropagation();qrMat(\x27'+m.id+'\x27,\x27approved\x27)">通过</button> ';
+    html+='<button class="btn btn-xs btn-gh" style="color:var(--d)" onclick="event.stopPropagation();qrMat(\x27'+m.id+'\x27,\x27rejected\x27)">退回</button>';
+    html+='</td></tr>';
+  });
+  html+='</tbody></table></div>';
+  document.getElementById('reviewContent').innerHTML=html;
+}
+function qrMat(mid,s){const p=AP();const m=p.materials.find(mm=>mm.id===mid);if(!m)return;if(s==='rejected'){const r=prompt('退回原因：');if(!r)return;m.rjReason=r}m.wf=s;m.op='审核员';m.date=nw();m.ver=(m.ver||1)+1;m.hist.push({s,desc:s==='approved'?'通过':'退回',date:nw(),op:'审核员',ver:m.ver});save();refresh()}
+
+// ================================================================
+// GANTT — 里程碑甘特图
+// rg(): 渲染甘特图条形图 + 今日线 + 逾期/进行中/未来状态着色
+// ================================================================
+function rg(){
+  const p=AP();if(!p)return;const ms=p.milestones||[],td=nw();
+  if(!ms.length){document.getElementById('ganttContent').innerHTML='<div class="empty-st"><p>暂无节点</p></div>';return}
+  const ds=ms.map(m=>m.pd).concat(ms.map(m=>m.ad).filter(Boolean));ds.sort();const st=ds[0],en=ds[ds.length-1],tot=Math.max(1,Math.ceil((new Date(en)-new Date(st))/86400000)),tL=Math.round((new Date(td)-new Date(st))/86400000/tot*100);
+  document.getElementById('ganttContent').innerHTML=`<div class="panel"><div class="phead"><h3>里程碑</h3><button class="btn btn-p btn-xs" onclick="addMs()">+ 新增</button></div><div class="pbody gantt">${ms.map(m=>{const l=Math.round((new Date(m.pd)-new Date(st))/86400000/tot*100),w=m.ad?Math.round((new Date(m.ad)-new Date(m.pd))/86400000/tot*100+3):5,cls=m.ad?'done':m.pd<td?'late':m.pd<=new Date(Date.now()+30*86400000).toISOString().slice(0,10)?'ongoing':'future';return`<div class="gantt-row"><div class="gantt-label">${esc(m.n)}</div><div class="gantt-bar-area">${tL>=0&&tL<=100?`<div class="gantt-today" style="left:${tL}%"></div>`:''}<div class="gantt-bar ${cls}" style="left:${l}%;width:${Math.max(w,3)}%">${m.pd.slice(5)}</div></div></div>`}).join('')}</div></div>`;
+}
+function addMs(){const n=prompt('名称：');if(!n)return;const d=prompt('计划日期(YYYY-MM-DD)：');if(!d)return;AP().milestones.push({id:uid(),n,pd:d,ad:''});save();rg()}
+
+// ================================================================
+// REPORT — 审计报告自动生成
+// rrpt(): 5大章节完整报告（项目概况/指标闭环/材料合规/里程碑/风险建议）
+// ================================================================
+function rrpt(){
+  const p=AP();if(!p)return;const inds=p.indicators||[],mats=p.materials||[],docs=p.deliverables||[],ms=p.milestones||[],td=nw();
+  const indApp=inds.reduce((s,i)=>s+Object.values(i.stages||{}).filter(st=>st.wf==='approved').length,0);
+  const matApp=mats.filter(m=>m.wf==='approved').length,docDone=docs.filter(d=>d.status==='finalized').length;
+  const totalStages=inds.length*5;
+  const indPct=totalStages>0?Math.round(indApp/totalStages*100):0;
+  const matPct=mats.length>0?Math.round(matApp/mats.length*100):0;
+  const closedInds=inds.filter(i=>{const ks=['requirement','design','implementation','verification','closure'];const vs=ks.map(k=>{const s=i.stages[k];return s&&s.wf==='approved'?1:0});return vs.filter(v=>v===1).length===5}).length;
+  const brokenInds=inds.filter(i=>{const ks=['requirement','design','implementation','verification','closure'];const vs=ks.map(k=>{const s=i.stages[k];return s&&s.wf==='rejected'?.5:0});return vs.filter(v=>v===.5).length>0}).length;
+  const overdueMats=mats.filter(m=>m.deadline&&m.deadline<td&&m.wf!=='approved');
+  const rejMats=mats.filter(m=>m.wf==='rejected');
+  const msDone=ms.filter(m=>m.ad).length,msOv=ms.filter(m=>!m.ad&&m.pd<td);
+
+  let h='<div style="background:var(--s);border:1px solid var(--bd);border-radius:var(--r);padding:24px;max-width:900px;margin:0 auto;line-height:1.8">';
+  // Header
+  h+='<div style="text-align:center;padding-bottom:16px;margin-bottom:16px;border-bottom:2px solid var(--p)">';
+  h+='<h2 style="font-size:17px;color:var(--p);margin:0 0 4px 0">'+esc(p.name)+'</h2>';
+  h+='<h3 style="font-size:14px;margin:0 0 8px 0">项目验收审计综合报告</h3>';
+  h+='<div style="font-size:10px;color:var(--t3)">报告生成日期：'+td+' | 项目类型：'+esc(p.tpl)+' | 工期：'+esc(p.sd)+' ~ '+esc(p.ed)+'</div>';
+  h+='</div>';
+
+  // 一、项目概况
+  h+='<h3 style="font-size:13px;color:var(--p);border-left:3px solid var(--p);padding-left:8px;margin:16px 0 10px 0">一、项目概况</h3>';
+  h+='<table style="width:100%;font-size:10px;border-collapse:collapse"><tr><td style="padding:4px 8px;background:#fafbfc;width:120px">项目名称</td><td style="padding:4px 8px">'+esc(p.name)+'</td></tr>';
+  h+='<tr><td style="padding:4px 8px;background:#fafbfc">项目类型</td><td style="padding:4px 8px">'+esc(p.tpl)+'</td></tr>';
+  h+='<tr><td style="padding:4px 8px;background:#fafbfc">起止日期</td><td style="padding:4px 8px">'+esc(p.sd)+' ~ '+esc(p.ed)+'</td></tr>';
+  h+='<tr><td style="padding:4px 8px;background:#fafbfc">组织规模</td><td style="padding:4px 8px">'+(p.org?.depts||[]).length+'个部门 · '+(p.org?.persons||[]).length+'名人员</td></tr></table>';
+
+  // 二、验收指标闭环情况
+  h+='<h3 style="font-size:13px;color:var(--p);border-left:3px solid var(--p);padding-left:8px;margin:16px 0 10px 0">二、技术指标闭环验证</h3>';
+  h+='<table style="width:100%;font-size:10px;border-collapse:collapse;margin-bottom:8px"><tr style="background:var(--p);color:#fff"><th style="padding:4px 8px;text-align:left">统计项</th><th style="padding:4px 8px;text-align:right">数值</th></tr>';
+  h+='<tr><td style="padding:4px 8px;background:#fafbfc">指标总数</td><td style="padding:4px 8px;text-align:right;font-weight:600">'+inds.length+'项</td></tr>';
+  h+='<tr><td style="padding:4px 8px;background:#fafbfc">阶段完成率</td><td style="padding:4px 8px;text-align:right;font-weight:600;color:'+(indPct>=70?'var(--su)':indPct>=40?'var(--w)':'var(--d)')+'">'+indPct+'%</td></tr>';
+  h+='<tr><td style="padding:4px 8px;background:#fafbfc">已闭环指标</td><td style="padding:4px 8px;text-align:right;font-weight:600;color:var(--su)">'+closedInds+'项</td></tr>';
+  h+='<tr><td style="padding:4px 8px;background:#fafbfc">存在断点指标</td><td style="padding:4px 8px;text-align:right;font-weight:600;color:'+(brokenInds?'var(--d)':'var(--su)')+'">'+brokenInds+'项</td></tr></table>';
+
+  // Indicator detail by module
+  const mods=TPL[p.tpl]?.mods||[];
+  mods.forEach(function(mod){
+    const mi=inds.filter(function(i){return i.mod===mod.id});
+    if(!mi.length)return;
+    h+='<div style="margin-bottom:6px"><strong style="font-size:10px">'+esc(mod.n)+' ('+mi.length+'项)</strong>';
+    h+='<table style="width:100%;font-size:9px;border-collapse:collapse;margin-top:2px"><tr style="background:#fafbfc"><th style="padding:2px 6px;text-align:left">指标名称</th><th style="padding:2px 6px">目标</th><th style="padding:2px 6px">完成</th><th style="padding:2px 6px">状态</th></tr>';
+    mi.forEach(function(i){
+      const ks=['requirement','design','implementation','verification','closure'];
+      const vs=ks.map(function(k){const s=i.stages[k];return s&&s.wf==='approved'?1:0});
+      const d=vs.filter(function(v){return v===1}).length;
+      const cls=d===5?'badge-ok':d>=3?'badge-info':d>0?'badge-warn':'badge-pending';
+      const lbl=d===5?'已闭环':d+'/5';
+      h+='<tr><td style="padding:2px 6px">'+esc(i.name)+'</td><td style="padding:2px 6px;font-size:8px;color:var(--t3)">'+esc(i.target)+'</td><td style="padding:2px 6px;text-align:center">'+d+'/5</td><td style="padding:2px 6px;text-align:center"><span class="badge '+cls+'">'+lbl+'</span></td></tr>';
+    });
+    h+='</table></div>';
+  });
+
+  // 三、审计材料合规情况
+  h+='<h3 style="font-size:13px;color:var(--p);border-left:3px solid var(--p);padding-left:8px;margin:16px 0 10px 0">三、审计材料合规检查</h3>';
+  h+='<table style="width:100%;font-size:10px;border-collapse:collapse;margin-bottom:8px"><tr style="background:var(--p);color:#fff"><th style="padding:4px 8px;text-align:left">统计项</th><th style="padding:4px 8px;text-align:right">数值</th></tr>';
+  h+='<tr><td style="padding:4px 8px;background:#fafbfc">材料总数</td><td style="padding:4px 8px;text-align:right;font-weight:600">'+mats.length+'份</td></tr>';
+  h+='<tr><td style="padding:4px 8px;background:#fafbfc">已定稿</td><td style="padding:4px 8px;text-align:right;font-weight:600;color:var(--su)">'+matApp+'份 ('+matPct+'%)</td></tr>';
+  h+='<tr><td style="padding:4px 8px;background:#fafbfc">退回修订</td><td style="padding:4px 8px;text-align:right;font-weight:600;color:'+(rejMats.length?'var(--d)':'var(--su)')+'">'+rejMats.length+'份</td></tr>';
+  h+='<tr><td style="padding:4px 8px;background:#fafbfc">逾期未完成</td><td style="padding:4px 8px;text-align:right;font-weight:600;color:'+(overdueMats.length?'var(--d)':'var(--su)')+'">'+overdueMats.length+'份</td></tr></table>';
+
+  // Material by category
+  (TPL[p.tpl]?.cats||[]).forEach(function(cat){
+    const cm=mats.filter(function(m){return m.cat===cat.id});
+    if(!cm.length)return;
+    const ap=cm.filter(function(m){return m.wf==='approved'}).length;
+    h+='<div style="margin-bottom:6px"><strong style="font-size:10px">'+esc(cat.n)+' ('+ap+'/'+cm.length+'定稿)</strong>';
+    h+='<table style="width:100%;font-size:9px;border-collapse:collapse;margin-top:2px"><tr style="background:#fafbfc"><th style="padding:2px 6px;text-align:left">材料名称</th><th style="padding:2px 6px">依据</th><th style="padding:2px 6px">责任人</th><th style="padding:2px 6px">状态</th></tr>';
+    cm.forEach(function(m){
+      const lb={approved:'已定稿',submitted:'审核中',draft:'编制中',rejected:'退回',pending:'待启动'};
+      const cb={approved:'badge-ok',submitted:'badge-info',draft:'badge-warn',rejected:'badge-err',pending:'badge-pending'};
+      h+='<tr><td style="padding:2px 6px">'+esc(m.name)+'</td><td style="padding:2px 6px;font-size:8px">'+esc(m.rule||'-')+'</td><td style="padding:2px 6px;font-size:8px">'+pn(p,m.owner)+'</td><td style="padding:2px 6px;text-align:center"><span class="badge '+cb[m.wf]+'">'+lb[m.wf]+'</span></td></tr>';
+    });
+    h+='</table></div>';
+  });
+
+  // 四、里程碑进度
+  h+='<h3 style="font-size:13px;color:var(--p);border-left:3px solid var(--p);padding-left:8px;margin:16px 0 10px 0">四、里程碑进度</h3>';
+  h+='<table style="width:100%;font-size:10px;border-collapse:collapse"><tr style="background:#fafbfc"><th style="padding:3px 8px;text-align:left">节点名称</th><th style="padding:3px 8px">计划日期</th><th style="padding:3px 8px">实际日期</th><th style="padding:3px 8px">状态</th></tr>';
+  ms.forEach(function(m){
+    var cls=m.ad?'done':m.pd<td?'late':'future';
+    var lbl=m.ad?'已完成 ('+m.ad+')':m.pd<td?'<span style="color:var(--d);font-weight:600">逾期 '+Math.floor((new Date(td)-new Date(m.pd))/86400000)+'天</span>':'待完成';
+    h+='<tr><td style="padding:3px 8px">'+esc(m.n)+'</td><td style="padding:3px 8px;text-align:center">'+m.pd+'</td><td style="padding:3px 8px;text-align:center">'+(m.ad||'-')+'</td><td style="padding:3px 8px;text-align:center;font-size:9px">'+lbl+'</td></tr>';
+  });
+  h+='</table>';
+
+  // 五、风险与建议
+  h+='<h3 style="font-size:13px;color:var(--p);border-left:3px solid var(--p);padding-left:8px;margin:16px 0 10px 0">五、风险提示与整改建议</h3>';
+  var risks=[];
+  if(brokenInds)risks.push(brokenInds+'项技术指标存在断点，需立即启动纠偏程序');
+  if(overdueMats.length)risks.push(overdueMats.length+'份审计材料已逾期：'+overdueMats.map(function(m){return m.name}).join('、'));
+  if(rejMats.length)risks.push(rejMats.length+'份材料被退回修订：'+rejMats.map(function(m){return m.name+(m.rjReason?'（'+m.rjReason+'）':'');}).join('、'));
+  if(msOv.length)risks.push(msOv.length+'个里程碑已逾期：'+msOv.map(function(m){return m.n+'（计划'+m.pd+'）'}).join('、'));
+  var orphanDocs=docs.filter(function(d){var pp=(p.org?.persons||[]).find(function(ppp){return ppp.id===d.owner});return pp&&pp.status==='inactive'});
+  if(orphanDocs.length)risks.push(orphanDocs.length+'份交付物归属离职/退休人员，需尽快移交');
+  if(!risks.length){h+='<div style="padding:8px;background:#e8f5e9;border-radius:4px;font-size:10px;color:var(--su)">当前未发现重大风险项。</div>'}
+  else{h+='<ol style="font-size:10px;padding-left:20px;margin:0">'+risks.map(function(r){return'<li style="margin-bottom:6px;color:var(--d)">'+r+'</li>'}).join('')+'</ol>';}
+
+  h+='<div style="margin-top:12px;padding:10px;background:#fafbfc;border-radius:4px;font-size:10px">';
+  h+='<strong>综合建议：</strong>';
+  if(matPct<60)h+='材料定稿率偏低（'+matPct+'%），建议加快编制进度，确保审计进场前材料定稿率≥80%。';
+  else if(indPct<50)h+='指标阶段完成率偏低（'+indPct+'%），建议优先推动存在断点和实施阶段的指标验证工作。';
+  else if(msOv.length)h+='存在逾期里程碑，建议立即启动赶工计划，重新评估后续节点可行性。';
+  else h+='项目整体推进正常，建议按计划继续推进材料定稿和指标闭环。';
+  h+='</div>';
+
+  // Footer
+  h+='<div style="text-align:center;padding-top:16px;margin-top:16px;border-top:1px solid var(--bd);font-size:9px;color:var(--t3)">本报告由验收审计智能合规管理系统自动生成 | 数据截至 '+td+'</div>';
+
+  h+='</div>';
+  document.getElementById('reportContent').innerHTML=h;
+}
+
+// ================================================================
+// TEMPLATES VIEW — 模板管理页面
+// rt(): 渲染4种项目模板卡片 + 创建项目按钮
+// ================================================================
+function rt(){var el=document.getElementById('tplContent');if(!el)return;try{var keys=Object.keys(TPL);if(!keys||!keys.length){el.innerHTML='<div class="empty-st"><p>模板数据未加载</p></div>';return}var html='';keys.forEach(function(k){var t=TPL[k];if(!t)return;html+='<div class="panel" style="margin-bottom:8px">';html+='<div class="phead">';html+='<h3>'+k+'</h3>';html+='<button class="btn btn-p btn-xs" data-type="'+k+'" onclick="wizFromTpl(this)">创建项目</button>';html+='</div>';html+='<div class="pbody" style="font-size:10px">';html+=(t.cats||[]).length+'类材料 | '+(t.mods||[]).length+'指标模块 | '+(t.defDocs||[]).length+'交付物 | '+(t.milestones||[]).length+'节点';html+='</div></div>'});el.innerHTML=html||'<div class="empty-st"><p>暂无模板</p></div>'}catch(e){el.innerHTML='<div class="empty-st"><p style="color:var(--d)">模板渲染错误: '+esc(String(e.message||e))+'</p></div>'}}
+
+// ================================================================
+// PROJECT WIZARD — 项目创建6步向导
+// 步骤：项目信息→组织架构→指标模块→材料清单→里程碑→确认创建
+// WS: wizard state (step + data)
+// 所有onclick/onchange使用data-*属性传参，避免引号注入
+// ================================================================
+var WS={step:0,steps:['项目信息','组织架构','指标模块','材料清单','里程碑','确认创建'],data:{}};
+
+function openWiz(type){
+  if(!type)type='技改项目';
+  WS.step=0;WS.data={name:'',type:type,sd:'',ed:'',depts:[],persons:[],mods:{},matCats:[],matNames:{},milestones:[],deliverables:[]};
+  document.getElementById('wizModal').classList.add('show');
+  renderWiz();
+}
+function closeWiz(){document.getElementById('wizModal').classList.remove('show')}
+
+function renderWiz(){
+  var steps='',i;for(i=0;i<WS.steps.length;i++)steps+='<div class="wiz-step-item'+(i===WS.step?' active':'')+(i<WS.step?' done':'')+'">'+(i+1)+'. '+WS.steps[i]+'</div>';
+  document.getElementById('wizSteps').innerHTML=steps;
+  document.getElementById('wizTit').textContent='创建新项目 - '+WS.steps[WS.step];
+  document.getElementById('wizPrev').style.display=WS.step===0?'none':'inline-flex';
+  document.getElementById('wizNext').textContent=WS.step===WS.steps.length-1?'创建项目':'下一步';
+  document.getElementById('wizBody').innerHTML=WS['render'+WS.step]();
+}
+function wizNext(){
+  // Save current step data from DOM before leaving
+  if(WS.step===0){
+    var ne=document.getElementById('wizName');if(ne)WS.data.name=ne.value.trim();
+    var te=document.getElementById('wizType');if(te)WS.data.type=te.value;
+    var se=document.getElementById('wizSd');if(se)WS.data.sd=se.value;
+    var ee=document.getElementById('wizEd');if(ee)WS.data.ed=ee.value;
+  }
+  if(WS.step===WS.steps.length-1){wizCreate();return}
+  WS.step++;renderWiz();
+}
+function wizPrev(){if(WS.step>0){WS.step--;renderWiz()}}
+
+// Step 0: Project info
+WS.render0=function(){
+  var types='';Object.keys(TPL).forEach(function(k){types+='<option value="'+k+'"'+(WS.data.type===k?' selected':'')+'>'+k+'</option>'});
+  return'<div class="wiz-section"><h4><input class="form-input" id="wizName" value="'+esc(WS.data.name||'')+'" placeholder="项目名称*" style="font-size:13px;margin-bottom:8px"></h4>'+
+    '<div class="form-row"><div class="form-g"><label>项目类型</label><select class="form-input" id="wizType">'+types+'</select></div>'+
+    '<div class="form-g"><label>开始日期</label><input type="date" class="form-input" id="wizSd" value="'+nw()+'"></div></div>'+
+    '<div class="form-g"><label>结束日期</label><input type="date" class="form-input" id="wizEd"></div>'+
+    '<p style="font-size:9.5px;color:var(--t3)">选择项目类型后，后续步骤将根据类型自动推荐对应的模块和材料分类。</p></div>';
+};
+
+// Step 1: Organization
+WS.render1=function(){
+  var p=AP();var depts=p?p.org.depts||[]:[];var persons=p?p.org.persons||[]:[];
+  if(!depts.length){depts=[{id:'D1',name:'计划处',status:'active'},{id:'D2',name:'技术部',status:'active'},{id:'D3',name:'质量部',status:'active'},{id:'D4',name:'财务部',status:'active'}];if(p){p.org.depts=depts}}
+  if(!persons.length){persons=[{id:'P1',name:'项目负责人',dept:'D1',role:'主管'},{id:'P2',name:'技术负责人',dept:'D2',role:'技术'},{id:'P3',name:'检验工程师',dept:'D3',role:'检验'}];if(p){p.org.persons=persons}}
+  if(!WS.data.depts.length)WS.data.depts=depts.filter(function(d){return d.status==='active'}).map(function(d){return d.id});
+  if(!WS.data.persons.length)WS.data.persons=persons.filter(function(p){return p.status==='active'}).map(function(p){return p.id});
+  var dh='<div class="wiz-section"><h4>部门 ('+WS.data.depts.length+'个已选)</h4><div class="wiz-chk-grid">';
+  depts.forEach(function(d){var ch=WS.data.depts.indexOf(d.id)>=0;dh+='<label><input type="checkbox" data-did="'+d.id+'"'+(ch?' checked':'')+' data-wtype="dept" onchange="wizOnCheckEl(this)">'+esc(d.name)+'</label>'});dh+='</div></div>';
+  var ph='<div class="wiz-section"><h4>人员 ('+WS.data.persons.length+'人已选)</h4><div class="wiz-chk-grid">';
+  persons.forEach(function(p){var ch=WS.data.persons.indexOf(p.id)>=0;ph+='<label><input type="checkbox" data-pid="'+p.id+'"'+(ch?' checked':'')+' data-wtype="person" onchange="wizOnCheckEl(this)">'+esc(p.name)+' ('+esc(p.role||'')+')</label>'});ph+='</div></div>';
+  return dh+ph+'<p style="font-size:9px;color:var(--t3)">勾选的部门/人员将被纳入项目。</p>';
+};
+function wizOnCheck(el,type){var id=el.getAttribute('data-did')||el.getAttribute('data-pid')||el.getAttribute('data-cid');var arr;if(type==='dept')arr=WS.data.depts;else if(type==='person')arr=WS.data.persons;else arr=WS.data.matCats;if(el.checked&&arr.indexOf(id)<0)arr.push(id);if(!el.checked){var key=type==='dept'?'depts':type==='person'?'persons':'matCats';WS.data[key]=arr.filter(function(v){return v!==id})}renderWiz()}
+function wizOnCheckEl(el){var type=el.getAttribute('data-wtype');wizOnCheck(el,type)}
+
+// Step 2: Indicators
+WS.render2=function(){
+  var t=TPL[WS.data.type]||TPL['技改项目'],mods=t.mods||[];
+  if(!WS.data.mods||Object.keys(WS.data.mods).length===0){WS.data.mods={};mods.forEach(function(m){WS.data.mods[m.id]=[]})}
+  var h='<div class="wiz-section"><h4>指标模块配置</h4>';
+  mods.forEach(function(m){var items=WS.data.mods[m.id]||[],active=items.length>0;
+    h+='<div class="wiz-mod-row'+(active?' active':'')+'"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><strong>'+esc(m.n)+'</strong><button class="btn btn-xs '+(active?'btn-s':'btn-p')+'" data-mid="'+m.id+'" onclick="wizToggleMod(this)">'+(active?'已选择('+items.length+'项)':'+ 激活模块')+'</button></div>';
+    items.forEach(function(ik,idx){h+='<div class="wiz-ind-row"><input class="form-input" style="flex:1" value="'+esc(ik)+'" data-mid="'+m.id+'" data-idx="'+idx+'" onchange="wizUpdateInd(this)"><button class="btn btn-xs btn-gh" style="color:var(--d)" data-mid="'+m.id+'" data-idx="'+idx+'" onclick="wizDelInd(this)">x</button></div>'});
+    if(active)h+='<button class="btn btn-xs btn-gh" style="margin-top:2px;font-size:9px" data-mid="'+m.id+'" onclick="wizAddInd(this)">+ 添加指标</button>';
+    h+='</div>'});
+  h+='</div><p style="font-size:9px;color:var(--t3)">点击"激活模块"启用该模块，然后添加验收指标。可自定义指标名称。</p>';return h;
+};
+function wizToggleMod(btn){var mid=btn.getAttribute('data-mid');var arr=WS.data.mods[mid]||[];if(!arr.length)WS.data.mods[mid]=['新指标'];else WS.data.mods[mid]=[];renderWiz()}
+function wizAddInd(btn){var mid=btn.getAttribute('data-mid');if(!WS.data.mods[mid])WS.data.mods[mid]=[];WS.data.mods[mid].push('新指标');renderWiz()}
+function wizDelInd(btn){var mid=btn.getAttribute('data-mid'),idx=parseInt(btn.getAttribute('data-idx'));WS.data.mods[mid].splice(idx,1);renderWiz()}
+function wizUpdateInd(inp){var mid=inp.getAttribute('data-mid'),idx=parseInt(inp.getAttribute('data-idx'));WS.data.mods[mid][idx]=inp.value}
+
+// Step 3: Materials
+WS.render3=function(){
+  var t=TPL[WS.data.type]||TPL['技改项目'],cats=t.cats||[];
+  if(!WS.data.matCats.length)WS.data.matCats=cats.map(function(c){return c.id});
+  if(!WS.data.matNames||Object.keys(WS.data.matNames).length===0){WS.data.matNames={};cats.forEach(function(c){WS.data.matNames[c.id]=['材料']})}
+  var h='<div class="wiz-section"><h4>材料分类 ('+WS.data.matCats.length+'/'+cats.length+'类已选)</h4><div class="wiz-chk-grid">';
+  cats.forEach(function(c){var sel=WS.data.matCats.indexOf(c.id)>=0;h+='<label><input type="checkbox" data-cid="'+c.id+'"'+(sel?' checked':'')+' data-wtype="cat" onchange="wizOnCheckEl(this)">'+esc(c.n)+'</label>'});h+='</div></div>';
+  WS.data.matCats.forEach(function(cid){var c=cats.find(function(cc){return cc.id===cid});var items=WS.data.matNames[cid]||['材料'];h+='<div style="margin-bottom:6px"><strong style="font-size:10px">'+esc(c?c.n:cid)+'</strong>';
+    items.forEach(function(n,idx){h+='<div class="wiz-ind-row"><input class="form-input" style="flex:1" value="'+esc(n)+'" data-cid="'+cid+'" data-idx="'+idx+'" onchange="wizUpdateMat(this)"><button class="btn btn-xs btn-gh" style="color:var(--d)" data-cid="'+cid+'" data-idx="'+idx+'" onclick="wizDelMat(this)">x</button></div>'});
+    h+='<button class="btn btn-xs btn-gh" style="margin-top:2px;font-size:9px" data-cid="'+cid+'" onclick="wizAddMat(this)">+ 添加材料</button></div>'});
+  return h+'<p style="font-size:9px;color:var(--t3)">勾选需要的材料分类，每种分类可自定义材料名称。</p>';
+};
+
+function wizAddMat(btn){var cid=btn.getAttribute('data-cid');if(!WS.data.matNames[cid])WS.data.matNames[cid]=[];WS.data.matNames[cid].push('新材料');renderWiz()}
+function wizDelMat(btn){var cid=btn.getAttribute('data-cid'),idx=parseInt(btn.getAttribute('data-idx'));WS.data.matNames[cid].splice(idx,1);renderWiz()}
+function wizUpdateMat(inp){var cid=inp.getAttribute('data-cid'),idx=parseInt(inp.getAttribute('data-idx'));WS.data.matNames[cid][idx]=inp.value}
+
+// Step 4: Milestones
+WS.render4=function(){
+  var t=TPL[WS.data.type]||TPL['技改项目'];
+  if(!WS.data.milestones.length)WS.data.milestones=(t.milestones||[]).map(function(m){return{n:m.n,o:m.o}});
+  var h='<div class="wiz-section"><h4>里程碑节点</h4><p style="font-size:9px;color:var(--t3);margin-bottom:8px">天数从项目开始日期起算。</p>';
+  WS.data.milestones.forEach(function(m,idx){h+='<div class="form-row" style="margin-bottom:4px"><div class="form-g"><input class="form-input" value="'+esc(m.n)+'" data-idx="'+idx+'" data-field="n" onchange="wizUpdateMs(this)"></div><div class="form-g"><input type="number" class="form-input" value="'+m.o+'" data-idx="'+idx+'" data-field="o" onchange="wizUpdateMsNum(this)" style="width:80px"> 天</div><button class="btn btn-xs btn-gh" style="color:var(--d)" data-idx="'+idx+'" onclick="wizDelMsItem(this)">x</button></div>'});
+  h+='</div><button class="btn btn-xs btn-out" data-n="新节点" data-o="90" onclick="wizAddMs(this)">+ 添加节点</button>';return h;
+};
+function wizAddMs(btn){WS.data.milestones.push({n:btn.getAttribute('data-n'),o:parseInt(btn.getAttribute('data-o'))});renderWiz()}
+
+// Step 5: Confirm
+WS.render5=function(){
+  var h='<div class="wiz-section" style="padding:10px;background:#fafbfc;border-radius:6px"><h4>创建预览</h4><table style="font-size:9.5px;width:100%"><tr><td>名称</td><td><strong>'+esc(WS.data.name||'(请在第一步填写)')+'</strong></td></tr><tr><td>类型</td><td>'+WS.data.type+'</td></tr><tr><td>部门</td><td>'+WS.data.depts.length+'个</td></tr><tr><td>人员</td><td>'+WS.data.persons.length+'人</td></tr>';
+  var modCount=0;Object.values(WS.data.mods||{}).forEach(function(a){if(a.length)modCount++});h+='<tr><td>指标模块</td><td>'+modCount+'个激活</td></tr>';
+  h+='<tr><td>材料分类</td><td>'+WS.data.matCats.length+'类</td></tr><tr><td>里程碑</td><td>'+WS.data.milestones.length+'个</td></tr></table></div>';return h;
+};
+
+function wizCreate(){
+  // Already saved from wizNext step 0 -> use WS.data directly
+  if(!WS.data.name){alert('请在第一步填写项目名称');WS.step=0;renderWiz();return}
+  if(!WS.data.sd)WS.data.sd=nw();
+  function ad(n){var d=new Date(WS.data.sd||nw());d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
+  var p=AP();var depts=[],persons=[];
+  if(p){depts=(p.org.depts||[]).filter(function(d){return WS.data.depts.indexOf(d.id)>=0});persons=(p.org.persons||[]).filter(function(pp){return WS.data.persons.indexOf(pp.id)>=0})}
+  else{depts=WS.data.depts.map(function(id){return{id:id,name:id,status:'active',hist:[]}});persons=WS.data.persons.map(function(id){return{id:id,name:id,dept:'',role:'',status:'active',hist:[]}})}
+  var proj={id:uid(),name:WS.data.name,tpl:WS.data.type,sd:ad(0),ed:WS.data.ed||ad(390),org:{depts:depts,persons:persons},
+    deliverables:(WS.data.deliverables||[]).length?WS.data.deliverables.map(function(d){return{id:uid(),name:d.name,type:d.type,ver:d.ver,file:d.file,owner:d.owner||(persons.length?persons[0].id:''),status:'draft',desc:'',linked:[],hist:[]}}):[],
+    indicators:[],materials:[],milestones:(WS.data.milestones||[]).map(function(m){return{id:uid(),n:m.n,pd:ad(m.o),ad:''}})};
+  Object.entries(WS.data.mods||{}).forEach(function(e){var mod=e[0],names=e[1];if(!names||!names.length)return;names.forEach(function(n){if(n==='新指标')return;proj.indicators.push({id:uid(),name:n,mod:mod,target:'',owner:persons.length?persons[0].id:'',deadline:ad(180),priority:'normal',dept:depts.length?depts[0].id:'',linkedDocs:[],linkedMats:[],stages:{requirement:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},design:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},implementation:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},verification:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]}})})});
+  (WS.data.matCats||[]).forEach(function(cid){var names=WS.data.matNames[cid]||['材料'];names.forEach(function(n){if(n==='新材料')return;proj.materials.push({id:uid(),name:n,cat:cid,rule:'',owner:'',deadline:ad(90),wf:'pending',ver:1,hist:[],linkedInds:[],linkedDocs:[]})})});
+  D.projects.push(proj);D.activeProjectId=proj.id;save();closeWiz();showV('dash');
+}
+
+
+// ================================================================
+// PAGE-SPECIFIC AI FUNCTIONS — 各页面AI交互函数
+// 数据源：aiAnalyzeDoc/aiParseDoc/aiDocsStats
+// 指标：aiCheckInd/aiCheckAll/aiDocDecide
+// 组织：aiAnalyzeDept/aiAnalyzePerson/aiOrgScan/aiOrgRisk
+// 审核：aiReviewBatch/aiReviewRisk
+// 进度：aiGanttRisk/aiGanttPath
+// ================================================================
+// Docs helpers
+function aiAnalyzeDoc(id){var p=AP();if(!p)return;var d=p.deliverables.find(function(dd){return dd.id===id});if(!d)return;
+  var linked=(d.linked||[]).map(function(iid){return p.indicators.find(function(i){return i.id===iid})}).filter(Boolean);
+  var owner=p.org?.persons?.find(function(pp){return pp.id===d.owner});
+  var msg='<strong>'+esc(d.name)+'</strong><br>类型：'+d.type+' | 版本：'+d.ver+' | 状态：'+(d.status==='finalized'?'已定稿':'草稿')+'<br>';
+  msg+='责任人：'+(owner?owner.name+' ('+dn(p,owner.dept)+')':'未指定')+'<br>';
+  msg+='关联指标：'+linked.length+'项<br>';
+  linked.forEach(function(i){var ks=['requirement','design','implementation','verification','closure'];var vs=ks.map(function(k){var s=i.stages[k];return s&&s.wf==='approved'?1:0});var done=vs.filter(function(v){return v===1}).length;msg+='· '+esc(i.name)+' ['+done+'/5]'+'<br>'});
+  if(d.status!=='finalized')msg+='<span style="color:var(--w)">建议：尽快完成交付物定稿，驱动关联指标闭环推进。</span>';
+  else msg+='<span style="color:var(--su)">该交付物已定稿，可作为审计证据。</span>';
+  addAIMsg(msg);
+  // Also show details
+  var h='<strong>'+esc(d.name)+'</strong><br>'+d.type+' · '+d.ver+' · '+(d.status==='finalized'?'已定稿':'草稿')+'<br>关联指标：'+linked.length+'项';
+  document.getElementById('aiParseResult').innerHTML=h;
+}
+function aiDocsStats(){
+  var p=AP();if(!p)return;var docs=p.deliverables||[];
+  var byType={};docs.forEach(function(d){if(!byType[d.type])byType[d.type]=[];byType[d.type].push(d)});
+  var msg='<strong>交付物健康度检查</strong><br>';
+  msg+='总数：'+docs.length+' | 定稿：'+docs.filter(function(d){return d.status==='finalized'}).length+'<br><br>';
+  Object.keys(byType).forEach(function(t){var items=byType[t];msg+=t+'：'+items.length+'项 (定稿'+items.filter(function(d){return d.status==='finalized'}).length+'/'+items.length+')<br>'});
+  var wl=docs.filter(function(d){return (d.linked||[]).length>0}).length;
+  msg+='<br>已关联指标：'+wl+'/'+docs.length+' 份 ('+Math.round(wl/docs.length*100)+'%)';
+  addAIMsg(msg);
+}
+
+// Org helpers
+function aiAnalyzeDept(id){var p=AP();if(!p)return;var d=(p.org?.depts||[]).find(function(dd){return dd.id===id});if(!d)return;
+  var members=(p.org?.persons||[]).filter(function(pp){return pp.dept===id});
+  var docs=p.deliverables||[];
+  var memberDocs=docs.filter(function(dd){return members.some(function(m){return m.id===dd.owner})});
+  var msg='<strong>部门：'+esc(d.name)+'</strong> ('+(d.status==='active'?'正常':d.status==='inactive'?'已撤销':'已更名')+')<br>';
+  msg+='成员：'+members.length+'人<br>';
+  msg+='负责交付物：'+memberDocs.length+'份';
+  if(d.status!=='active')msg+='<br><span style="color:var(--d)">⚠ 该部门已不可用，相关任务需重新分配</span>';
+  addAIMsg(msg);
+}
+function aiAnalyzePerson(id){var p=AP();if(!p)return;var pp=(p.org?.persons||[]).find(function(ppp){return ppp.id===id});if(!pp)return;
+  var docs=(p.deliverables||[]).filter(function(d){return d.owner===id});
+  var inds=(p.indicators||[]).filter(function(i){return i.owner===id});
+  var msg='<strong>人员：'+esc(pp.name)+'</strong> ('+(pp.status==='active'?'在职':pp.status==='inactive'?'离职':'')+')<br>';
+  msg+='部门：'+dn(p,pp.dept)+' | 角色：'+(pp.role||'未指定')+'<br>';
+  msg+='交付物：'+docs.length+'份 (定稿'+docs.filter(function(d){return d.status==='finalized'}).length+')<br>';
+  msg+='指标：'+inds.length+'项';
+  if(pp.status!=='active')msg+='<br><span style="color:var(--d)">⚠ 该人员已离职，名下任务需移交</span>';
+  addAIMsg(msg);
+}
+function aiOrgScan(){var p=AP();if(!p)return;
+  var persons=p.org?.persons||[],docs=p.deliverables||[],inds=p.indicators||[];
+  var msg='<strong>人员工作量分析</strong><br>';
+  persons.filter(function(pp){return pp.status==='active'}).forEach(function(pp){
+    var dc=docs.filter(function(d){return d.owner===pp.id}).length;
+    var ic=inds.filter(function(i){return i.owner===pp.id}).length;
+    if(dc||ic)msg+=pp.name+'：'+dc+'交付物 + '+ic+'指标<br>';
+  });
+  if(msg.indexOf('<br>')<0)msg+='暂无可统计数据';
+  addAIMsg(msg);
+}
+function aiOrgRisk(){var p=AP();if(!p)return;
+  var docs=p.deliverables||[],orph=docs.filter(function(d){var pp=(p.org?.persons||[]).find(function(ppp){return ppp.id===d.owner});return pp&&pp.status==='inactive'});
+  var inactiveDs=(p.org?.depts||[]).filter(function(d){return d.status!=='active'});
+  var msg='<strong>组织风险检查</strong><br>';
+  if(orph.length)msg+=orph.length+'份交付物归属离职人员<br>'+orph.map(function(d){return '· '+d.name}).join('<br>')+'<br>';
+  if(inactiveDs.length)msg+=inactiveDs.length+'个部门已撤销/更名<br>';
+  if(!orph.length&&!inactiveDs.length)msg+='未发现组织风险';
+  addAIMsg(msg);
+}
+
+// Review helpers
+function aiReviewBatch(){var p=AP();if(!p)return;var mats=p.materials||[];
+  var sub=mats.filter(function(m){return m.wf==='submitted'}),rej=mats.filter(function(m){return m.wf==='rejected'});
+  var msg='<strong>批量审核建议</strong><br>';
+  msg+='待审核：'+sub.length+'项<br>';
+  if(sub.length){msg+='可快速通过项：'+sub.filter(function(m){return m.deadline&&m.deadline>=nw()}).length+'（未逾期）<br>';}
+  msg+='需重做：'+rej.length+'项<br>';
+  if(rej.length)msg+='建议优先处理：'+rej.map(function(m){return m.name}).join('、')+'<br>';
+  msg+='<span style="font-size:9px;color:var(--t3)">建议操作路径：先处理逾期项 -> 退回重做项 -> 正常审核项</span>';
+  addAIMsg(msg);
+}
+function aiReviewRisk(){var p=AP();if(!p)return;var mats=p.materials||[];
+  var rej=mats.filter(function(m){return m.wf==='rejected'});
+  if(!rej.length){addAIMsg('无驳回项，风险可控');return}
+  var msg='<strong>驳回项风险评估</strong><br>';
+  rej.forEach(function(m){msg+='<strong>'+esc(m.name)+'</strong>：'+esc(m.rjReason||'未填写原因')+'<br>建议：修正后重新提交审核<br><br>'});
+  msg+='<span style="color:var(--w)">驳回项共'+rej.length+'项，需在审计进场前全部整改完成</span>';
+  addAIMsg(msg);
+}
+
+// Gantt helpers
+function aiGanttRisk(){var p=AP();if(!p)return;var ms=p.milestones||[],td=nw();
+  var ov=ms.filter(function(m){return !m.ad&&m.pd<td});
+  if(!ov.length){addAIMsg('无逾期里程碑，进度正常');return}
+  var msg='<strong>逾期影响分析</strong><br>';
+  ov.forEach(function(m){var days=Math.floor((new Date(td)-new Date(m.pd))/86400000);msg+=m.n+'：逾期'+days+'天 ('+m.pd+')<br>'});
+  var nextOpen=ms.filter(function(m){return !m.ad&&m.pd>=td}).sort(function(a,b){return a.pd<b.pd?-1:a.pd>b.pd?1:0})[0];
+  if(nextOpen)msg+='<br>下一个到期节点：'+nextOpen.n+' ('+nextOpen.pd+')';
+  msg+='<br><span style="color:var(--w)">建议：立即调整工作计划，评估后续节点赶工可行性</span>';
+  addAIMsg(msg);
+}
+function aiGanttPath(){var p=AP();if(!p)return;var ms=p.milestones||[],td=nw();
+  var done=ms.filter(function(m){return m.ad}).length;
+  var total=ms.length;
+  var remain=ms.filter(function(m){return !m.ad}).sort(function(a,b){return a.pd<b.pd?-1:a.pd>b.pd?1:0});
+  var msg='<strong>关键路径建议</strong><br>';
+  msg+='已完成：'+done+'/'+total+' ('+Math.round(done/total*100)+'%)<br>';
+  if(remain.length){
+    msg+='剩余节点（按计划日期排序）：<br>';
+    remain.forEach(function(m){msg+=m.n+' -> '+m.pd+'<br>'});
+    var gap=Math.ceil((new Date(remain[remain.length-1].pd)-new Date(td))/86400000);
+    msg+='<br>距最后节点还有'+gap+'天';
+  }
+  addAIMsg(msg);
+}
+
+// ================================================================
+// REVIEW INTERACTIVE ANALYSIS — 审核中心AI分析
+// aiAnalyzeReview(): 审核状态/逾期/审核链路/责任人/关联指标/建议
+// ================================================================
+function aiAnalyzeReview(id){
+  var p=AP();if(!p)return;
+  var m=p.materials.find(function(mm){return mm.id===id});if(!m)return;
+  var lb={submitted:'待审核',rejected:'需重做',approved:'已通过'};
+  var owner=null;
+  if(p.org&&p.org.persons)owner=p.org.persons.find(function(pp){return pp.id===m.owner});
+  var h='';
+  // 1. Status
+  h+='<strong>'+esc(m.name)+'</strong><br>';
+  if(m.wf==='submitted')h+='<span class="badge badge-info">待审核</span> ';
+  else h+='<span class="badge badge-err">需重做</span> ';
+  if(m.rjReason)h+='<span style="font-size:9px;color:var(--d)">('+esc(m.rjReason)+')</span>';
+  // 2. Deadline
+  if(m.deadline){
+    var td=nw();
+    if(m.deadline<td&&m.wf!=='approved'){
+      h+='<br><span style="color:var(--d);font-size:9px">已逾期'+Math.floor((new Date(td)-new Date(m.deadline))/86400000)+'天</span>';
+    }
+  }
+  // 3. Owner
+  h+='<br><strong>责任人：</strong>';
+  if(owner)h+=esc(owner.name)+' ('+dn(p,owner.dept)+')';
+  else h+='未指定';
+  // 4. Review history
+  var hist=m.hist||[];
+  if(hist.length){
+    h+='<br><br><strong>审核记录：</strong>';
+    var sl2={submitted:'提交审核',approved:'审核通过',rejected:'退回修订'};
+    for(var i=0;i<hist.length;i++){
+      var hh=hist[i];
+      h+='<br><span style="font-size:9px;color:var(--a)">v'+hh.ver+'</span> ';
+      h+=(sl2[hh.s]||hh.s)+' ';
+      h+='<span style="color:var(--t3);font-size:8px">'+hh.date.slice(0,10)+'</span> '+pn(p,hh.op);
+      if(hh.desc)h+='<br><span style="font-size:8px">'+esc(hh.desc)+'</span>';
+      if(hh.rjReason)h+='<br><span style="color:var(--d);font-size:8px">原因：'+esc(hh.rjReason)+'</span>';
+    }
+  }
+  // 5. Linked indicators
+  var linked=m.linkedInds||[];
+  if(linked.length){
+    h+='<br><br><strong>关联指标：</strong>';
+    for(var j=0;j<linked.length;j++){
+      var ind=p.indicators.find(function(ii){return ii.id===linked[j]});
+      if(ind)h+='<br><span style="font-size:9px">'+esc(ind.name)+' ['+esc(ind.target)+']</span>';
+    }
+  }
+  // 6. Suggestion
+  h+='<br><br><div style="padding:4px;background:#fffbe6;border-radius:3px;font-size:9px">';
+  if(m.wf==='submitted')h+='建议：核实材料内容完整性和合规性后审核通过。';
+  else h+='建议：联系责任人修正驳回问题后重新提交审核。';
+  h+='</div>';
+  addAIMsg(h);
+}
+
+// ================================================================
+// WIZARD SAFE HANDLERS — 向导按钮安全处理函数
+// 使用data-*属性传参，彻底避免onclick中的引号注入问题
+// ================================================================
+function wizFromTpl(btn){openWiz(btn.getAttribute('data-type'))}
+function wizUpdateMs(inp){var idx=parseInt(inp.getAttribute('data-idx'));WS.data.milestones[idx].n=inp.value}
+function wizUpdateMsNum(inp){var idx=parseInt(inp.getAttribute('data-idx'));WS.data.milestones[idx].o=parseInt(inp.value)||0}
+function wizDelMsItem(btn){var idx=parseInt(btn.getAttribute('data-idx'));WS.data.milestones.splice(idx,1);renderWiz()}
+function aiPushNotifyBtn(btn){aiPushNotify(btn.getAttribute('data-iid'))}
+function aiPushNotify2Btn(btn){aiPushNotify2(btn.getAttribute('data-mid'))}
+
+
+// ================================================================
+// DELIVERABLE CRUD — 交付物增删改
+// 导入时必须指定责任人，支持关联指标
+// ================================================================
+let edid=null;
+function openDocM(id){edid=id||null;const p=AP();if(!p)return;
+  document.getElementById('docMTitle').textContent=id?'编辑交付物':'导入交付物';
+  document.getElementById('fdowner').innerHTML='<option value="">-- 请选择责任人 --</option>'+(p.org?.persons||[]).filter(pp=>pp.status==='active').map(pp=>`<option value="${pp.id}">${pp.name} (${dn(p,pp.dept)})</option>`).join('');
+  document.getElementById('fdlinked').innerHTML=(p.indicators||[]).map(i=>`<option value="${i.id}">${i.name}</option>`).join('');
+  if(id){const d=p.deliverables.find(dd=>dd.id===id);if(!d)return;
+    document.getElementById('fdid').value=d.id;document.getElementById('fdname').value=d.name;
+    document.getElementById('fdtype').value=d.type;document.getElementById('fdver').value=d.ver||'V1.0';
+    document.getElementById('fdfile').value=d.file||'';document.getElementById('fdowner').value=d.owner||'';
+    document.getElementById('fdstatus').value=d.status||'draft';document.getElementById('fddesc').value=d.desc||'';
+    Array.from(document.getElementById('fdlinked').options).forEach(o=>o.selected=(d.linked||[]).includes(o.value));
+    document.getElementById('fdowner').parentElement.classList.remove('has-err');
+  }else{
+    document.getElementById('fdid').value='';document.getElementById('fdname').value='';document.getElementById('fdtype').value='招标文件';
+    document.getElementById('fdver').value='V1.0';document.getElementById('fdfile').value='';document.getElementById('fdowner').value='';
+    document.getElementById('fdstatus').value='draft';document.getElementById('fddesc').value='';
+    Array.from(document.getElementById('fdlinked').options).forEach(o=>o.selected=false);
+    document.getElementById('fdowner').parentElement.classList.add('has-err');
+  }
+  document.getElementById('docModal').classList.add('show');
+}
+function closeDocM(){document.getElementById('docModal').classList.remove('show');edid=null}
+function saveDoc(){
+  const p=AP();if(!p)return;const name=document.getElementById('fdname').value.trim();
+  const owner=document.getElementById('fdowner').value;
+  if(!name){alert('请输入名称');return}
+  if(!owner){document.getElementById('fdowner').parentElement.classList.add('has-err');return}
+  document.getElementById('fdowner').parentElement.classList.remove('has-err');
+  const si=Array.from(document.getElementById('fdlinked').selectedOptions).map(o=>o.value);
+  const obj={id:edid||uid(),name,type:document.getElementById('fdtype').value,ver:document.getElementById('fdver').value.trim(),
+    file:document.getElementById('fdfile').value.trim(),owner,status:document.getElementById('fdstatus').value,
+    desc:document.getElementById('fddesc').value.trim(),linked:si};
+  if(edid){const idx=p.deliverables.findIndex(d=>d.id===edid);if(idx>=0){const old=p.deliverables[idx];obj.hist=old.hist||[];if(obj.ver!==old.ver)obj.hist.push({ver:obj.ver,date:nw(),op:'系统',note:'版本更新：'+old.ver+'→'+obj.ver});obj.aiContent=old.aiContent;p.deliverables[idx]=obj}}
+  else{obj.hist=[{ver:obj.ver,date:nw(),op:owner,note:'初始导入'}];p.deliverables.push(obj)}
+  (p.indicators||[]).forEach(i=>{if(!i.linkedDocs)i.linkedDocs=[];i.linkedDocs=i.linkedDocs.filter(did=>did!==(edid||obj.id))});
+  si.forEach(iid=>{const ind=p.indicators.find(ii=>ii.id===iid);if(ind&&!ind.linkedDocs.includes(obj.id))ind.linkedDocs.push(obj.id)});
+  save();closeDocM();refresh();
+}
+
+// ================================================================
+// INDICATOR CRUD — 指标增删改
+// 阶段管理弹窗含：操作人/审核人/评审意见/专家意见/意见闭环
+// ================================================================
+let eiid=null;
+function openIndM(id){eiid=id||null;const p=AP();if(!p)return;
+  document.getElementById('indMTitle').textContent=id?'编辑指标':'新增指标';
+  document.getElementById('fimodule').innerHTML=(TPL[p.tpl]?.mods||[]).map(m=>`<option value="${m.id}">${m.n}</option>`).join('');
+  document.getElementById('fiowner').innerHTML='<option value="">未指定</option>'+(p.org?.persons||[]).map(pp=>`<option value="${pp.id}">${pp.name} (${dn(p,pp.dept)})</option>`).join('');
+  document.getElementById('fidept').innerHTML='<option value="">未指定</option>'+(p.org?.depts||[]).map(d=>`<option value="${d.id}">${d.name}</option>`).join('');
+  document.getElementById('fidocs').innerHTML=(p.deliverables||[]).map(d=>`<option value="${d.id}">${d.name} (${d.type})</option>`).join('');
+  document.getElementById('fimats').innerHTML=(p.materials||[]).map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+  if(id){const ind=p.indicators.find(i=>i.id===id);if(!ind)return;
+    document.getElementById('fiid').value=ind.id;document.getElementById('finame').value=ind.name;
+    document.getElementById('fimodule').value=ind.mod;document.getElementById('fidept').value=ind.dept||'';
+    document.getElementById('fitarget').value=ind.target||'';
+    document.getElementById('fiowner').value=ind.owner||'';document.getElementById('fideadline').value=ind.deadline||'';
+    document.getElementById('fipriority').value=ind.priority||'normal';
+    Array.from(document.getElementById('fidocs').options).forEach(o=>o.selected=(ind.linkedDocs||[]).includes(o.value));
+    Array.from(document.getElementById('fimats').options).forEach(o=>o.selected=(ind.linkedMats||[]).includes(o.value));
+  }else{
+    document.getElementById('fiid').value='';document.getElementById('finame').value='';document.getElementById('fidept').value='';
+    document.getElementById('fitarget').value='';
+    document.getElementById('fiowner').value='';document.getElementById('fideadline').value='';document.getElementById('fipriority').value='normal';
+    Array.from(document.getElementById('fidocs').options).forEach(o=>o.selected=false);
+    Array.from(document.getElementById('fimats').options).forEach(o=>o.selected=false);
+  }
+  document.getElementById('indModal').classList.add('show');
+}
+function closeIndM(){document.getElementById('indModal').classList.remove('show');eiid=null}
+function saveInd(){
+  const p=AP();if(!p)return;const name=document.getElementById('finame').value.trim();if(!name)return;
+  const sd=Array.from(document.getElementById('fidocs').selectedOptions).map(o=>o.value),sm=Array.from(document.getElementById('fimats').selectedOptions).map(o=>o.value);
+  const obj={id:eiid||uid(),name,mod:document.getElementById('fimodule').value,dept:document.getElementById('fidept').value,target:document.getElementById('fitarget').value.trim(),owner:document.getElementById('fiowner').value,deadline:document.getElementById('fideadline').value,priority:document.getElementById('fipriority').value,linkedDocs:sd,linkedMats:sm};
+  if(eiid){const idx=p.indicators.findIndex(i=>i.id===eiid);if(idx>=0){obj.stages=p.indicators[idx].stages;obj.oHistory=p.indicators[idx].oHistory||[];p.indicators[idx]=obj}}
+  else{obj.stages={requirement:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},design:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},implementation:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},verification:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},closure:{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1,hist:[]},oHistory:[]};p.indicators.push(obj)}
+  (p.deliverables||[]).forEach(d=>{if(!d.linked)d.linked=[];d.linked=d.linked.filter(iid=>iid!==(eiid||obj.id))});sd.forEach(did=>{const d=p.deliverables.find(dd=>dd.id===did);if(d&&!d.linked.includes(obj.id))d.linked.push(obj.id)});
+  (p.materials||[]).forEach(m=>{if(!m.linkedInds)m.linkedInds=[];m.linkedInds=m.linkedInds.filter(iid=>iid!==(eiid||obj.id))});sm.forEach(mid=>{const m=p.materials.find(mm=>mm.id===mid);if(m&&!m.linkedInds.includes(obj.id))m.linkedInds.push(obj.id)});
+  save();closeIndM();refresh();
+}
+
+// ============ STAGE ============
+let sti=null,stk=null;
+function openStM(iid,k){sti=iid;stk=k;const p=AP();if(!p)return;const ind=p.indicators.find(i=>i.id===iid);if(!ind)return;
+  if(!stk){const keys=['requirement','design','implementation','verification','closure'];stk=keys.find(kk=>{const s=ind.stages[kk];return !s||s.wf==='pending'||s.wf==='draft'})||keys[0]}
+  const sl={requirement:'需求定义',design:'方案设计',implementation:'实施执行',verification:'验收验证',closure:'闭环确认'};
+  document.getElementById('stMTitle').textContent=sl[stk]+' — '+ind.name;
+  const s=ind.stages[stk]||{wf:'pending',desc:'',evid:'',date:''};
+  document.getElementById('stStatus').value=s.wf||'pending';document.getElementById('stDesc').value=s.desc||'';
+  document.getElementById('stEvid').value=s.evid||'';document.getElementById('stDate').value=s.date||nw();document.getElementById('stRej').value='';tgStRej();
+  document.getElementById('stOp').innerHTML='<option value="">当前用户</option>'+(p.org?.persons||[]).map(pp=>`<option value="${pp.id}">${pp.name}</option>`).join('');
+  document.getElementById('stReviewer').innerHTML='<option value="">未指定</option>'+(p.org?.persons||[]).map(pp=>`<option value="${pp.id}">${pp.name}</option>`).join('');
+  document.getElementById('stReviewer').value=s.reviewer||'';
+  document.getElementById('stReviewOpinion').value=s.reviewOpinion||'';
+  document.getElementById('stExpertOpinions').value=(s.expertOpinions||[]).join('\n');
+  document.getElementById('stOpinionClosed').value=s.opinionClosed||'no';
+  document.getElementById('stNewOwner').innerHTML='<option value="">不变更</option>'+(p.org?.persons||[]).map(pp=>`<option value="${pp.id}">${pp.name}</option>`).join('');
+  document.getElementById('stModal').classList.add('show');
+}
+function closeStM(){document.getElementById('stModal').classList.remove('show');sti=null;stk=null}
+function tgStRej(){document.getElementById('stRejG').style.display=document.getElementById('stStatus').value==='rejected'?'block':'none'}
+function saveSt(){if(!sti||!stk)return;const p=AP();const ind=p.indicators.find(i=>i.id===sti);if(!ind)return;
+  const wf=document.getElementById('stStatus').value,desc=document.getElementById('stDesc').value.trim(),evid=document.getElementById('stEvid').value.trim(),date=document.getElementById('stDate').value||nw(),op=document.getElementById('stOp').value||'系统',no=document.getElementById('stNewOwner').value;
+  const reviewer=document.getElementById('stReviewer').value,reviewOpinion=document.getElementById('stReviewOpinion').value.trim();
+  const expertOpinions=document.getElementById('stExpertOpinions').value.split('\n').filter(function(l){return l.trim()!==''});
+  const opinionClosed=document.getElementById('stOpinionClosed').value;
+  if(wf==='rejected'){const r=document.getElementById('stRej').value.trim();if(!r){alert('驳回须填写原因');return}}
+  const old=ind.stages[stk]||{wf:'pending',desc:'',evid:'',date:'',op:'',ver:0,hist:[]};
+  ind.stages[stk]={wf,desc:desc||old.desc,evid:evid||old.evid,date,op,reviewer,reviewOpinion,expertOpinions,opinionClosed,ver:old.ver+1,hist:[...(old.hist||[]),{s:wf,desc:desc||old.desc,date,op,ver:old.ver+1,rjReason:wf==='rejected'?document.getElementById('stRej').value.trim():undefined,reviewer,reviewOpinion}]};
+  if(no&&no!==ind.owner){if(!ind.oHistory)ind.oHistory=[];ind.oHistory.push({name:no,from:date,prev:ind.owner});ind.owner=no}save();closeStM();refresh();}
+
+// ================================================================
+// MATERIAL CRUD — 材料增删改 + 工作流更新
+// 含会议记录/专家签名字段
+// ================================================================
+let emid=null;
+function openMatM(id){emid=id||null;const p=AP();if(!p)return;
+  document.getElementById('matMTitle').textContent=id?'编辑材料':'新增材料';
+  document.getElementById('fmcat').innerHTML=(TPL[p.tpl]?.cats||[]).map(c=>`<option value="${c.id}">${c.n}</option>`).join('');
+  document.getElementById('fmowner').innerHTML='<option value="">未指定</option>'+(p.org?.persons||[]).map(pp=>`<option value="${pp.id}">${pp.name}</option>`).join('');
+  document.getElementById('fmdocs').innerHTML=(p.deliverables||[]).map(d=>`<option value="${d.id}">${d.name}</option>`).join('');
+  document.getElementById('fminds').innerHTML=(p.indicators||[]).map(i=>`<option value="${i.id}">${i.name}</option>`).join('');
+  if(id){const m=p.materials.find(mm=>mm.id===id);if(!m)return;
+    document.getElementById('fmid').value=m.id;document.getElementById('fmname').value=m.name;document.getElementById('fmcat').value=m.cat;
+    document.getElementById('fmrule').value=m.rule||'';document.getElementById('fmowner').value=m.owner||'';document.getElementById('fmdeadline').value=m.deadline||'';
+    Array.from(document.getElementById('fmdocs').options).forEach(o=>o.selected=(m.linkedDocs||[]).includes(o.value));
+    Array.from(document.getElementById('fminds').options).forEach(o=>o.selected=(m.linkedInds||[]).includes(o.value));
+  }else{
+    document.getElementById('fmid').value='';document.getElementById('fmname').value='';document.getElementById('fmrule').value='';
+    document.getElementById('fmowner').value='';document.getElementById('fmdeadline').value='';
+    Array.from(document.getElementById('fmdocs').options).forEach(o=>o.selected=false);Array.from(document.getElementById('fminds').options).forEach(o=>o.selected=false);
+  }
+  document.getElementById('matModal').classList.add('show');
+}
+function closeMatM(){document.getElementById('matModal').classList.remove('show');emid=null}
+function saveMat(){
+  const p=AP();if(!p)return;const name=document.getElementById('fmname').value.trim();if(!name)return;
+  const sd=Array.from(document.getElementById('fmdocs').selectedOptions).map(o=>o.value),si=Array.from(document.getElementById('fminds').selectedOptions).map(o=>o.value);
+  const obj={id:emid||uid(),name,cat:document.getElementById('fmcat').value,rule:document.getElementById('fmrule').value.trim(),owner:document.getElementById('fmowner').value,deadline:document.getElementById('fmdeadline').value,linkedDocs:sd,linkedInds:si};
+  if(emid){const idx=p.materials.findIndex(m=>m.id===emid);if(idx>=0){const o=p.materials[idx];obj.wf=o.wf;obj.op=o.op;obj.date=o.date;obj.ver=o.ver;obj.hist=o.hist||[];obj.rjReason=o.rjReason;p.materials[idx]=obj}}
+  else{obj.wf='pending';obj.ver=1;obj.hist=[];p.materials.push(obj)}save();closeMatM();refresh();}
+
+// ============ MATERIAL WF ============
+let mwid=null;
+function openMwfM(id){mwid=id;const p=AP();const m=p.materials.find(mm=>mm.id===id);if(!m)return;
+  document.getElementById('mwfTitle').textContent='更新：'+m.name;document.getElementById('mwfStatus').value=m.wf||'pending';
+  document.getElementById('mwfDesc').value='';document.getElementById('mwfDate').value=nw();document.getElementById('mwfRej').value='';tgMwRej();
+  document.getElementById('mwfOp').innerHTML='<option value="">当前用户</option>'+(p.org?.persons||[]).map(pp=>`<option value="${pp.id}">${pp.name}</option>`).join('');
+  document.getElementById('mwfMeetings').value=(m.meetingRecords||[]).join('\n');
+  document.getElementById('mwfExpertOps').value=(m.expertOpinions||[]).join('\n');
+  document.getElementById('mwfModal').classList.add('show');
+}
+function closeMwfM(){document.getElementById('mwfModal').classList.remove('show');mwid=null}
+function tgMwRej(){document.getElementById('mwfRejG').style.display=document.getElementById('mwfStatus').value==='rejected'?'block':'none'}
+function saveMwf(){
+  if(!mwid)return;const p=AP();const m=p.materials.find(mm=>mm.id===mwid);if(!m)return;
+  const wf=document.getElementById('mwfStatus').value,desc=document.getElementById('mwfDesc').value.trim(),op=document.getElementById('mwfOp').value||'系统',date=document.getElementById('mwfDate').value||nw();
+  if(wf==='rejected'){const r=document.getElementById('mwfRej').value.trim();if(!r){alert('退回须填写原因');return};m.rjReason=r}
+  m.wf=wf;m.op=op;m.date=date;m.ver=(m.ver||1)+1;
+  m.meetingRecords=document.getElementById('mwfMeetings').value.split('\n').filter(function(l){return l.trim()!==''});
+  m.expertOpinions=document.getElementById('mwfExpertOps').value.split('\n').filter(function(l){return l.trim()!==''});
+  m.hist.push({s:wf,desc,date,op,ver:m.ver,rjReason:wf==='rejected'?m.rjReason:undefined});save();closeMwfM();refresh();}
+
+// ================================================================
+// ORGANIZATION CRUD — 组织架构增删改
+// 部门/人员双类型，含状态变更历史
+// ================================================================
+let eoid=null,eotype='dept';
+function openOrgM(type,id){eoid=id||null;eotype=type||'dept';const p=AP();if(!p)return;
+  document.getElementById('orgMTitle').textContent=(id?'编辑':'新增')+(type==='dept'?'部门':'人员');document.getElementById('orgType').value=type;tgOrgType();
+  document.getElementById('orgDept').innerHTML='<option value="">未指定</option>'+(p.org?.depts||[]).filter(d=>d.status!=='inactive').map(d=>`<option value="${d.id}">${d.name}</option>`).join('');
+  if(id){if(type==='dept'){const d=(p.org?.depts||[]).find(dd=>dd.id===id);if(!d)return;document.getElementById('orgId').value=d.id;document.getElementById('orgName').value=d.name;document.getElementById('orgStatus').value=d.status;document.getElementById('orgNote').value=d.note||''}
+  else{const pp=(p.org?.persons||[]).find(ppp=>ppp.id===id);if(!pp)return;document.getElementById('orgId').value=pp.id;document.getElementById('orgName').value=pp.name;document.getElementById('orgDept').value=pp.dept||'';document.getElementById('orgRole').value=pp.role||'';document.getElementById('orgStatus').value=pp.status;document.getElementById('orgNote').value=pp.note||''}}
+  else{document.getElementById('orgId').value='';document.getElementById('orgName').value='';document.getElementById('orgDept').value='';document.getElementById('orgRole').value='';document.getElementById('orgStatus').value='active';document.getElementById('orgNote').value=''}
+  document.getElementById('orgModal').classList.add('show');
+}
+function closeOrgM(){document.getElementById('orgModal').classList.remove('show');eoid=null}
+function tgOrgType(){const t=document.getElementById('orgType').value;document.getElementById('orgDeptG').style.display=t==='person'?'block':'none';document.getElementById('orgRoleG').style.display=t==='person'?'block':'none'}
+function saveOrg(){
+  const p=AP();const type=document.getElementById('orgType').value,name=document.getElementById('orgName').value.trim();if(!name)return;
+  const obj={id:eoid||uid(),name,status:document.getElementById('orgStatus').value};
+  if(type==='person'){obj.dept=document.getElementById('orgDept').value;obj.role=document.getElementById('orgRole').value.trim();obj.note=document.getElementById('orgNote').value.trim();obj.hist=[]}
+  else{obj.note=document.getElementById('orgNote').value.trim();obj.hist=[]}
+  if(eoid){if(type==='dept'){const idx=(p.org.depts||[]).findIndex(d=>d.id===eoid);if(idx>=0){obj.hist=p.org.depts[idx].hist||[];if(obj.status!==p.org.depts[idx].status)obj.hist.push({note:'状态变更',date:nw()});p.org.depts[idx]=obj}}
+  else{const idx=(p.org.persons||[]).findIndex(pp=>pp.id===eoid);if(idx>=0){obj.hist=p.org.persons[idx].hist||[];if(obj.dept!==p.org.persons[idx].dept)obj.hist.push({note:'部门变更',date:nw()});p.org.persons[idx]=obj}}}
+  else{if(type==='dept'){if(!p.org.depts)p.org.depts=[];p.org.depts.push(obj)}else{if(!p.org.persons)p.org.persons=[];p.org.persons.push(obj)}}save();closeOrgM();refresh();}
+
+// ================================================================
+// AI PANEL — 页面感知智能助手
+// updateAI(): 根据当前视图(cv)切换AI面板内容
+// 各视图专属功能：文档解析/指标检查/材料合规/审核辅助/进度分析等
+// ================================================================
+// toggleAI(): 切换AI面板展开/折叠状态
+function toggleAI(){const panel=document.getElementById('aiPanel'),main=document.getElementById('mainArea'),toggle=document.getElementById('aiToggle');
+  panel.classList.toggle('collapsed');main.classList.toggle('ai-open',!panel.classList.contains('collapsed'));
+  toggle.style.display=panel.classList.contains('collapsed')?'flex':'none';
+}
+function updateAI(){
+  const p=AP();if(!p)return;
+  const titles={dash:'仪表盘分析',docs:'文档解析器',indicators:'指标智能助手',materials:'材料合规检查',org:'组织分析',review:'审核辅助',gantt:'进度分析',report:'报告预览',tpl:'模板对比'};
+  document.getElementById('aiHeadTitle').textContent=titles[cv]||'AI 助手';
+  const body=document.getElementById('aiBody'),inds=p.indicators||[],mats=p.materials||[],docs=p.deliverables||[];
+  if(!p){body.innerHTML='<div class="empty-st"><p>请选择项目</p></div>';return}
+  function sec(t,c,o){return'<div class="ai-section"><div class="ai-shead ai-tgl">'+t+'</div><div class="ai-sbody"'+(o===false?' style="display:none"':'')+'>'+c+'</div></div>'}
+  const td=nw();
+  if(cv==='docs'){
+    body.innerHTML=sec('文档解析器','<select id="aiDocSel" style="width:100%;padding:4px;font-size:9.5px;margin-bottom:6px"><option value="">-- 选择交付物 --</option>'+docs.map(d=>'<option value="'+d.id+'">'+esc(d.name)+'</option>').join('')+'</select><button class="btn btn-xs" style="width:100%;background:var(--ai);color:#fff;margin-bottom:4px" onclick="aiParseDoc()">解析文档</button><button class="btn btn-xs btn-s" style="width:100%" onclick="aiBatchParse()">全量扫描</button><div id="aiParseResult" style="font-size:9.5px;margin-top:6px;color:var(--t3)">选择交付物后点击解析，AI提取技术指标和合规要点。</div>')+
+      sec('交付物统计','<button class="btn btn-xs btn-s" style="width:100%" onclick="aiDocsStats()">交付物健康度检查</button><div id="aiDocsStatsResult" style="font-size:9px;margin-top:3px;color:var(--t3)">分析交付物定稿率和归属情况</div>',false);
+  }
+  else if(cv==='indicators'){
+    body.innerHTML=sec('智能检查','<select id="aiIndSel" style="width:100%;padding:4px;font-size:9.5px;margin-bottom:4px"><option value="">-- 选择指标 --</option>'+inds.map(i=>'<option value="'+i.id+'">'+esc(i.name)+'</option>').join('')+'</select><button class="btn btn-xs" style="width:100%;background:var(--ai);color:#fff;margin-bottom:3px" onclick="aiCheckInd()">检查指标状态</button><button class="btn btn-xs btn-s" style="width:100%;margin-bottom:3px" onclick="aiCheckAll()">批量扫描</button><div id="aiIndResult" style="font-size:9.5px;margin-top:4px;color:var(--t3)">选择指标后点击检查，AI评估当前阶段并给出闭环建议。</div>')+
+      sec('依据文件决策','<select id="aiDocForInd" style="width:100%;padding:4px;font-size:9.5px;margin-bottom:4px"><option value="">-- 选择参考文件 --</option>'+docs.map(d=>'<option value="'+d.id+'">'+esc(d.name)+'</option>').join('')+'</select><button class="btn btn-xs btn-s" style="width:100%" onclick="aiDocDecide()">依据此文件决策参数状态</button><div id="aiDocDecideResult" style="font-size:9px;color:var(--t3);margin-top:3px">选择文件后AI基于文档内容建议对应指标验证状态。</div>',false);
+  }
+  else if(cv==='materials'){
+    const ap=mats.filter(m=>m.wf==='approved').length,rej=mats.filter(m=>m.wf==='rejected').length;
+    body.innerHTML=sec('合规检查','<table style="width:100%;font-size:9.5px"><tr><td>定稿率</td><td style="color:'+(ap/mats.length>.5?'var(--su)':'var(--w)')+'">'+Math.round(ap/mats.length*100)+'%</td></tr><tr><td>退回</td><td style="color:'+(rej>0?'var(--d)':'var(--su)')+'">'+rej+'项</td></tr></table>')+
+      sec('建议','<button class="btn btn-xs btn-s" style="width:100%" onclick="addAIMsg('+"'审计进场需材料定稿率≥80%，当前"+Math.round(ap/mats.length*100)+"%，需补充"+(Math.ceil(mats.length*.8)-ap)+"项。'"+')">定稿率目标分析</button>',false);
+  }
+  else if(cv==='review'){
+    const sub=mats.filter(m=>m.wf==='submitted'),rej=mats.filter(m=>m.wf==='rejected');
+    body.innerHTML=sec('审核队列','待审核：'+sub.length+'项 · 需重做：'+rej.length+'项'+(rej.length?'<br><span style="color:var(--d)">'+rej.map(m=>m.name).join('、')+'</span>':''))+
+      sec('智能审核','<button class="btn btn-xs btn-s" style="width:100%;margin-bottom:3px" onclick="aiReviewBatch()">批量审核建议</button><button class="btn btn-xs btn-s" style="width:100%" onclick="aiReviewRisk()">驳回项风险评估</button><div id="aiReviewResult" style="font-size:9px;margin-top:3px;color:var(--t3)">AI审核辅助功能</div>');
+  }
+  else if(cv==='gantt'){
+    const ms=p.milestones||[],done=ms.filter(m=>m.ad).length,ov=ms.filter(m=>!m.ad&&m.pd<td),next=ms.filter(m=>!m.ad&&m.pd>=td).sort((a,b)=>a.pd.localeCompare(b.pd))[0];
+    body.innerHTML=sec('进度总览',done+'/'+ms.length+'完成 · 完成率'+Math.round(done/ms.length*100)+'%'+(ov.length?'<br><span style="color:var(--d)">⚠ 逾期：'+ov.map(m=>m.n).join('、')+'</span>':'')+(next?'<br>下一节点：'+next.n+'('+next.pd+')':''))+
+      sec('风险分析','<button class="btn btn-xs btn-s" style="width:100%;margin-bottom:3px" onclick="aiGanttRisk()">逾期影响分析</button><button class="btn btn-xs btn-s" style="width:100%" onclick="aiGanttPath()">关键路径建议</button><div id="aiGanttResult" style="font-size:9px;margin-top:3px;color:var(--t3)">里程碑智能分析</div>');
+  }
+  else if(cv==='org'){
+    const act=(p.org?.persons||[]).filter(pp=>pp.status==='active'),orph=docs.filter(d=>{const per=(p.org?.persons||[]).find(pp=>pp.id===d.owner);return per&&per.status==='inactive'});
+    const inactiveDs=(p.org?.depts||[]).filter(d=>d.status!=='active');
+    body.innerHTML=sec('组织概览','在职：'+act.length+'人 · 部门：'+(p.org?.depts||[]).length+'个'+(orph.length?'<br><span style="color:var(--d)">⚠ '+orph.length+'份交付物归属离职人员</span>':'')+(inactiveDs.length?'<br><span style="color:var(--d)">⚠ '+inactiveDs.length+'个部门已撤销/更名</span>':''))+
+      sec('智能分析','<button class="btn btn-xs btn-s" style="width:100%;margin-bottom:3px" onclick="aiOrgScan()">人员工作量分析</button><button class="btn btn-xs btn-s" style="width:100%" onclick="aiOrgRisk()">组织风险检查</button><div id="aiOrgResult" style="font-size:9px;margin-top:3px;color:var(--t3)">点击按钮进行组织架构智能分析</div>',false);
+  }
+  else{
+    const indApp=inds.reduce((s,i)=>s+Object.values(i.stages||{}).filter(st=>st.wf==='approved').length,0),matAp=mats.filter(m=>m.wf==='approved').length;
+    body.innerHTML=sec('健康度','指标：'+(inds.length*5?Math.round(indApp/(inds.length*5)*100):0)+'% · 材料：'+(mats.length?Math.round(matAp/mats.length*100):0)+'%<br>交付物：'+docs.filter(d=>d.status==='finalized').length+'/'+docs.length+'定稿');
+  }
+}
+
+function aiParseDoc(){const p=AP();const did=document.getElementById('aiDocSel')?.value;if(!did){addAIMsg('请选择交付物');return}
+  const doc=p.deliverables.find(d=>d.id===did);if(!doc)return;
+  const linked=(doc.linked||[]).map(iid=>p.indicators.find(i=>i.id===iid)).filter(Boolean);
+  const unlinked=p.indicators.filter(i=>!(doc.linked||[]).includes(i.id));
+  let h='<strong>'+esc(doc.name)+'</strong> ('+doc.type+' · '+doc.ver+')<br><br>已关联指标：'+linked.length+'项<br>'+linked.map(i=>'· '+esc(i.name)+' <span style="font-size:8px;color:var(--t3)">['+esc(i.target)+']</span>').join('<br>')+'<br><br>建议补充关联：'+unlinked.slice(0,3).map(i=>'· '+esc(i.name)).join('<br>');
+  document.getElementById('aiParseResult').innerHTML=h;addAIMsg('已解析「'+esc(doc.name)+'」：'+linked.length+'项关联指标');
+}
+function aiBatchParse(){const p=AP();const docs=p.deliverables||[],wl=docs.filter(d=>(d.linked||[]).length>0).length;addAIMsg('全量扫描：'+docs.length+'份交付物，'+wl+'份已关联指标('+Math.round(wl/docs.length*100)+'%)');}
+
+function aiCheckInd(){const p=AP();const iid=document.getElementById('aiIndSel')?.value;if(!iid){addAIMsg('请选择指标');return}
+  const i=p.indicators.find(ii=>ii.id===iid);if(!i)return;
+  const keys=['requirement','design','implementation','verification','closure'],labels=['需求','方案','实施','验证','闭环'];
+  const st=keys.map((k,j)=>{const s=i.stages[k];return{wf:s?s.wf:'pending',l:labels[j]}});
+  const done=st.filter(s=>s.wf==='approved').length,broken=st.filter(s=>s.wf==='rejected');
+  let h='<strong>'+esc(i.name)+'</strong> ['+done+'/5]<br>'+st.map(s=>'<span style="font-size:9px;color:'+(s.wf==='approved'?'var(--su)':s.wf==='rejected'?'var(--d)':'var(--t3)')+'">'+s.l+' '+(s.wf==='approved'?'✓':s.wf==='rejected'?'X':'·')+'</span>').join(' | ');
+  if(broken.length)h+='<br><span style="color:var(--d)">断点：'+broken.map(s=>s.l).join('、')+'</span>';
+  if(done<5)h+='<br><span style="color:var(--w)">建议：推进「'+st.find(s=>s.wf==='pending'||s.wf==='draft')?.l+'」阶段</span>';
+  document.getElementById('aiIndResult').innerHTML=h;addAIMsg('「'+esc(i.name)+'」：'+done+'/5阶段完成');
+}
+function aiCheckAll(){const p=AP(),inds=p.indicators||[],keys=['requirement','design','implementation','verification','closure'];
+  const r=inds.map(i=>{const vs=keys.map(k=>{const s=i.stages[k];return s&&s.wf==='approved'?1:s&&s.wf==='rejected'?.5:0});const d=vs.filter(v=>v===1).length;return d===5?'O':vs.filter(v=>v===.5).length>0?'X':'='});
+  addAIMsg('批量扫描：'+r.filter(v=>v==='O').length+'闭环 · '+r.filter(v=>v==='X').length+'断点 · '+r.filter(v=>v==='=').length+'进行中');
+}
+function aiDocDecide(){const p=AP();const did=document.getElementById('aiDocForInd')?.value;if(!did){addAIMsg('请选择文件');return}
+  const doc=p.deliverables.find(d=>d.id===did);if(!doc)return;
+  const linked=(doc.linked||[]).map(iid=>p.indicators.find(i=>i.id===iid)).filter(Boolean);
+  if(!linked.length){document.getElementById('aiDocDecideResult').innerHTML='该文件暂无关联指标';return}
+  const keys=['requirement','design','implementation','verification','closure'];
+  let h='<strong>依据'+esc(doc.name)+'('+doc.status+')决策：</strong><br>'+linked.map(i=>{const vs=keys.map(k=>{const s=i.stages[k];return s&&s.wf==='approved'?1:0});const done=vs.filter(v=>v===1).length;const sug=doc.status==='finalized'&&done<4?'->建议标记验证阶段通过':'';return'· '+esc(i.name)+' ['+done+'/5] '+sug}).join('<br>');
+  document.getElementById('aiDocDecideResult').innerHTML=h;addAIMsg('已分析'+linked.length+'项关联指标');
+}
+
+function aiSend(){const input=document.getElementById('aiInput'),q=input.value.trim();if(!q)return;input.value='';addAIMsg(q,'user');
+  setTimeout(function(){const p=AP();if(!p)return;const td=nw(),mats=p.materials||[],inds=p.indicators||[];
+    if(cv==='docs'&&(q.indexOf('解析')>=0||q.indexOf('扫描')>=0)){aiBatchParse();return}
+    if(cv==='indicators'&&(q.indexOf('检查')>=0||q.indexOf('扫描')>=0)){aiCheckAll();return}
+    var ans={'指标':function(){return inds.length+'项'},'材料':function(){return mats.filter(function(m){return m.wf==='approved'}).length+'/'+mats.length+'定稿'},'逾期':function(){var o=mats.filter(function(m){return m.deadline&&m.deadline<td&&m.wf!=='approved'});return o.length?'逾期'+o.length+'项':'无逾期'},'进度':function(){return (p.milestones||[]).filter(function(m){return m.ad}).length+'/'+(p.milestones||[]).length+'完成'}};
+    var f=false;Object.keys(ans).forEach(function(k){if(q.indexOf(k)>=0){addAIMsg(ans[k]());f=true}});
+    if(!f)addAIMsg('请切换到相关页面使用专属AI功能');
+  },200);
+}
+// addAIMsg(): 向AI面板消息区域追加一条消息
+function addAIMsg(t,type){var b=document.getElementById('aiBody');var c=b.querySelector('.ai-chat-msgs');if(!c){c=document.createElement('div');c.className='ai-chat-msgs';c.style.cssText='flex:1;overflow-y:auto;max-height:140px;padding:0 4px;margin-top:4px';b.appendChild(c)}
+  c.innerHTML+='<div class="ai-msg '+(type||'bot')+'">'+t+'<div class="meta">'+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})+'</div></div>';c.scrollTop=c.scrollHeight;
+}
+
+// ===== INTERACTIVE ANALYSIS (click indicator/material -> AI panel) =====
+function aiAnalyzeIndicator2(id){
+  var p=AP();if(!p)return;
+  var ind=p.indicators.find(function(i){return i.id===id});if(!ind)return;
+  var keys=['requirement','design','implementation','verification','closure'];
+  var labels=['需求定义','方案设计','实施执行','验收验证','闭环确认'];
+  var stages=keys.map(function(k,i){
+    var s=ind.stages[k]||{wf:'pending',desc:'',evid:'',date:'',op:'',ver:1};
+    return {key:k,label:labels[i],wf:s.wf,desc:s.desc,evid:s.evid,date:s.date,ver:s.ver};
+  });
+  var done=stages.filter(function(s){return s.wf==='approved'}).length;
+  var broken=stages.filter(function(s){return s.wf==='rejected'});
+  var pending=stages.filter(function(s){return s.wf==='pending'||s.wf==='draft'});
+  var linkedDocs=(ind.linkedDocs||[]).map(function(did){return p.deliverables.find(function(d){return d.id===did})}).filter(Boolean);
+  var linkedMats=(ind.linkedMats||[]).map(function(mid){return p.materials.find(function(m){return m.id===mid})}).filter(Boolean);
+
+  // Build analysis HTML for AI panel
+  var h='';
+  // Title bar
+  h+='<div style="background:var(--ai-bg);border:1px solid #c4b5fd;border-radius:4px;padding:8px 10px;margin-bottom:8px">';
+  h+='<strong style="color:var(--ai);font-size:11px">正在分析：'+esc(ind.name)+'</strong>';
+  h+='<div style="font-size:9px;color:var(--t3);margin-top:2px">目标：「'+esc(ind.target||'未设置')+'」 · 责任人：'+pn(p,ind.owner)+'</div>';
+  h+='</div>';
+
+  // Stage status
+  h+='<div style="font-size:10.5px;margin-bottom:8px"><strong>五阶段状态分析</strong></div>';
+  h+='<table style="width:100%;font-size:9.5px;margin-bottom:8px">';
+  stages.forEach(function(s,i){
+    var cl=s.wf==='approved'?'var(--su)':s.wf==='rejected'?'var(--d)':s.wf==='draft'||s.wf==='submitted'?'var(--w)':'var(--t3)';
+    var st=s.wf==='approved'?'✓ 完成':s.wf==='rejected'?'✗ 驳回':s.wf==='draft'?'⚙ 草稿':s.wf==='submitted'?'→ 审核中':'· 未开始';
+    h+='<tr><td style="padding:3px 4px">'+(i+1)+'. '+s.label+'</td><td style="color:'+cl+'">'+st+'</td></tr>';
+    if(s.wf==='rejected'&&s.evid)h+='<tr><td></td><td style="font-size:8px;color:var(--d)">原因：'+esc(s.evid)+'</td></tr>';
+  });
+  h+='</table>';
+  h+='<div style="font-size:10px;margin-bottom:6px">完成进度：<strong>'+done+'/5</strong> 阶段</div>';
+
+  // Suggestions
+  h+='<div style="font-size:10.5px;margin-bottom:6px"><strong>闭环建议</strong></div>';
+  if(done===5){
+    h+='<div style="color:var(--su);font-size:10px">✅ 该指标已形成完整闭环，无需进一步操作。</div>';
+  }else if(broken.length>0){
+    h+='<div style="color:var(--d);font-size:10px">⚠ 存在驳回项：'+broken.map(function(s){return s.label}).join('、')+'。<br>建议：重新修订被驳回阶段的材料，修正后重新提交审核。</div>';
+  }else if(pending.length>0){
+    var next=pending[0];
+    h+='<div style="color:var(--w);font-size:10px">下一步建议：启动「<strong>'+next.label+'</strong>」阶段的编制工作。<br>';
+    if(linkedDocs.length>0){
+      h+='可参考的交付物：'+linkedDocs.map(function(d){return d.name+'('+d.status+')'}).join('、')+'<br>';
+      var finalized=linkedDocs.filter(function(d){return d.status==='finalized'});
+      if(finalized.length>0)h+='<span style="color:var(--su)">✓ '+finalized.length+'份已定稿交付物可为该阶段提供证据支撑</span>';
+    }
+    h+='</div>';
+  }
+
+  // Linked deliverables
+  if(linkedDocs.length>0){
+    h+='<div style="font-size:10px;margin-top:8px"><strong>关联交付物 ('+linkedDocs.length+'份)</strong></div>';
+    linkedDocs.forEach(function(d){
+      var st=d.status==='finalized'?'已定稿':d.status==='draft'?'草稿':'已作废';
+      h+='<div style="font-size:9px;padding:2px 0">· '+esc(d.name)+' <span style="color:'+(d.status==='finalized'?'var(--su)':'var(--t3)')+'">['+st+']</span></div>';
+    });
+  }
+
+  // Push notification button
+  h+='<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--bd)">';
+  h+='<button class="btn btn-xs" style="background:var(--ai);color:#fff;width:100%;margin-bottom:3px" onclick="aiPushNotify(\''+ind.id+'\')">📨 推送状态给责任人</button>';
+  h+='<div style="font-size:8px;color:var(--t3)">深化应用：将当前指标分析报告推送给 '+pn(p,ind.owner)+'，通知其进行下一步操作。</div>';
+  h+='</div>';
+
+  // Render to AI panel
+  var body=document.getElementById('aiBody');
+  body.innerHTML='<div style="padding:4px;font-size:10px">'+h+'</div>';
+  // Also add message
+  setTimeout(function(){addAIMsg('已分析「'+esc(ind.name)+'」：'+done+'/5阶段完成'+(broken.length?'，'+broken.length+'处驳回':'')+(pending.length?'，建议下一步：'+pending[0].label:'')+'。');},100);
+}
+
+function aiAnalyzeMaterial(id){
+  var p=AP();if(!p)return;
+  var m=p.materials.find(function(mm){return mm.id===id});if(!m)return;
+  var wfLabels={approved:'已定稿',submitted:'审核中',draft:'编制中',rejected:'退回修订',pending:'待启动'};
+  var linkedInds=(m.linkedInds||[]).map(function(iid){return p.indicators.find(function(i){return i.id===iid})}).filter(Boolean);
+  var linkedDocs=(m.linkedDocs||[]).map(function(did){return p.deliverables.find(function(d){return d.id===did})}).filter(Boolean);
+
+  var h='';
+  h+='<div style="background:var(--ai-bg);border:1px solid #c4b5fd;border-radius:4px;padding:8px 10px;margin-bottom:8px">';
+  h+='<strong style="color:var(--ai);font-size:11px">正在分析：'+esc(m.name)+'</strong>';
+  h+='<div style="font-size:9px;color:var(--t3);margin-top:2px">类别：'+cn(p,m.cat)+' · 状态：'+wfLabels[m.wf]+' · v'+m.ver+'</div>';
+  h+='</div>';
+
+  if(m.wf==='rejected'){
+    h+='<div style="color:var(--d);font-size:10px;margin-bottom:8px">⚠ 该材料已被退回修订<br>原因：'+esc(m.rjReason||'未说明')+'<br>建议：修正后重新提交审核。</div>';
+  }else if(m.wf==='approved'){
+    h+='<div style="color:var(--su);font-size:10px;margin-bottom:8px">✅ 该材料已定稿，合规状态良好。</div>';
+  }else if(m.wf==='pending'){
+    h+='<div style="color:var(--w);font-size:10px;margin-bottom:8px">⚠ 该材料尚未启动编制。<br>建议：尽快启动编制，审计依据：'+esc(m.rule||'无')+'</div>';
+  }else{
+    h+='<div style="color:var(--w);font-size:10px;margin-bottom:8px">⚙ 该材料正在'+wfLabels[m.wf]+'。</div>';
+  }
+
+  if(linkedInds.length>0){
+    h+='<div style="font-size:10px;margin-bottom:6px"><strong>关联指标 ('+linkedInds.length+'项)</strong></div>';
+    linkedInds.forEach(function(i){
+      var keys=['requirement','design','implementation','verification','closure'];
+      var done=keys.filter(function(k){var s=i.stages[k];return s&&s.wf==='approved'}).length;
+      h+='<div style="font-size:9px;padding:2px 0">· '+esc(i.name)+' ['+done+'/5]</div>';
+    });
+  }
+
+  h+='<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--bd)">';
+  h+='<button class="btn btn-xs" style="background:var(--ai);color:#fff;width:100%" onclick="aiPushNotify2(\''+m.id+'\')">📨 推送状态给责任人 '+pn(p,m.owner)+'</button>';
+  h+='</div>';
+
+  var body=document.getElementById('aiBody');
+  body.innerHTML='<div style="padding:4px;font-size:10px">'+h+'</div>';
+  setTimeout(function(){addAIMsg('已分析材料「'+esc(m.name)+'」：'+wfLabels[m.wf]+(linkedInds.length?'，关联'+linkedInds.length+'项指标':''));},100);
+}
+
+function aiPushNotify(id){
+  var p=AP();var ind=p.indicators.find(function(i){return i.id===id});if(!ind)return;
+  var owner=pn(p,ind.owner);
+  var keys=['requirement','design','implementation','verification','closure'];
+  var done=keys.filter(function(k){var s=ind.stages[k];return s&&s.wf==='approved'}).length;
+  var broken=keys.filter(function(k){var s=ind.stages[k];return s&&s.wf==='rejected'}).length;
+  var pendingStage=keys.find(function(k){var s=ind.stages[k];return !s||s.wf==='pending'||s.wf==='draft'});
+  var labels={requirement:'需求定义',design:'方案设计',implementation:'实施执行',verification:'验收验证',closure:'闭环确认'};
+  var msg='📨 已向 '+owner+' 推送指标状态通知：\n';
+  msg+='「'+ind.name+'」当前状态：'+done+'/5阶段完成';
+  if(broken>0)msg+='，'+broken+'处驳回需处理';
+  if(pendingStage)msg+='，下一步：'+labels[pendingStage];
+  if(ind.deadline)msg+='，截止日期：'+ind.deadline;
+  alert(msg);
+  addAIMsg(msg.replace(/\n/g,'<br>'));
+}
+
+function aiPushNotify2(id){
+  var p=AP();var m=p.materials.find(function(mm){return mm.id===id});if(!m)return;
+  var owner=pn(p,m.owner);
+  var wfLabels={approved:'已定稿',submitted:'审核中',draft:'编制中',rejected:'退回修订',pending:'待启动'};
+  var msg='📨 已向 '+owner+' 推送材料状态通知：\n';
+  msg+='「'+m.name+'」当前状态：'+wfLabels[m.wf];
+  if(m.deadline)msg+='，截止日期：'+m.deadline;
+  if(m.wf==='rejected')msg+='，退回原因：'+esc(m.rjReason||'未说明');
+  alert(msg);
+  addAIMsg(msg.replace(/\n/g,'<br>'));
+}
+
+// ================================================================
+// IMPORT/EXPORT — 数据导入导出
+// imp(): JSON文件导入 | exp(): JSON文件导出
+// ================================================================
+function exp(){const j=JSON.stringify(D,null,2);const b=new Blob([j],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`验收数据_${nw()}.json`;a.click()}
+function imp(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=function(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=function(ev){try{const d=JSON.parse(ev.target.result);if(!d||!d.projects)throw new Error();if(!confirm(`导入${d.projects.length}个项目？`))return;D=d;save();showV('dash')}catch(err){alert('导入失败')}};r.readAsText(f)};i.click()}
+
+// Modal close
+['docModal','indModal','stModal','matModal','mwfModal','orgModal'].forEach(id=>{document.getElementById(id).addEventListener('click',function(e){if(e.target===this){if(id==='docModal')closeDocM();else if(id==='indModal')closeIndM();else if(id==='stModal')closeStM();else if(id==='matModal')closeMatM();else if(id==='mwfModal')closeMwfM();else closeOrgM()}})});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeDocM();closeIndM();closeStM();closeMatM();closeMwfM();closeOrgM()}});
+
+// ================================================================
+// INITIALIZATION — 页面初始化
+// ================================================================
+// Global toggle for AI sections (class ai-tgl)
+document.addEventListener('click',function(e){var el=e.target;while(el&&el.className.indexOf('ai-tgl')<0)el=el.parentElement;if(el){var b=el.nextElementSibling;if(b)b.style.display=b.style.display?'':'none'}});
+// Init AI panel toggle button visibility
+document.getElementById('aiToggle').style.display='none';
+showV('dash');
+</script>
+
+  <!-- ========== 项目创建向导弹窗 ========== -->
+
+<div class="modal-overlay" id="wizModal"><div class="modal" style="max-width:720px">
+  <div class="modal-head"><h2 id="wizTit">创建新项目</h2><button class="modal-close" onclick="closeWiz()">&times;</button></div>
+  <div class="wiz-steps" id="wizSteps"></div>
+  <div class="modal-body" id="wizBody"></div>
+  <div class="modal-foot">
+    <button class="btn btn-s" id="wizPrev" onclick="wizPrev()" style="display:none">上一步</button>
+    <button class="btn btn-p" id="wizNext" onclick="wizNext()">下一步</button>
+  </div>
+</div></div>
+
+</body>
+</html>
