@@ -649,7 +649,7 @@ function wizStep4(){
       '<div class="form-g"><label>偏移天数</label><input type="number" class="form-input" value="'+m.o+'" onchange="wizData.milestones['+idx+'].o=parseInt(this.value)||0" style="width:80px"></div>'+
       '<button class="btn btn-xs btn-gh" style="color:var(--d);align-self:flex-end;margin-bottom:4px" onclick="wizData.milestones.splice('+idx+',1);renderWiz()">x</button></div>';
   });
-  h+='</div><button class="btn btn-xs btn-out" onclick="wizData.milestones.push({n:'新节点',o:90});renderWiz()">+ 添加节点</button>';
+  h+='</div><button class="btn btn-xs btn-out" onclick="wizData.milestones.push({n:\x27新节点\x27,o:90});renderWiz()">+ 添加节点</button>';
   return h;
 }
 
@@ -663,7 +663,7 @@ function wizStep5(){
       '<div class="form-g"><select class="form-input" onchange="wizData.deliverables['+idx+'].type=this.value">'+dt.map(function(tp){return'<option value="'+tp+'"'+(d.type===tp?' selected':'')+'>'+tp+'</option>'}).join('')+'</select></div>'+
       '<button class="btn btn-xs btn-gh" style="color:var(--d);align-self:center" onclick="wizData.deliverables.splice('+idx+',1);renderWiz()">x</button></div>';
   });
-  h+='</div><button class="btn btn-xs btn-out" onclick="wizData.deliverables.push({name:'新建交付物',type:'交付物',ver:'V1.0',file:''});renderWiz()">+ 添加交付物</button>';
+  h+='</div><button class="btn btn-xs btn-out" onclick="wizData.deliverables.push({name:\x27新建交付物\x27,type:\x27交付物\x27,ver:\x27V1.0\x27,file:\x27\x27});renderWiz()">+ 添加交付物</button>';
   // Summary
   h+='<div class="wiz-section" style="margin-top:14px;padding:10px;background:#fafbfc;border-radius:6px"><h4>创建预览</h4>'+
     '<table style="font-size:9.5px;width:100%"><tr><td>项目名称</td><td><strong>'+esc(wizData.name||'(未填写)')+'</strong></td></tr>'+
